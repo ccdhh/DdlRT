@@ -8,8 +8,10 @@
 #include <cmath>
 #include <fstream>
 #include <random>
+#include <set>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <sys/time.h>
 #include <unistd.h>
 #include <vector>
@@ -690,6 +692,128 @@ void CoordinatorImpl::initialize_equiox_stripe_placement(Stripe *stripe) {
   stripe->num_groups = stripe->group_to_blocks.size();
 }
 
+void CoordinatorImpl::initialize_cluster_rt_stripe_placement(Stripe *stripe) {
+  // Cluster RT (RS encoding only):
+  // - parity blocks (k..k+r-1) all live in a single parity_cluster and are placed
+  //   on r distinct nodes within that cluster.
+  // - data blocks (0..k-1) are distributed to zu data clusters (excluding the parity cluster),
+  //   and within each data cluster group g, place either (m-1) or m blocks on distinct nodes.
+
+  assert(m_sys_config->CodeType == "RS" &&
+         "initialize_cluster_rt_stripe_placement is only valid for RS");
+  assert(stripe->z == 0 &&
+         "Cluster RT baseline currently requires z=0 (RS with only global parity)");
+  assert(stripe->n == stripe->k + stripe->r);
+  assert(stripe->object_keys.size() == 1);
+
+  const int k = stripe->k;
+  const int r = stripe->r;
+  const int m = r; // per your baseline: parity cluster has m parity blocks
+  const int zu = (k + m - 1) / m;
+  const int b = ((k - 1) % m) + 1; // 1..m
+  const int m_minus_b = m - b;     // number of data clusters with (m-1) blocks
+
+  // Parity cluster allocation: parity_cluster = mod(stripe_id, num_clusters)
+  const int parity_cluster = stripe->stripe_id % m_sys_config->ClusterNum;//校验块位置轮询
+
+  // Pick zu data clusters (excluding parity_cluster), order defines g=1..zu
+  std::vector<int> available_clusters;
+  available_clusters.reserve(m_sys_config->ClusterNum - 1);
+  for (int cid = 0; cid < m_sys_config->ClusterNum; cid++) {
+    if (cid == parity_cluster) continue;
+    available_clusters.push_back(cid);//将可用集群收集起来
+  }
+  assert(static_cast<int>(available_clusters.size()) >= zu &&
+         "Cluster RT requires enough distinct data clusters");
+  std::shuffle(available_clusters.begin(), available_clusters.end(),
+               std::mt19937(std::random_device{}()));//打乱集群顺序
+  available_clusters.resize(zu);//只保留zu个集群
+
+  stripe->group_to_blocks.clear();
+  stripe->blocks.clear();
+  stripe->place2clusters.clear();
+
+  Block *blocks_info = new Block[stripe->n];
+
+  // Track data group boundary while iterating block_id in ascending order.
+  int cur_group_g = 1; // data group id in [1..zu]
+  int cur_group_block_left =
+      (cur_group_g <= m_minus_b) ? (m - 1) : m; // 数据集群内部数据块数量
+  if (cur_group_block_left < 0) cur_group_block_left = 0;
+  int data_id = 0;
+
+  for (int i = 0; i < stripe->n; i++) {
+    blocks_info[i].block_size = m_sys_config->BlockSize;
+    blocks_info[i].map2stripe = stripe->stripe_id;
+    blocks_info[i].map2key = stripe->object_keys[0];
+
+    if (i < k) {
+      // data block
+      // Determine which data cluster group (g=1..zu) this block_id belongs to.
+      if (cur_group_g > zu) {
+        // Should never happen if k/r are valid.
+        std::cerr << "[ClusterRT] cur_group_g overflow for stripe_id=" << stripe->stripe_id
+                  << std::endl;
+        std::terminate();
+      }
+      const int data_cluster_id = available_clusters[cur_group_g - 1];//分配数据集群
+
+      std::string tmp = "_D";
+      if (i < 10) tmp = "_D0";
+      blocks_info[i].block_key = std::to_string(stripe->stripe_id) + tmp + std::to_string(i);
+      blocks_info[i].block_id = i;
+      blocks_info[i].block_type = 'D';
+      blocks_info[i].map2group = cur_group_g; // group id
+      blocks_info[i].map2cluster = data_cluster_id;
+
+      int node_id = randomly_select_a_node(data_cluster_id, stripe->stripe_id);
+      blocks_info[i].map2node = node_id;
+
+      update_stripe_info_in_node(node_id, stripe->stripe_id, i);
+      m_cluster_table[data_cluster_id].blocks.push_back(&blocks_info[i]);
+      m_cluster_table[data_cluster_id].stripes.insert(stripe->stripe_id);
+      stripe->blocks.push_back(&blocks_info[i]);
+      stripe->place2clusters.insert(data_cluster_id);
+      add_to_map(stripe->group_to_blocks, cur_group_g, i);
+
+      // move to next data block within same group
+      data_id++;
+      cur_group_block_left--;
+      if (cur_group_block_left == 0) {
+        cur_group_g++;
+        if (cur_group_g <= zu) {
+          cur_group_block_left =
+              (cur_group_g <= m_minus_b) ? (m - 1) : m;
+        }
+      }
+    } else {
+      // parity block (global parity only, since z=0)
+      const int parity_idx = i - k; // 0..r-1
+      std::string tmp = "_G";
+      if (parity_idx < 10) tmp = "_G0";
+      blocks_info[i].block_key = std::to_string(stripe->stripe_id) + tmp + std::to_string(parity_idx);
+      blocks_info[i].block_id = i;
+      blocks_info[i].block_type = 'G';
+      blocks_info[i].map2group = 0; // parity group id fixed to 0
+      blocks_info[i].map2cluster = parity_cluster;
+
+      int node_id = randomly_select_a_node(parity_cluster, stripe->stripe_id);
+      blocks_info[i].map2node = node_id;
+      update_stripe_info_in_node(node_id, stripe->stripe_id, i);
+      m_cluster_table[parity_cluster].blocks.push_back(&blocks_info[i]);
+      m_cluster_table[parity_cluster].stripes.insert(stripe->stripe_id);
+      stripe->blocks.push_back(&blocks_info[i]);
+      stripe->place2clusters.insert(parity_cluster);
+      add_to_map(stripe->group_to_blocks, 0, i);
+    }
+  }
+
+  // sanity: all k data blocks should be assigned
+  assert(static_cast<int>(data_id) == k);
+  stripe->base_k = k;
+  stripe->num_groups = stripe->group_to_blocks.size();
+}
+
 void CoordinatorImpl::initialize_unilrc_and_azurelrc_stripe_placement(
     Stripe *stripe) {
   std::string code_type = m_sys_config->CodeType;
@@ -1189,7 +1313,11 @@ grpc::Status CoordinatorImpl::uploadSetValue(
     } else if (code_type == "UniformLRC") {
       initialize_uniform_lrc_stripe_placement(&t_stripe);
     } else if (code_type == "RS") {
-      initialize_equiox_stripe_placement(&t_stripe);
+      if (m_sys_config->AppendMode == "CLUSTER_RT_MODE") {
+        initialize_cluster_rt_stripe_placement(&t_stripe);
+      } else {
+        initialize_equiox_stripe_placement(&t_stripe);
+      }
     }
 
     print_stripe_data_placement(t_stripe);
@@ -4225,10 +4353,629 @@ CoordinatorImpl::Get_OA_Information(const std::string &filename) {
   return matrix;
 }
 
+namespace {
+
+// --- Cluster RT merge helpers (aim-based data placement) ---
+
+void cluster_rt_build_aim_sorted(int total_k, int m, std::vector<int> &aim_sorted) {
+  int R = (total_k + m - 1) / m;
+  int b = ((total_k - 1) % m) + 1;
+  int m_minus_b = m - b;
+  aim_sorted.clear();
+  aim_sorted.reserve(R);
+  for (int i = 0; i < m_minus_b; ++i)
+    aim_sorted.push_back(m - 1);
+  for (int i = 0; i < R - m_minus_b; ++i)
+    aim_sorted.push_back(m);
+  std::sort(aim_sorted.begin(), aim_sorted.end());
+}
+
+} // namespace
+
+void CoordinatorImpl::cluster_rt_rebuild_groups_impl(Stripe &stripe) {
+  int k = stripe.k;
+  int m = stripe.r;
+  int zu = (k + m - 1) / m;
+  int b = ((k - 1) % m) + 1;
+  int m_minus_b = m - b;
+  stripe.group_to_blocks.clear();
+  for (int j = 0; j < stripe.r; ++j) {
+    stripe.blocks[k + j]->map2group = 0;
+    add_to_map(stripe.group_to_blocks, 0, k + j);
+  }
+  int bid = 0;
+  for (int g = 1; g <= zu; ++g) {
+    int gs = (g <= m_minus_b) ? (m - 1) : m;
+    for (int t = 0; t < gs && bid < k; ++t) {
+      stripe.blocks[bid]->map2group = g;
+      add_to_map(stripe.group_to_blocks, g, bid);
+      bid++;
+    }
+  }
+  stripe.num_groups = static_cast<int>(stripe.group_to_blocks.size());
+}
+
+grpc::Status CoordinatorImpl::mergeStripesClusterRT(
+    grpc::ServerContext *context,
+    const coordinator_proto::MergeRequest *request,
+    coordinator_proto::MergeReply *reply) {
+  (void)context;
+  int stripe_id_a = request->stripe_id_a();
+  int stripe_id_b = request->stripe_id_b();
+  int merge_round = request->merge_round();
+
+  if (m_stripe_table.find(stripe_id_a) == m_stripe_table.end() ||
+      m_stripe_table.find(stripe_id_b) == m_stripe_table.end()) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "stripe not found");
+  }
+
+  Stripe &stripe_a = m_stripe_table[stripe_id_a];
+  Stripe &stripe_b = m_stripe_table[stripe_id_b];
+  int k = stripe_a.k;
+  int r = stripe_a.r;
+  if (stripe_b.k != k || stripe_b.r != r) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "merge requires two stripes with same k and r");
+  }
+
+  int m = r;
+  int k0 = stripe_a.base_k > 0 ? stripe_a.base_k : k;
+  if (stripe_b.base_k > 0 && stripe_b.base_k != k0) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "merge requires same base_k on both stripes");
+  }
+
+  if (merge_round < 1) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "merge_round must be >= 1");
+  }
+
+  int total_k = (1 << merge_round) * k0;
+  int new_k = 2 * k;
+  if (new_k != total_k) {
+    std::cerr << "[ClusterRT][Merge] warning: expected merged k="
+              << total_k << " from round=" << merge_round
+              << " base_k=" << k0 << " but input stripes have k=" << k
+              << " (continuing with new_k=" << new_k << ")" << std::endl;
+  }
+
+  std::vector<int> aim_sorted;
+  cluster_rt_build_aim_sorted(total_k, m, aim_sorted);
+  int R = static_cast<int>(aim_sorted.size());
+
+  int parity_cluster_dest = stripe_a.blocks[k]->map2cluster;
+
+  int block_size = m_sys_config->BlockSize;
+  int new_stripe_id = request->new_stripe_id();
+  if (new_stripe_id <= 0) {
+    new_stripe_id = m_cur_stripe_id++;
+  }
+
+  // --- Data rows: [block*, stripe_for_node_pick] ---
+  struct Row {
+    ECProject::Block *blk;
+    int sid_pick;
+  };
+  std::vector<Row> rows;
+  rows.reserve(static_cast<size_t>(new_k));
+  for (int i = 0; i < k; ++i) {
+    rows.push_back({stripe_a.blocks[i], stripe_id_a});
+  }
+  for (int i = 0; i < k; ++i) {
+    rows.push_back({stripe_b.blocks[i], stripe_id_b});
+  }
+
+  auto cluster_counts = [&rows]() {
+    std::map<int, int> cnt;
+    for (const auto &row : rows) {
+      cnt[row.blk->map2cluster]++;
+    }
+    return cnt;
+  };
+
+  auto build_racks_sorted = [](const std::map<int, int> &cnt) {
+    std::vector<std::pair<int, int>> racks;
+    racks.reserve(cnt.size());
+    for (const auto &p : cnt)
+      racks.push_back({p.first, p.second});
+    std::sort(racks.begin(), racks.end(),
+              [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
+                if (a.second != b.second)
+                  return a.second < b.second;
+                return a.first < b.first;
+              });
+    return racks;
+  };
+
+  // Greedy balancing loop (multiple passes until counts multiset matches aim)
+  const int max_pass = 64;
+  for (int pass = 0; pass < max_pass; ++pass) {
+    std::map<int, int> cnt = cluster_counts();
+    std::vector<std::pair<int, int>> racks_sorted = build_racks_sorted(cnt);
+    int num_racks = static_cast<int>(racks_sorted.size());
+    int t = num_racks - R;
+
+    std::vector<int> transfer;
+    std::vector<int> cluster_at_index;
+    std::vector<int> new_cluster_slots;
+
+    if (t > 0) {
+      transfer.resize(num_racks);
+      std::vector<int> padded(static_cast<size_t>(t), 0);
+      for (int v : aim_sorted)
+        padded.push_back(v);
+      for (int i = 0; i < num_racks; ++i)
+        transfer[i] = racks_sorted[i].second - padded[i];
+      for (int i = 0; i < num_racks; ++i)
+        cluster_at_index.push_back(racks_sorted[i].first);
+    } else {
+      int abs_t = R - num_racks;
+      transfer.resize(R);
+      std::vector<int> padded(static_cast<size_t>(abs_t), 0);
+      for (const auto &pr : racks_sorted)
+        padded.push_back(pr.second);
+      for (int i = 0; i < R; ++i)
+        transfer[i] = padded[i] - aim_sorted[i];
+      cluster_at_index.resize(R, -1);
+      for (int i = abs_t; i < R; ++i)
+        cluster_at_index[i] = racks_sorted[i - abs_t].first;
+      for (int i = 0; i < abs_t; ++i)
+        new_cluster_slots.push_back(i);
+    }
+
+    long sum_pos = 0, sum_neg = 0;
+    for (int v : transfer) {
+      if (v > 0)
+        sum_pos += v;
+      if (v < 0)
+        sum_neg -= v;
+    }
+    if (sum_pos == 0 && sum_neg == 0)
+      break;
+
+    // Collect outgoing blocks from clusters with positive transfer
+    std::vector<Row> outgoing;
+    auto gather_blocks_in_cluster = [&](int cid) {
+      std::vector<Row> blks;
+      for (const auto &row : rows) {
+        if (row.blk->map2cluster == cid)
+          blks.push_back(row);
+      }
+      return blks;
+    };
+
+    auto pick_eviction_order = [&](int cid, int need) {
+      std::map<int, std::vector<ECProject::Block *>> node_to;
+      for (const auto &row : rows) {
+        if (row.blk->map2cluster != cid)
+          continue;
+        node_to[row.blk->map2node].push_back(row.blk);
+      }
+      std::vector<std::pair<int, int>> order;
+      for (const auto &p : node_to)
+        order.push_back({static_cast<int>(p.second.size()), p.first});
+      std::sort(order.begin(), order.end(),
+                [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
+                  if (a.first != b.first)
+                    return a.first > b.first;
+                  return a.second < b.second;
+                });
+      std::vector<ECProject::Block *> picked;
+      for (auto &pr : order) {
+        int nid = pr.second;
+        while (need > 0 && !node_to[nid].empty()) {
+          picked.push_back(node_to[nid].back());
+          node_to[nid].pop_back();
+          need--;
+        }
+        if (need == 0)
+          break;
+      }
+      return picked;
+    };
+
+    if (t > 0) {
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[i] <= 0)
+          continue;
+        int cid = cluster_at_index[static_cast<int>(i)];
+        auto blks = pick_eviction_order(cid, transfer[i]);
+        for (auto *b : blks) {
+          for (const auto &row : rows) {
+            if (row.blk == b) {
+              outgoing.push_back(row);
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      int abs_t = R - num_racks;
+      (void)abs_t;
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[static_cast<int>(i)] <= 0)
+          continue;
+        int cid = cluster_at_index[static_cast<int>(i)];
+        if (cid < 0)
+          continue;
+        auto blks = pick_eviction_order(cid, transfer[static_cast<int>(i)]);
+        for (auto *b : blks) {
+          for (const auto &row : rows) {
+            if (row.blk == b) {
+              outgoing.push_back(row);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Destinations for negative transfer
+    std::vector<std::pair<int, int>> dests;
+    std::set<int> used_clusters;
+    for (const auto &row : rows)
+      used_clusters.insert(row.blk->map2cluster);
+    used_clusters.insert(parity_cluster_dest);
+
+    auto pick_new_cluster = [&]() -> int {
+      for (int c = 0; c < m_sys_config->ClusterNum; ++c) {
+        if (used_clusters.count(c))
+          continue;
+        if (c == parity_cluster_dest)
+          continue;
+        used_clusters.insert(c);
+        return c;
+      }
+      return -1;
+    };
+
+    if (t > 0) {
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[static_cast<int>(i)] >= 0)
+          continue;
+        int need = -transfer[static_cast<int>(i)];
+        int cid = cluster_at_index[static_cast<int>(i)];
+        for (int u = 0; u < need; ++u)
+          dests.push_back({cid, 1});
+      }
+    } else {
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[static_cast<int>(i)] >= 0)
+          continue;
+        int need = -transfer[static_cast<int>(i)];
+        int cid_slot = static_cast<int>(i);
+        for (int u = 0; u < need; ++u) {
+          int target_c = cluster_at_index[cid_slot];
+          if (target_c < 0) {
+            target_c = pick_new_cluster();
+            cluster_at_index[cid_slot] = target_c;
+          }
+          if (target_c < 0) {
+            std::cerr << "[ClusterRT][Merge] no free cluster for placement" << std::endl;
+            reply->set_success(false);
+            return grpc::Status(grpc::StatusCode::RESOURCE_EXHAUSTED,
+                                "no free cluster for merge placement");
+          }
+          dests.push_back({target_c, 1});
+        }
+      }
+    }
+
+    size_t mv = std::min(outgoing.size(), dests.size());
+    struct RelocEntry {
+      std::string block_key;
+      std::string from_ip;
+      int from_port;
+      std::string to_ip;
+      int to_port;
+    };
+    std::map<int, std::vector<RelocEntry>> proxy_reloc_plans;
+
+    for (size_t e = 0; e < mv; ++e) {
+      ECProject::Block *blk = outgoing[e].blk;
+      int sid_pick = outgoing[e].sid_pick;
+      int to_c = dests[e].first;
+      int new_node_id = randomly_select_a_node(to_c, sid_pick);
+      ECProject::Node &old_node = m_node_table[blk->map2node];
+      ECProject::Node &to_node = m_node_table[new_node_id];
+      RelocEntry re;
+      re.block_key = blk->block_key;
+      re.from_ip = old_node.node_ip;
+      re.from_port = old_node.node_port;
+      re.to_ip = to_node.node_ip;
+      re.to_port = to_node.node_port;
+      proxy_reloc_plans[to_c].push_back(re);
+      blk->map2cluster = to_c;
+      blk->map2node = new_node_id;
+    }
+
+    for (auto &kv : proxy_reloc_plans) {
+      int cluster_id = kv.first;
+      auto &entries = kv.second;
+      if (entries.empty())
+        continue;
+      std::string proxy_addr = m_cluster_table[cluster_id].proxy_ip + ":" +
+                               std::to_string(m_cluster_table[cluster_id].proxy_port);
+      if (m_proxy_ptrs.find(proxy_addr) == m_proxy_ptrs.end() ||
+          !m_proxy_ptrs[proxy_addr]) {
+        std::cerr << "[ClusterRT][Merge] proxy not found: " << proxy_addr << std::endl;
+        reply->set_success(false);
+        return grpc::Status(grpc::StatusCode::UNAVAILABLE, "proxy not found");
+      }
+      grpc::ClientContext ctx;
+      proxy_proto::blockRelocPlan plan;
+      proxy_proto::blockRelocReply reloc_reply;
+      plan.set_block_size(block_size);
+      for (auto &ent : entries) {
+        plan.add_blocktomove(ent.block_key);
+        plan.add_fromdatanodeip(ent.from_ip);
+        plan.add_fromdatanodeport(ent.from_port);
+        plan.add_todatanodeip(ent.to_ip);
+        plan.add_todatanodeport(ent.to_port);
+      }
+      grpc::Status st =
+          m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+      if (!st.ok()) {
+        std::cerr << "[ClusterRT][Merge] relocateBlock failed: "
+                  << st.error_message() << std::endl;
+        reply->set_success(false);
+        return st;
+      }
+    }
+
+    if (mv == 0) {
+      std::cerr << "[ClusterRT][Merge] placement stuck (pass " << pass << ")" << std::endl;
+      break;
+    }
+  }
+
+  // Intra-cluster duplicate node fix
+  {
+    std::map<int, std::vector<ECProject::Block *>> by_c;
+    for (int i = 0; i < new_k; ++i) {
+      ECProject::Block *b = (i < k) ? stripe_a.blocks[i] : stripe_b.blocks[i - k];
+      by_c[b->map2cluster].push_back(b);
+    }
+    for (auto &kv : by_c) {
+      int cid = kv.first;
+      std::map<int, std::vector<ECProject::Block *>> by_n;
+      for (auto *b : kv.second)
+        by_n[b->map2node].push_back(b);
+      for (auto &p : by_n) {
+        auto &vec = p.second;
+        if (vec.size() <= 1)
+          continue;
+        for (size_t u = 1; u < vec.size(); ++u) {
+          ECProject::Block *blk = vec[u];
+          int sid_pick = (blk->map2stripe == stripe_id_b) ? stripe_id_b : stripe_id_a;
+          int nn = randomly_select_a_node(cid, sid_pick);
+          ECProject::Node &old_node = m_node_table[blk->map2node];
+          ECProject::Node &new_node = m_node_table[nn];
+          std::string proxy_addr = m_cluster_table[cid].proxy_ip + ":" +
+                                   std::to_string(m_cluster_table[cid].proxy_port);
+          if (m_proxy_ptrs.find(proxy_addr) != m_proxy_ptrs.end() &&
+              m_proxy_ptrs[proxy_addr]) {
+            grpc::ClientContext ctx;
+            proxy_proto::blockRelocPlan plan;
+            proxy_proto::blockRelocReply reloc_reply;
+            plan.set_block_size(block_size);
+            plan.add_blocktomove(blk->block_key);
+            plan.add_fromdatanodeip(old_node.node_ip);
+            plan.add_fromdatanodeport(old_node.node_port);
+            plan.add_todatanodeip(new_node.node_ip);
+            plan.add_todatanodeport(new_node.node_port);
+            grpc::Status st =
+                m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+            if (!st.ok()) {
+              std::cerr << "[ClusterRT][Merge] intra-cluster relocate failed" << std::endl;
+              reply->set_success(false);
+              return st;
+            }
+          }
+          blk->map2node = nn;
+        }
+      }
+    }
+  }
+
+  // --- Parity merge (same GF as legacy RS merge) ---
+  struct ParityMergeTask {
+    std::string parity_key_a;
+    std::string parity_key_b;
+    std::string new_parity_key;
+    std::string datanode_ip;
+    int datanode_port;
+    unsigned char gf_coeff;
+  };
+  std::vector<ParityMergeTask> parity_tasks;
+
+  for (int j = 0; j < r; ++j) {
+    ECProject::Block *pa = stripe_a.blocks[k + j];
+    ECProject::Block *pb = stripe_b.blocks[k + j];
+    int j_1based = j + 1;
+    unsigned char base = ECProject::gf_pow(2, static_cast<unsigned int>(j_1based));
+    unsigned char coeff = ECProject::gf_pow(base, static_cast<unsigned int>(k));
+    ECProject::Node &parity_node = m_node_table[pa->map2node];
+    std::string new_key = std::to_string(new_stripe_id) +
+                          (j < 10 ? "_G0" : "_G") + std::to_string(j);
+    parity_tasks.push_back({pa->block_key, pb->block_key, new_key,
+                            parity_node.node_ip, parity_node.node_port, coeff});
+  }
+
+  bool parity_ok = true;
+  std::vector<std::thread> sub_threads;
+  for (auto &task : parity_tasks) {
+    sub_threads.emplace_back([&task, block_size, &parity_ok]() {
+      auto channel = grpc::CreateChannel(
+          task.datanode_ip + ":" + std::to_string(task.datanode_port),
+          grpc::InsecureChannelCredentials());
+      auto stub = datanode_proto::datanodeService::NewStub(channel);
+
+      grpc::ClientContext ctx;
+      datanode_proto::StripeMergeParityInfo info;
+      datanode_proto::RequestResult result;
+      info.set_parity_key_a(task.parity_key_a);
+      info.set_parity_key_b(task.parity_key_b);
+      info.set_new_parity_key(task.new_parity_key);
+      info.set_block_size(block_size);
+      info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+
+      grpc::Status st = stub->handleStripeMergeParity(&ctx, info, &result);
+      if (!st.ok() || !result.message()) {
+        std::cerr << "[ClusterRT][Merge] parity merge failed on "
+                  << task.datanode_ip << ":" << task.datanode_port << std::endl;
+        parity_ok = false;
+      }
+    });
+  }
+  for (auto &t : sub_threads)
+    t.join();
+
+  if (!parity_ok) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INTERNAL, "parity merge failed");
+  }
+
+  // --- Build merged stripe metadata ---
+  Stripe new_stripe;
+  new_stripe.stripe_id = new_stripe_id;
+  new_stripe.k = new_k;
+  new_stripe.r = r;
+  new_stripe.z = stripe_a.z;
+  new_stripe.n = new_k + r;
+  new_stripe.l = stripe_a.l;
+  new_stripe.g_m = stripe_a.g_m;
+  new_stripe.N = stripe_a.N;
+  new_stripe.num_arry = stripe_a.num_arry;
+  new_stripe.base_k = k0;
+  new_stripe.object_keys = stripe_a.object_keys;
+
+  for (int i = 0; i < k; ++i) {
+    ECProject::Block *blk = stripe_a.blocks[i];
+    blk->map2stripe = new_stripe_id;
+    blk->block_id = i;
+    new_stripe.blocks.push_back(blk);
+    new_stripe.place2clusters.insert(blk->map2cluster);
+  }
+  for (int i = 0; i < k; ++i) {
+    ECProject::Block *blk = stripe_b.blocks[i];
+    blk->map2stripe = new_stripe_id;
+    blk->block_id = k + i;
+    new_stripe.blocks.push_back(blk);
+    new_stripe.place2clusters.insert(blk->map2cluster);
+  }
+  for (int j = 0; j < r; ++j) {
+    ECProject::Block *pa = stripe_a.blocks[k + j];
+    pa->block_key = parity_tasks[j].new_parity_key;
+    pa->map2stripe = new_stripe_id;
+    pa->block_id = new_k + j;
+    pa->block_type = 'G';
+    new_stripe.blocks.push_back(pa);
+    new_stripe.place2clusters.insert(pa->map2cluster);
+  }
+
+  cluster_rt_rebuild_groups_impl(new_stripe);
+
+  m_stripe_table.erase(stripe_id_a);
+  m_stripe_table.erase(stripe_id_b);
+  m_stripe_table[new_stripe_id] = std::move(new_stripe);
+
+  reply->set_success(true);
+  reply->set_new_stripe_id(new_stripe_id);
+  std::cout << "[ClusterRT][Merge] merged " << stripe_id_a << " + " << stripe_id_b
+            << " -> " << new_stripe_id << " (k=" << new_k << ", round=" << merge_round
+            << ")" << std::endl;
+  return grpc::Status::OK;
+}
+
+grpc::Status CoordinatorImpl::mergeClusterRTRound(
+    grpc::ServerContext *context,
+    const coordinator_proto::MergeClusterRTRoundRequest *request,
+    coordinator_proto::MergeClusterRTRoundReply *reply) {
+  (void)context;
+  reply->set_success(false);
+  reply->set_merges_done(0);
+  if (m_sys_config->CodeType != "RS" ||
+      m_sys_config->AppendMode != "CLUSTER_RT_MODE") {
+    reply->set_message("mergeClusterRTRound requires CodeType=RS and AppendMode=CLUSTER_RT_MODE");
+    return grpc::Status::OK;
+  }
+  int Q = request->merge_round();
+  if (Q < 1) {
+    reply->set_message("merge_round must be >= 1");
+    return grpc::Status::OK;
+  }
+
+  std::map<int, std::vector<int>> parity_groups;
+  for (const auto &kv : m_stripe_table) {
+    int sid = kv.first;
+    const Stripe &st = kv.second;
+    if (static_cast<int>(st.blocks.size()) < st.k + st.r)
+      continue;
+    int pc = st.blocks[st.k]->map2cluster;
+    parity_groups[pc].push_back(sid);
+  }
+  for (auto &kv : parity_groups) {
+    std::sort(kv.second.begin(), kv.second.end());
+  }
+
+  std::vector<std::pair<int, int>> pairs;
+  std::vector<int> rong;
+  for (auto &kv : parity_groups) {
+    auto &ids = kv.second;
+    for (size_t i = 0; i + 1 < ids.size(); i += 2) {
+      pairs.push_back({ids[i], ids[i + 1]});
+    }
+    if (ids.size() % 2 == 1) {
+      rong.push_back(ids.back());
+    }
+  }
+  std::sort(rong.begin(), rong.end());
+  for (size_t i = 0; i + 1 < rong.size(); i += 2) {
+    pairs.push_back({rong[i], rong[i + 1]});
+  }
+  if (rong.size() % 2 == 1) {
+    reply->set_message("unpaired stripe remains after parity-group and cross pairing");
+    return grpc::Status::OK;
+  }
+
+  int merges_done = 0;
+  for (const auto &pr : pairs) {
+    coordinator_proto::MergeRequest req;
+    coordinator_proto::MergeReply rep;
+    req.set_stripe_id_a(pr.first);
+    req.set_stripe_id_b(pr.second);
+    req.set_merge_round(Q);
+    req.set_new_stripe_id(0);
+    grpc::Status st = mergeStripesClusterRT(context, &req, &rep);
+    if (!st.ok()) {
+      reply->set_message("mergeStripesClusterRT failed: " + st.error_message());
+      return st;
+    }
+    if (!rep.success()) {
+      reply->set_message("merge pair failed internally");
+      return grpc::Status::OK;
+    }
+    merges_done++;
+  }
+  reply->set_success(true);
+  reply->set_merges_done(merges_done);
+  reply->set_message("ok");
+  return grpc::Status::OK;
+}
+
 grpc::Status CoordinatorImpl::mergeStripes(
     grpc::ServerContext *context,
     const coordinator_proto::MergeRequest *request,
     coordinator_proto::MergeReply *reply) {
+  if (m_sys_config->CodeType == "RS" &&
+      m_sys_config->AppendMode == "CLUSTER_RT_MODE") {
+    return mergeStripesClusterRT(context, request, reply);
+  }
+
   int stripe_id_a = request->stripe_id_a();
   int stripe_id_b = request->stripe_id_b();
   int merge_round = request->merge_round();

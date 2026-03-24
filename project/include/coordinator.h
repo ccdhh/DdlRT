@@ -133,6 +133,10 @@ namespace ECProject
         grpc::ServerContext *context,
         const coordinator_proto::MergeRequest *request,
         coordinator_proto::MergeReply *reply) override;
+    grpc::Status mergeClusterRTRound(
+        grpc::ServerContext *context,
+        const coordinator_proto::MergeClusterRTRoundRequest *request,
+        coordinator_proto::MergeClusterRTRoundReply *reply) override;
 
     // other
     grpc::Status listStripes(
@@ -153,6 +157,7 @@ namespace ECProject
 
     void initialize_equiox_stripe_placement(Stripe *stripe);
     void initialize_unilrc_and_azurelrc_stripe_placement(Stripe *stripe);
+    void initialize_cluster_rt_stripe_placement(Stripe *stripe);
     void initialize_optimal_lrc_stripe_placement(Stripe *stripe);
     void initialize_uniform_lrc_stripe_placement(Stripe *stripe);
     void add_to_map(std::map<int, std::vector<int>> &map, int key, int value);
@@ -193,6 +198,13 @@ namespace ECProject
     std::map<int, std::vector<int>> m_recovery_group_lookup_table;
     
     std::vector<int> get_data_block_num_per_group(int k, int r, int z, std::string code_type);
+
+    /// RS + CLUSTER_RT_MODE: two-stripe merge with aim-based data migration
+    grpc::Status mergeStripesClusterRT(
+        grpc::ServerContext *context,
+        const coordinator_proto::MergeRequest *request,
+        coordinator_proto::MergeReply *reply);
+    void cluster_rt_rebuild_groups_impl(Stripe &stripe);
 
   private:
     std::mutex m_mutex;

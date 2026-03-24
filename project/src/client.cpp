@@ -713,6 +713,42 @@ namespace ECProject
     }
   }
 
+  void Client::get_cluster_rt_block_num_per_group_from_stripe_id(
+      int k, int r, int z, int stripe_id, std::vector<int> &data_block_num_per_group,
+      std::vector<int> &global_parity_block_num_per_group,
+      std::vector<int> &local_parity_block_num_per_group)
+  {
+    (void)stripe_id;
+    (void)z;
+    data_block_num_per_group.clear();
+    global_parity_block_num_per_group.clear();
+    local_parity_block_num_per_group.clear();
+
+    // Cluster RT baseline (RS only):
+    // - group 0: parity group -> 0 data + r global parity + 0 local parity
+    // - groups 1..zu: data groups distributed by your (zu, b, m-b) rule
+    //   where m == r (parity blocks count).
+    const int m = r;
+    const int zu = (k + m - 1) / m;
+    const int b = ((k - 1) % m) + 1; // 1..m
+    const int m_minus_b = m - b;    // number of groups with (m-1) blocks
+
+    data_block_num_per_group.push_back(0);
+    global_parity_block_num_per_group.push_back(r);
+    local_parity_block_num_per_group.push_back(0);
+
+    int data_sum = 0;
+    for (int g = 1; g <= zu; g++) {
+      int blocks_in_group = (g <= m_minus_b) ? (m - 1) : m;
+      data_block_num_per_group.push_back(blocks_in_group);
+      global_parity_block_num_per_group.push_back(0);
+      local_parity_block_num_per_group.push_back(0);
+      data_sum += blocks_in_group;
+    }
+
+    assert(data_sum == k && "Cluster RT block grouping does not sum to k");
+  }
+
   void Client::split_for_set_data_and_parity(const coordinator_proto::ReplyProxyIPsPorts *reply_proxy_ips_ports, const std::vector<char *> &cluster_slice_data, const std::vector<int> &data_block_num_per_group, const std::vector<int> &global_parity_block_num_per_group, const std::vector<int> &local_parity_block_num_per_group, std::vector<char *> &data_ptr_array, std::vector<char *> &global_parity_ptr_array, std::vector<char *> &local_parity_ptr_array)
   {
     for (int i = 0; i < cluster_slice_data.size(); i++)
@@ -761,7 +797,13 @@ namespace ECProject
         size_t pos = first_key.find('_');
         if (pos != std::string::npos)
           stripe_id = std::stoi(first_key.substr(0, pos));
-        get_rs_block_num_per_group_from_stripe_id(m_sys_config->k, m_sys_config->r, m_sys_config->z, stripe_id, data_block_num_per_group, global_parity_block_num_per_group, local_parity_block_num_per_group);
+        if (m_sys_config->AppendMode == "CLUSTER_RT_MODE") {
+          get_cluster_rt_block_num_per_group_from_stripe_id(m_sys_config->k, m_sys_config->r, m_sys_config->z, stripe_id,
+                                                            data_block_num_per_group, global_parity_block_num_per_group, local_parity_block_num_per_group);
+        } else {
+          get_rs_block_num_per_group_from_stripe_id(m_sys_config->k, m_sys_config->r, m_sys_config->z, stripe_id,
+                                                   data_block_num_per_group, global_parity_block_num_per_group, local_parity_block_num_per_group);
+        }
       } else {
         data_block_num_per_group = get_data_block_num_per_group(m_sys_config->k, m_sys_config->r, m_sys_config->z, m_sys_config->CodeType);
         global_parity_block_num_per_group = get_global_parity_block_num_per_group(m_sys_config->k, m_sys_config->r, m_sys_config->z, m_sys_config->CodeType);
@@ -1480,6 +1522,34 @@ namespace ECProject
   }
   void Client::start_merge()
   {
+    if (m_sys_config->AppendMode == "CLUSTER_RT_MODE" &&
+        m_sys_config->CodeType == "RS") {
+      int merge_round = 0;
+      std::cout << "Enter merge round Q (starting from 1, Cluster RT): ";
+      std::cin >> merge_round;
+      if (merge_round < 1) {
+        std::cout << "[Client] invalid merge round" << std::endl;
+        return;
+      }
+      grpc::ClientContext ctx;
+      coordinator_proto::MergeClusterRTRoundRequest req;
+      coordinator_proto::MergeClusterRTRoundReply rep;
+      req.set_merge_round(merge_round);
+      grpc::Status st = m_coordinator_ptr->mergeClusterRTRound(&ctx, req, &rep);
+      if (!st.ok()) {
+        std::cout << "[Client] mergeClusterRTRound failed: " << st.error_message()
+                  << std::endl;
+        return;
+      }
+      if (rep.success()) {
+        std::cout << "[Client] Cluster RT round done, merges_done=" << rep.merges_done()
+                  << " msg=" << rep.message() << std::endl;
+      } else {
+        std::cout << "[Client] Cluster RT round failed: " << rep.message() << std::endl;
+      }
+      return;
+    }
+
     // List all stripes first
     grpc::ClientContext list_ctx;
     coordinator_proto::RequestToCoordinator list_req;

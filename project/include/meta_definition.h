@@ -86,6 +86,8 @@ namespace ECProject
     int oa1_row_idx = -1;
     std::vector<int> oa1_used_cols;
     int oa2_row_idx = -1;
+    /// RS Cluster RT: initial stripe k (before any merge); used for merge-round aim.
+    int base_k = 0;
   } Stripe;
 
   typedef struct ObjectInfo

@@ -407,8 +407,36 @@ struct MergeReplyDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 MergeReplyDefaultTypeInternal _MergeReply_default_instance_;
+PROTOBUF_CONSTEXPR MergeClusterRTRoundRequest::MergeClusterRTRoundRequest(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.merge_round_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct MergeClusterRTRoundRequestDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR MergeClusterRTRoundRequestDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~MergeClusterRTRoundRequestDefaultTypeInternal() {}
+  union {
+    MergeClusterRTRoundRequest _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 MergeClusterRTRoundRequestDefaultTypeInternal _MergeClusterRTRoundRequest_default_instance_;
+PROTOBUF_CONSTEXPR MergeClusterRTRoundReply::MergeClusterRTRoundReply(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.message_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.success_)*/false
+  , /*decltype(_impl_.merges_done_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct MergeClusterRTRoundReplyDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR MergeClusterRTRoundReplyDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~MergeClusterRTRoundReplyDefaultTypeInternal() {}
+  union {
+    MergeClusterRTRoundReply _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 MergeClusterRTRoundReplyDefaultTypeInternal _MergeClusterRTRoundReply_default_instance_;
 }  // namespace coordinator_proto
-static ::_pb::Metadata file_level_metadata_coordinator_2eproto[26];
+static ::_pb::Metadata file_level_metadata_coordinator_2eproto[28];
 static constexpr ::_pb::EnumDescriptor const** file_level_enum_descriptors_coordinator_2eproto = nullptr;
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_coordinator_2eproto = nullptr;
 
@@ -638,6 +666,22 @@ const uint32_t TableStruct_coordinator_2eproto::offsets[] PROTOBUF_SECTION_VARIA
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeReply, _impl_.success_),
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeReply, _impl_.new_stripe_id_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundRequest, _impl_.merge_round_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.success_),
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.message_),
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.merges_done_),
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::coordinator_proto::Parameter)},
@@ -666,6 +710,8 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 198, -1, -1, sizeof(::coordinator_proto::StripePosListAndClient)},
   { 207, -1, -1, sizeof(::coordinator_proto::MergeRequest)},
   { 217, -1, -1, sizeof(::coordinator_proto::MergeReply)},
+  { 225, -1, -1, sizeof(::coordinator_proto::MergeClusterRTRoundRequest)},
+  { 232, -1, -1, sizeof(::coordinator_proto::MergeClusterRTRoundReply)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -695,6 +741,8 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::coordinator_proto::_StripePosListAndClient_default_instance_._instance,
   &::coordinator_proto::_MergeRequest_default_instance_._instance,
   &::coordinator_proto::_MergeReply_default_instance_._instance,
+  &::coordinator_proto::_MergeClusterRTRoundRequest_default_instance_._instance,
+  &::coordinator_proto::_MergeClusterRTRoundReply_default_instance_._instance,
 };
 
 const char descriptor_table_protodef_coordinator_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
@@ -748,73 +796,79 @@ const char descriptor_table_protodef_coordinator_2eproto[] PROTOBUF_SECTION_VARI
   " \001(\005\022\023\n\013stripe_id_b\030\002 \001(\005\022\023\n\013merge_round"
   "\030\003 \001(\005\022\025\n\rnew_stripe_id\030\004 \001(\005\"4\n\nMergeRe"
   "ply\022\017\n\007success\030\001 \001(\010\022\025\n\rnew_stripe_id\030\002 "
-  "\001(\0052\343\022\n\022coordinatorService\022k\n\025sayHelloTo"
-  "Coordinator\022\'.coordinator_proto.RequestT"
-  "oCoordinator\032\'.coordinator_proto.ReplyFr"
-  "omCoordinator\"\000\022`\n\ncheckalive\022\'.coordina"
-  "tor_proto.RequestToCoordinator\032\'.coordin"
-  "ator_proto.ReplyFromCoordinator\"\000\022V\n\014set"
-  "Parameter\022\034.coordinator_proto.Parameter\032"
-  "&.coordinator_proto.RepIfSetParaSuccess\""
-  "\000\022d\n\024uploadOriginKeyValue\022%.coordinator_"
-  "proto.RequestProxyIPPort\032#.coordinator_p"
-  "roto.ReplyProxyIPPort\"\000\022a\n\021reportCommitA"
-  "bort\022!.coordinator_proto.CommitAbortKey\032"
-  "\'.coordinator_proto.ReplyFromCoordinator"
-  "\"\000\022V\n\020checkCommitAbort\022\037.coordinator_pro"
-  "to.AskIfSuccess\032\037.coordinator_proto.RepI"
-  "fSuccess\"\000\022`\n\016uploadSetValue\022%.coordinat"
-  "or_proto.RequestProxyIPPort\032%.coordinato"
-  "r_proto.ReplyProxyIPsPorts\"\000\022c\n\021uploadSu"
-  "bsetValue\022%.coordinator_proto.RequestPro"
-  "xyIPPort\032%.coordinator_proto.ReplyProxyI"
-  "PsPorts\"\000\022c\n\021uploadAppendValue\022%.coordin"
-  "ator_proto.RequestProxyIPPort\032%.coordina"
-  "tor_proto.ReplyProxyIPsPorts\"\000\022S\n\010getVal"
-  "ue\022!.coordinator_proto.KeyAndClientIP\032\"."
-  "coordinator_proto.RepIfGetSuccess\"\000\022W\n\tg"
-  "etStripe\022!.coordinator_proto.KeyAndClien"
-  "tIP\032%.coordinator_proto.ReplyProxyIPsPor"
-  "ts\"\000\022\\\n\tgetBlocks\022&.coordinator_proto.Bl"
-  "ockIDsAndClientIP\032%.coordinator_proto.Re"
-  "plyProxyIPsPorts\"\000\022j\n\024getBlocksByStripeP"
-  "os\022).coordinator_proto.StripePosListAndC"
-  "lient\032%.coordinator_proto.ReplyProxyIPsP"
-  "orts\"\000\022h\n\025getDegradedReadBlocks\022&.coordi"
+  "\001(\005\"1\n\032MergeClusterRTRoundRequest\022\023\n\013mer"
+  "ge_round\030\001 \001(\005\"Q\n\030MergeClusterRTRoundRep"
+  "ly\022\017\n\007success\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\022\023\n\013"
+  "merges_done\030\003 \001(\0052\330\023\n\022coordinatorService"
+  "\022k\n\025sayHelloToCoordinator\022\'.coordinator_"
+  "proto.RequestToCoordinator\032\'.coordinator"
+  "_proto.ReplyFromCoordinator\"\000\022`\n\ncheckal"
+  "ive\022\'.coordinator_proto.RequestToCoordin"
+  "ator\032\'.coordinator_proto.ReplyFromCoordi"
+  "nator\"\000\022V\n\014setParameter\022\034.coordinator_pr"
+  "oto.Parameter\032&.coordinator_proto.RepIfS"
+  "etParaSuccess\"\000\022d\n\024uploadOriginKeyValue\022"
+  "%.coordinator_proto.RequestProxyIPPort\032#"
+  ".coordinator_proto.ReplyProxyIPPort\"\000\022a\n"
+  "\021reportCommitAbort\022!.coordinator_proto.C"
+  "ommitAbortKey\032\'.coordinator_proto.ReplyF"
+  "romCoordinator\"\000\022V\n\020checkCommitAbort\022\037.c"
+  "oordinator_proto.AskIfSuccess\032\037.coordina"
+  "tor_proto.RepIfSuccess\"\000\022`\n\016uploadSetVal"
+  "ue\022%.coordinator_proto.RequestProxyIPPor"
+  "t\032%.coordinator_proto.ReplyProxyIPsPorts"
+  "\"\000\022c\n\021uploadSubsetValue\022%.coordinator_pr"
+  "oto.RequestProxyIPPort\032%.coordinator_pro"
+  "to.ReplyProxyIPsPorts\"\000\022c\n\021uploadAppendV"
+  "alue\022%.coordinator_proto.RequestProxyIPP"
+  "ort\032%.coordinator_proto.ReplyProxyIPsPor"
+  "ts\"\000\022S\n\010getValue\022!.coordinator_proto.Key"
+  "AndClientIP\032\".coordinator_proto.RepIfGet"
+  "Success\"\000\022W\n\tgetStripe\022!.coordinator_pro"
+  "to.KeyAndClientIP\032%.coordinator_proto.Re"
+  "plyProxyIPsPorts\"\000\022\\\n\tgetBlocks\022&.coordi"
   "nator_proto.BlockIDsAndClientIP\032%.coordi"
-  "nator_proto.ReplyProxyIPsPorts\"\000\022a\n\024getD"
-  "egradedReadBlock\022!.coordinator_proto.Key"
-  "AndClientIP\032$.coordinator_proto.Degraded"
-  "ReadReply\"\000\022j\n\035getDegradedReadBlockBreak"
-  "down\022!.coordinator_proto.KeyAndClientIP\032"
-  "$.coordinator_proto.DegradedReadReply\"\000\022"
-  "T\n\013getRecovery\022!.coordinator_proto.KeyAn"
-  "dClientIP\032 .coordinator_proto.RecoveryRe"
-  "ply\"\000\022]\n\024getRecoveryBreakdown\022!.coordina"
-  "tor_proto.KeyAndClientIP\032 .coordinator_p"
-  "roto.RecoveryReply\"\000\022Y\n\020fullNodeRecovery"
-  "\022#.coordinator_proto.NodeIdFromClient\032\036."
-  "coordinator_proto.RepBlockNum\"\000\022j\n\022multi"
-  "BlockRecovery\0220.coordinator_proto.Stripe"
-  "IdAndBlockIDsFromClient\032 .coordinator_pr"
-  "oto.RecoveryReply\"\000\022N\n\010delByKey\022 .coordi"
-  "nator_proto.KeyFromClient\032\036.coordinator_"
-  "proto.RepIfDeling\"\000\022V\n\013delByStripe\022%.coo"
-  "rdinator_proto.StripeIdFromClient\032\036.coor"
-  "dinator_proto.RepIfDeling\"\000\022P\n\014mergeStri"
-  "pes\022\037.coordinator_proto.MergeRequest\032\035.c"
-  "oordinator_proto.MergeReply\"\000\022Y\n\013listStr"
-  "ipes\022\'.coordinator_proto.RequestToCoordi"
-  "nator\032\037.coordinator_proto.RepStripeIds\"\000"
-  "\022W\n\ndecodeTest\022!.coordinator_proto.KeyAn"
-  "dClientIP\032$.coordinator_proto.DegradedRe"
-  "adReply\"\000b\006proto3"
+  "nator_proto.ReplyProxyIPsPorts\"\000\022j\n\024getB"
+  "locksByStripePos\022).coordinator_proto.Str"
+  "ipePosListAndClient\032%.coordinator_proto."
+  "ReplyProxyIPsPorts\"\000\022h\n\025getDegradedReadB"
+  "locks\022&.coordinator_proto.BlockIDsAndCli"
+  "entIP\032%.coordinator_proto.ReplyProxyIPsP"
+  "orts\"\000\022a\n\024getDegradedReadBlock\022!.coordin"
+  "ator_proto.KeyAndClientIP\032$.coordinator_"
+  "proto.DegradedReadReply\"\000\022j\n\035getDegraded"
+  "ReadBlockBreakdown\022!.coordinator_proto.K"
+  "eyAndClientIP\032$.coordinator_proto.Degrad"
+  "edReadReply\"\000\022T\n\013getRecovery\022!.coordinat"
+  "or_proto.KeyAndClientIP\032 .coordinator_pr"
+  "oto.RecoveryReply\"\000\022]\n\024getRecoveryBreakd"
+  "own\022!.coordinator_proto.KeyAndClientIP\032 "
+  ".coordinator_proto.RecoveryReply\"\000\022Y\n\020fu"
+  "llNodeRecovery\022#.coordinator_proto.NodeI"
+  "dFromClient\032\036.coordinator_proto.RepBlock"
+  "Num\"\000\022j\n\022multiBlockRecovery\0220.coordinato"
+  "r_proto.StripeIdAndBlockIDsFromClient\032 ."
+  "coordinator_proto.RecoveryReply\"\000\022N\n\010del"
+  "ByKey\022 .coordinator_proto.KeyFromClient\032"
+  "\036.coordinator_proto.RepIfDeling\"\000\022V\n\013del"
+  "ByStripe\022%.coordinator_proto.StripeIdFro"
+  "mClient\032\036.coordinator_proto.RepIfDeling\""
+  "\000\022P\n\014mergeStripes\022\037.coordinator_proto.Me"
+  "rgeRequest\032\035.coordinator_proto.MergeRepl"
+  "y\"\000\022s\n\023mergeClusterRTRound\022-.coordinator"
+  "_proto.MergeClusterRTRoundRequest\032+.coor"
+  "dinator_proto.MergeClusterRTRoundReply\"\000"
+  "\022Y\n\013listStripes\022\'.coordinator_proto.Requ"
+  "estToCoordinator\032\037.coordinator_proto.Rep"
+  "StripeIds\"\000\022W\n\ndecodeTest\022!.coordinator_"
+  "proto.KeyAndClientIP\032$.coordinator_proto"
+  ".DegradedReadReply\"\000b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_coordinator_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_coordinator_2eproto = {
-    false, false, 4417, descriptor_table_protodef_coordinator_2eproto,
+    false, false, 4668, descriptor_table_protodef_coordinator_2eproto,
     "coordinator.proto",
-    &descriptor_table_coordinator_2eproto_once, nullptr, 0, 26,
+    &descriptor_table_coordinator_2eproto_once, nullptr, 0, 28,
     schemas, file_default_instances, TableStruct_coordinator_2eproto::offsets,
     file_level_metadata_coordinator_2eproto, file_level_enum_descriptors_coordinator_2eproto,
     file_level_service_descriptors_coordinator_2eproto,
@@ -7135,6 +7189,447 @@ void MergeReply::InternalSwap(MergeReply* other) {
       file_level_metadata_coordinator_2eproto[25]);
 }
 
+// ===================================================================
+
+class MergeClusterRTRoundRequest::_Internal {
+ public:
+};
+
+MergeClusterRTRoundRequest::MergeClusterRTRoundRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:coordinator_proto.MergeClusterRTRoundRequest)
+}
+MergeClusterRTRoundRequest::MergeClusterRTRoundRequest(const MergeClusterRTRoundRequest& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  MergeClusterRTRoundRequest* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.merge_round_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _this->_impl_.merge_round_ = from._impl_.merge_round_;
+  // @@protoc_insertion_point(copy_constructor:coordinator_proto.MergeClusterRTRoundRequest)
+}
+
+inline void MergeClusterRTRoundRequest::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.merge_round_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+}
+
+MergeClusterRTRoundRequest::~MergeClusterRTRoundRequest() {
+  // @@protoc_insertion_point(destructor:coordinator_proto.MergeClusterRTRoundRequest)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void MergeClusterRTRoundRequest::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
+
+void MergeClusterRTRoundRequest::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void MergeClusterRTRoundRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:coordinator_proto.MergeClusterRTRoundRequest)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.merge_round_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* MergeClusterRTRoundRequest::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int32 merge_round = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.merge_round_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* MergeClusterRTRoundRequest::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:coordinator_proto.MergeClusterRTRoundRequest)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 merge_round = 1;
+  if (this->_internal_merge_round() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_merge_round(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:coordinator_proto.MergeClusterRTRoundRequest)
+  return target;
+}
+
+size_t MergeClusterRTRoundRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:coordinator_proto.MergeClusterRTRoundRequest)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // int32 merge_round = 1;
+  if (this->_internal_merge_round() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_merge_round());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData MergeClusterRTRoundRequest::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    MergeClusterRTRoundRequest::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*MergeClusterRTRoundRequest::GetClassData() const { return &_class_data_; }
+
+
+void MergeClusterRTRoundRequest::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<MergeClusterRTRoundRequest*>(&to_msg);
+  auto& from = static_cast<const MergeClusterRTRoundRequest&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:coordinator_proto.MergeClusterRTRoundRequest)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_merge_round() != 0) {
+    _this->_internal_set_merge_round(from._internal_merge_round());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void MergeClusterRTRoundRequest::CopyFrom(const MergeClusterRTRoundRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:coordinator_proto.MergeClusterRTRoundRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool MergeClusterRTRoundRequest::IsInitialized() const {
+  return true;
+}
+
+void MergeClusterRTRoundRequest::InternalSwap(MergeClusterRTRoundRequest* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.merge_round_, other->_impl_.merge_round_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata MergeClusterRTRoundRequest::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_coordinator_2eproto_getter, &descriptor_table_coordinator_2eproto_once,
+      file_level_metadata_coordinator_2eproto[26]);
+}
+
+// ===================================================================
+
+class MergeClusterRTRoundReply::_Internal {
+ public:
+};
+
+MergeClusterRTRoundReply::MergeClusterRTRoundReply(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:coordinator_proto.MergeClusterRTRoundReply)
+}
+MergeClusterRTRoundReply::MergeClusterRTRoundReply(const MergeClusterRTRoundReply& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  MergeClusterRTRoundReply* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.message_){}
+    , decltype(_impl_.success_){}
+    , decltype(_impl_.merges_done_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.message_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.message_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_message().empty()) {
+    _this->_impl_.message_.Set(from._internal_message(), 
+      _this->GetArenaForAllocation());
+  }
+  ::memcpy(&_impl_.success_, &from._impl_.success_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.merges_done_) -
+    reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.merges_done_));
+  // @@protoc_insertion_point(copy_constructor:coordinator_proto.MergeClusterRTRoundReply)
+}
+
+inline void MergeClusterRTRoundReply::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.message_){}
+    , decltype(_impl_.success_){false}
+    , decltype(_impl_.merges_done_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.message_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.message_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+MergeClusterRTRoundReply::~MergeClusterRTRoundReply() {
+  // @@protoc_insertion_point(destructor:coordinator_proto.MergeClusterRTRoundReply)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void MergeClusterRTRoundReply::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.message_.Destroy();
+}
+
+void MergeClusterRTRoundReply::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void MergeClusterRTRoundReply::Clear() {
+// @@protoc_insertion_point(message_clear_start:coordinator_proto.MergeClusterRTRoundReply)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.message_.ClearToEmpty();
+  ::memset(&_impl_.success_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.merges_done_) -
+      reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.merges_done_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* MergeClusterRTRoundReply::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // bool success = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.success_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // string message = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_message();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "coordinator_proto.MergeClusterRTRoundReply.message"));
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 merges_done = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _impl_.merges_done_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* MergeClusterRTRoundReply::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:coordinator_proto.MergeClusterRTRoundReply)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // bool success = 1;
+  if (this->_internal_success() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
+  }
+
+  // string message = 2;
+  if (!this->_internal_message().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_message().data(), static_cast<int>(this->_internal_message().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "coordinator_proto.MergeClusterRTRoundReply.message");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_message(), target);
+  }
+
+  // int32 merges_done = 3;
+  if (this->_internal_merges_done() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_merges_done(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:coordinator_proto.MergeClusterRTRoundReply)
+  return target;
+}
+
+size_t MergeClusterRTRoundReply::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:coordinator_proto.MergeClusterRTRoundReply)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string message = 2;
+  if (!this->_internal_message().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_message());
+  }
+
+  // bool success = 1;
+  if (this->_internal_success() != 0) {
+    total_size += 1 + 1;
+  }
+
+  // int32 merges_done = 3;
+  if (this->_internal_merges_done() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_merges_done());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData MergeClusterRTRoundReply::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    MergeClusterRTRoundReply::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*MergeClusterRTRoundReply::GetClassData() const { return &_class_data_; }
+
+
+void MergeClusterRTRoundReply::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<MergeClusterRTRoundReply*>(&to_msg);
+  auto& from = static_cast<const MergeClusterRTRoundReply&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:coordinator_proto.MergeClusterRTRoundReply)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_message().empty()) {
+    _this->_internal_set_message(from._internal_message());
+  }
+  if (from._internal_success() != 0) {
+    _this->_internal_set_success(from._internal_success());
+  }
+  if (from._internal_merges_done() != 0) {
+    _this->_internal_set_merges_done(from._internal_merges_done());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void MergeClusterRTRoundReply::CopyFrom(const MergeClusterRTRoundReply& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:coordinator_proto.MergeClusterRTRoundReply)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool MergeClusterRTRoundReply::IsInitialized() const {
+  return true;
+}
+
+void MergeClusterRTRoundReply::InternalSwap(MergeClusterRTRoundReply* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.message_, lhs_arena,
+      &other->_impl_.message_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(MergeClusterRTRoundReply, _impl_.merges_done_)
+      + sizeof(MergeClusterRTRoundReply::_impl_.merges_done_)
+      - PROTOBUF_FIELD_OFFSET(MergeClusterRTRoundReply, _impl_.success_)>(
+          reinterpret_cast<char*>(&_impl_.success_),
+          reinterpret_cast<char*>(&other->_impl_.success_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata MergeClusterRTRoundReply::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_coordinator_2eproto_getter, &descriptor_table_coordinator_2eproto_once,
+      file_level_metadata_coordinator_2eproto[27]);
+}
+
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace coordinator_proto
 PROTOBUF_NAMESPACE_OPEN
@@ -7241,6 +7736,14 @@ Arena::CreateMaybeMessage< ::coordinator_proto::MergeRequest >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::coordinator_proto::MergeReply*
 Arena::CreateMaybeMessage< ::coordinator_proto::MergeReply >(Arena* arena) {
   return Arena::CreateMessageInternal< ::coordinator_proto::MergeReply >(arena);
+}
+template<> PROTOBUF_NOINLINE ::coordinator_proto::MergeClusterRTRoundRequest*
+Arena::CreateMaybeMessage< ::coordinator_proto::MergeClusterRTRoundRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::coordinator_proto::MergeClusterRTRoundRequest >(arena);
+}
+template<> PROTOBUF_NOINLINE ::coordinator_proto::MergeClusterRTRoundReply*
+Arena::CreateMaybeMessage< ::coordinator_proto::MergeClusterRTRoundReply >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::coordinator_proto::MergeClusterRTRoundReply >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

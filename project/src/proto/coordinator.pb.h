@@ -63,6 +63,12 @@ extern KeyAndClientIPDefaultTypeInternal _KeyAndClientIP_default_instance_;
 class KeyFromClient;
 struct KeyFromClientDefaultTypeInternal;
 extern KeyFromClientDefaultTypeInternal _KeyFromClient_default_instance_;
+class MergeClusterRTRoundReply;
+struct MergeClusterRTRoundReplyDefaultTypeInternal;
+extern MergeClusterRTRoundReplyDefaultTypeInternal _MergeClusterRTRoundReply_default_instance_;
+class MergeClusterRTRoundRequest;
+struct MergeClusterRTRoundRequestDefaultTypeInternal;
+extern MergeClusterRTRoundRequestDefaultTypeInternal _MergeClusterRTRoundRequest_default_instance_;
 class MergeReply;
 struct MergeReplyDefaultTypeInternal;
 extern MergeReplyDefaultTypeInternal _MergeReply_default_instance_;
@@ -131,6 +137,8 @@ template<> ::coordinator_proto::CommitAbortKey* Arena::CreateMaybeMessage<::coor
 template<> ::coordinator_proto::DegradedReadReply* Arena::CreateMaybeMessage<::coordinator_proto::DegradedReadReply>(Arena*);
 template<> ::coordinator_proto::KeyAndClientIP* Arena::CreateMaybeMessage<::coordinator_proto::KeyAndClientIP>(Arena*);
 template<> ::coordinator_proto::KeyFromClient* Arena::CreateMaybeMessage<::coordinator_proto::KeyFromClient>(Arena*);
+template<> ::coordinator_proto::MergeClusterRTRoundReply* Arena::CreateMaybeMessage<::coordinator_proto::MergeClusterRTRoundReply>(Arena*);
+template<> ::coordinator_proto::MergeClusterRTRoundRequest* Arena::CreateMaybeMessage<::coordinator_proto::MergeClusterRTRoundRequest>(Arena*);
 template<> ::coordinator_proto::MergeReply* Arena::CreateMaybeMessage<::coordinator_proto::MergeReply>(Arena*);
 template<> ::coordinator_proto::MergeRequest* Arena::CreateMaybeMessage<::coordinator_proto::MergeRequest>(Arena*);
 template<> ::coordinator_proto::NodeIdFromClient* Arena::CreateMaybeMessage<::coordinator_proto::NodeIdFromClient>(Arena*);
@@ -4644,6 +4652,329 @@ class MergeReply final :
   union { Impl_ _impl_; };
   friend struct ::TableStruct_coordinator_2eproto;
 };
+// -------------------------------------------------------------------
+
+class MergeClusterRTRoundRequest final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:coordinator_proto.MergeClusterRTRoundRequest) */ {
+ public:
+  inline MergeClusterRTRoundRequest() : MergeClusterRTRoundRequest(nullptr) {}
+  ~MergeClusterRTRoundRequest() override;
+  explicit PROTOBUF_CONSTEXPR MergeClusterRTRoundRequest(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  MergeClusterRTRoundRequest(const MergeClusterRTRoundRequest& from);
+  MergeClusterRTRoundRequest(MergeClusterRTRoundRequest&& from) noexcept
+    : MergeClusterRTRoundRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline MergeClusterRTRoundRequest& operator=(const MergeClusterRTRoundRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline MergeClusterRTRoundRequest& operator=(MergeClusterRTRoundRequest&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const MergeClusterRTRoundRequest& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const MergeClusterRTRoundRequest* internal_default_instance() {
+    return reinterpret_cast<const MergeClusterRTRoundRequest*>(
+               &_MergeClusterRTRoundRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    26;
+
+  friend void swap(MergeClusterRTRoundRequest& a, MergeClusterRTRoundRequest& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(MergeClusterRTRoundRequest* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(MergeClusterRTRoundRequest* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  MergeClusterRTRoundRequest* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<MergeClusterRTRoundRequest>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const MergeClusterRTRoundRequest& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const MergeClusterRTRoundRequest& from) {
+    MergeClusterRTRoundRequest::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(MergeClusterRTRoundRequest* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "coordinator_proto.MergeClusterRTRoundRequest";
+  }
+  protected:
+  explicit MergeClusterRTRoundRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kMergeRoundFieldNumber = 1,
+  };
+  // int32 merge_round = 1;
+  void clear_merge_round();
+  int32_t merge_round() const;
+  void set_merge_round(int32_t value);
+  private:
+  int32_t _internal_merge_round() const;
+  void _internal_set_merge_round(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:coordinator_proto.MergeClusterRTRoundRequest)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int32_t merge_round_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_coordinator_2eproto;
+};
+// -------------------------------------------------------------------
+
+class MergeClusterRTRoundReply final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:coordinator_proto.MergeClusterRTRoundReply) */ {
+ public:
+  inline MergeClusterRTRoundReply() : MergeClusterRTRoundReply(nullptr) {}
+  ~MergeClusterRTRoundReply() override;
+  explicit PROTOBUF_CONSTEXPR MergeClusterRTRoundReply(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  MergeClusterRTRoundReply(const MergeClusterRTRoundReply& from);
+  MergeClusterRTRoundReply(MergeClusterRTRoundReply&& from) noexcept
+    : MergeClusterRTRoundReply() {
+    *this = ::std::move(from);
+  }
+
+  inline MergeClusterRTRoundReply& operator=(const MergeClusterRTRoundReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline MergeClusterRTRoundReply& operator=(MergeClusterRTRoundReply&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const MergeClusterRTRoundReply& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const MergeClusterRTRoundReply* internal_default_instance() {
+    return reinterpret_cast<const MergeClusterRTRoundReply*>(
+               &_MergeClusterRTRoundReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    27;
+
+  friend void swap(MergeClusterRTRoundReply& a, MergeClusterRTRoundReply& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(MergeClusterRTRoundReply* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(MergeClusterRTRoundReply* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  MergeClusterRTRoundReply* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<MergeClusterRTRoundReply>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const MergeClusterRTRoundReply& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const MergeClusterRTRoundReply& from) {
+    MergeClusterRTRoundReply::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(MergeClusterRTRoundReply* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "coordinator_proto.MergeClusterRTRoundReply";
+  }
+  protected:
+  explicit MergeClusterRTRoundReply(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kMessageFieldNumber = 2,
+    kSuccessFieldNumber = 1,
+    kMergesDoneFieldNumber = 3,
+  };
+  // string message = 2;
+  void clear_message();
+  const std::string& message() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_message(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_message();
+  PROTOBUF_NODISCARD std::string* release_message();
+  void set_allocated_message(std::string* message);
+  private:
+  const std::string& _internal_message() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_message(const std::string& value);
+  std::string* _internal_mutable_message();
+  public:
+
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
+  public:
+
+  // int32 merges_done = 3;
+  void clear_merges_done();
+  int32_t merges_done() const;
+  void set_merges_done(int32_t value);
+  private:
+  int32_t _internal_merges_done() const;
+  void _internal_set_merges_done(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:coordinator_proto.MergeClusterRTRoundReply)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr message_;
+    bool success_;
+    int32_t merges_done_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_coordinator_2eproto;
+};
 // ===================================================================
 
 
@@ -6760,9 +7091,131 @@ inline void MergeReply::set_new_stripe_id(int32_t value) {
   // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.new_stripe_id)
 }
 
+// -------------------------------------------------------------------
+
+// MergeClusterRTRoundRequest
+
+// int32 merge_round = 1;
+inline void MergeClusterRTRoundRequest::clear_merge_round() {
+  _impl_.merge_round_ = 0;
+}
+inline int32_t MergeClusterRTRoundRequest::_internal_merge_round() const {
+  return _impl_.merge_round_;
+}
+inline int32_t MergeClusterRTRoundRequest::merge_round() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeClusterRTRoundRequest.merge_round)
+  return _internal_merge_round();
+}
+inline void MergeClusterRTRoundRequest::_internal_set_merge_round(int32_t value) {
+  
+  _impl_.merge_round_ = value;
+}
+inline void MergeClusterRTRoundRequest::set_merge_round(int32_t value) {
+  _internal_set_merge_round(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundRequest.merge_round)
+}
+
+// -------------------------------------------------------------------
+
+// MergeClusterRTRoundReply
+
+// bool success = 1;
+inline void MergeClusterRTRoundReply::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool MergeClusterRTRoundReply::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool MergeClusterRTRoundReply::success() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeClusterRTRoundReply.success)
+  return _internal_success();
+}
+inline void MergeClusterRTRoundReply::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void MergeClusterRTRoundReply::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.success)
+}
+
+// string message = 2;
+inline void MergeClusterRTRoundReply::clear_message() {
+  _impl_.message_.ClearToEmpty();
+}
+inline const std::string& MergeClusterRTRoundReply::message() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeClusterRTRoundReply.message)
+  return _internal_message();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void MergeClusterRTRoundReply::set_message(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.message_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.message)
+}
+inline std::string* MergeClusterRTRoundReply::mutable_message() {
+  std::string* _s = _internal_mutable_message();
+  // @@protoc_insertion_point(field_mutable:coordinator_proto.MergeClusterRTRoundReply.message)
+  return _s;
+}
+inline const std::string& MergeClusterRTRoundReply::_internal_message() const {
+  return _impl_.message_.Get();
+}
+inline void MergeClusterRTRoundReply::_internal_set_message(const std::string& value) {
+  
+  _impl_.message_.Set(value, GetArenaForAllocation());
+}
+inline std::string* MergeClusterRTRoundReply::_internal_mutable_message() {
+  
+  return _impl_.message_.Mutable(GetArenaForAllocation());
+}
+inline std::string* MergeClusterRTRoundReply::release_message() {
+  // @@protoc_insertion_point(field_release:coordinator_proto.MergeClusterRTRoundReply.message)
+  return _impl_.message_.Release();
+}
+inline void MergeClusterRTRoundReply::set_allocated_message(std::string* message) {
+  if (message != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.message_.SetAllocated(message, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.message_.IsDefault()) {
+    _impl_.message_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:coordinator_proto.MergeClusterRTRoundReply.message)
+}
+
+// int32 merges_done = 3;
+inline void MergeClusterRTRoundReply::clear_merges_done() {
+  _impl_.merges_done_ = 0;
+}
+inline int32_t MergeClusterRTRoundReply::_internal_merges_done() const {
+  return _impl_.merges_done_;
+}
+inline int32_t MergeClusterRTRoundReply::merges_done() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeClusterRTRoundReply.merges_done)
+  return _internal_merges_done();
+}
+inline void MergeClusterRTRoundReply::_internal_set_merges_done(int32_t value) {
+  
+  _impl_.merges_done_ = value;
+}
+inline void MergeClusterRTRoundReply::set_merges_done(int32_t value) {
+  _internal_set_merges_done(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.merges_done)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

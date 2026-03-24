@@ -58,6 +58,8 @@ service coordinatorService {
 
   // merge
   rpc mergeStripes(MergeRequest) returns (MergeReply) {};
+  // RS Cluster RT: one full merge round (parity-cluster pairing + unpaired pass)
+  rpc mergeClusterRTRound(MergeClusterRTRoundRequest) returns (MergeClusterRTRoundReply) {};
 
   //other
   rpc listStripes(RequestToCoordinator) returns (RepStripeIds) {};
@@ -214,4 +216,14 @@ message MergeRequest {
 message MergeReply {
   bool success = 1;
   int32 new_stripe_id = 2;
+}
+
+message MergeClusterRTRoundRequest {
+  int32 merge_round = 1;
+}
+
+message MergeClusterRTRoundReply {
+  bool success = 1;
+  string message = 2;
+  int32 merges_done = 3;
 }

@@ -2,7 +2,7 @@
 <Configuration>
     <AlignedSize>4096</AlignedSize>
     <UnitSize>8192</UnitSize>
-    <BlockSize>67108864</BlockSize>
+    <BlockSize>1048576</BlockSize>
     <!--64MB=67108864; 1MB=1048576-->
     <!--8388608-->
     <!--67108864-->
@@ -14,7 +14,7 @@
     <CoordinatorPort>55555</CoordinatorPort>
     <!-- Coordinator listens on 0.0.0.0:CoordinatorPort. Proxies use port from clusterInformation.xml; data port = proxy_port+1. Start proxy as: ./run_proxy <ip>:50405 -->
     <!-- AppendMode: REP_MODE; UNILRC_MODE; CACHED_MODE -->
-    <AppendMode>EQUIOX_MODE</AppendMode>
+    <AppendMode>CLUSTER_RT_MODE</AppendMode>
     <alpha>2</alpha>
     <!-- LRC: UniLRC; AzureLRC; OptimalLRC; UniformLRC -->
     <CodeType>RS</CodeType>
