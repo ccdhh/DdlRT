@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <random>
 #include <set>
 #include <sstream>
@@ -4372,7 +4373,7 @@ void cluster_rt_build_aim_sorted(int total_k, int m, std::vector<int> &aim_sorte
 
 } // namespace
 
-void CoordinatorImpl::cluster_rt_rebuild_groups_impl(Stripe &stripe) {
+void CoordinatorImpl::cluster_rt_rebuild_groups_impl(Stripe &stripe) {// 合并后目标分组方式
   int k = stripe.k;
   int m = stripe.r;
   int zu = (k + m - 1) / m;
@@ -4554,25 +4555,25 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
           continue;
         node_to[row.blk->map2node].push_back(row.blk);
       }
-      std::vector<std::pair<int, int>> order;
-      for (const auto &p : node_to)
-        order.push_back({static_cast<int>(p.second.size()), p.first});
-      std::sort(order.begin(), order.end(),
-                [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
-                  if (a.first != b.first)
-                    return a.first > b.first;
-                  return a.second < b.second;
-                });
       std::vector<ECProject::Block *> picked;
-      for (auto &pr : order) {
-        int nid = pr.second;
-        while (need > 0 && !node_to[nid].empty()) {
-          picked.push_back(node_to[nid].back());
-          node_to[nid].pop_back();
-          need--;
+      // Dynamic re-ranking: after each picked block, recompute current
+      // node occupancy and pick from the most loaded node again.
+      while (need > 0) {
+        int best_nid = -1;
+        int best_cnt = -1;
+        for (const auto &p : node_to) {
+          int cnt = static_cast<int>(p.second.size());
+          if (cnt <= 0) continue;
+          if (cnt > best_cnt || (cnt == best_cnt && p.first < best_nid)) {
+            best_cnt = cnt;
+            best_nid = p.first;
+          }
         }
-        if (need == 0)
+        if (best_nid < 0)
           break;
+        picked.push_back(node_to[best_nid].back());
+        node_to[best_nid].pop_back();
+        need--;
       }
       return picked;
     };
@@ -4620,23 +4621,32 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
       used_clusters.insert(row.blk->map2cluster);
     used_clusters.insert(parity_cluster_dest);
 
-    auto pick_new_cluster = [&]() -> int {
-      for (int c = 0; c < m_sys_config->ClusterNum; ++c) {
-        if (used_clusters.count(c))
-          continue;
-        if (c == parity_cluster_dest)
-          continue;
-        used_clusters.insert(c);
-        return c;
-      }
-      return -1;
+    // Randomly choose new clusters from remaining racks, without replacement.
+    std::vector<int> remaining_clusters;
+    remaining_clusters.reserve(m_sys_config->ClusterNum);
+    for (int c = 0; c < m_sys_config->ClusterNum; ++c) {
+      if (used_clusters.count(c)) continue;
+      if (c == parity_cluster_dest) continue;
+      remaining_clusters.push_back(c);
+    }
+    std::mt19937 new_cluster_rng(std::random_device{}());
+    auto pick_new_cluster = [&]() -> int {//选择新机架
+      if (remaining_clusters.empty()) return -1;
+      std::uniform_int_distribution<int> dis(
+          0, static_cast<int>(remaining_clusters.size()) - 1);
+      int idx = dis(new_cluster_rng);
+      int c = remaining_clusters[idx];
+      remaining_clusters[idx] = remaining_clusters.back();
+      remaining_clusters.pop_back();
+      used_clusters.insert(c);
+      return c;
     };
 
     if (t > 0) {
       for (size_t i = 0; i < transfer.size(); ++i) {
         if (transfer[static_cast<int>(i)] >= 0)
           continue;
-        int need = -transfer[static_cast<int>(i)];
+        int need = -transfer[static_cast<int>(i)];//需要迁进机架几个数据块
         int cid = cluster_at_index[static_cast<int>(i)];
         for (int u = 0; u < need; ++u)
           dests.push_back({cid, 1});
@@ -4650,7 +4660,7 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
         for (int u = 0; u < need; ++u) {
           int target_c = cluster_at_index[cid_slot];
           if (target_c < 0) {
-            target_c = pick_new_cluster();
+            target_c = pick_new_cluster();//选择空闲机架进行放置
             cluster_at_index[cid_slot] = target_c;
           }
           if (target_c < 0) {
@@ -4909,6 +4919,86 @@ grpc::Status CoordinatorImpl::mergeClusterRTRound(
     return grpc::Status::OK;
   }
 
+  if (m_stripe_table.empty()) {
+    reply->set_message("no stripe to merge");
+    reply->set_success(true);
+    return grpc::Status::OK;
+  }
+  // Build round-Q target aim once for move-cost evaluation.
+  int any_sid = m_stripe_table.begin()->first;
+  const Stripe &any_st = m_stripe_table.begin()->second;
+  int base_k = any_st.base_k > 0 ? any_st.base_k : any_st.k;
+  int total_k = (1 << Q) * base_k;
+  std::vector<int> aim_sorted;
+  cluster_rt_build_aim_sorted(total_k, any_st.r, aim_sorted);
+
+  auto calculate_moves = [this, &aim_sorted](int sid1, int sid2) -> int {
+    auto it1 = m_stripe_table.find(sid1);
+    auto it2 = m_stripe_table.find(sid2);
+    if (it1 == m_stripe_table.end() || it2 == m_stripe_table.end()) {
+      return std::numeric_limits<int>::max() / 4;
+    }
+    const Stripe &s1 = it1->second;
+    const Stripe &s2 = it2->second;
+    if (s1.k != s2.k) {
+      return std::numeric_limits<int>::max() / 4;
+    }
+
+    std::map<int, int> cnt;
+    for (int i = 0; i < s1.k; ++i) cnt[s1.blocks[i]->map2cluster]++;
+    for (int i = 0; i < s2.k; ++i) cnt[s2.blocks[i]->map2cluster]++;
+
+    std::vector<int> now_group;
+    now_group.reserve(cnt.size());
+    for (const auto &kv : cnt) now_group.push_back(kv.second);
+    std::sort(now_group.begin(), now_group.end());
+
+    long long moves = 0;
+    if (now_group.size() > aim_sorted.size()) {
+      size_t t = now_group.size() - aim_sorted.size();
+      for (size_t i = 0; i < now_group.size(); ++i) {
+        int target = (i < t) ? 0 : aim_sorted[i - t];//向目标前面的补0
+        int b = now_group[i] - target;
+        if (b > 0) moves += b;
+      }
+    } else {
+      size_t t = aim_sorted.size() - now_group.size();
+      for (size_t i = 0; i < aim_sorted.size(); ++i) {
+        int cur = (i < t) ? 0 : now_group[i - t];//向实际前面补0
+        int b = cur - aim_sorted[i];
+        if (b > 0) moves += b;
+      }
+    }
+    return static_cast<int>(moves);
+  };
+
+  auto greedy_min_cost_pairs = [&calculate_moves](const std::vector<int> &ids,
+                                                  std::vector<std::pair<int, int>> &out_pairs,
+                                                  std::vector<int> &out_leftover) {
+    std::vector<int> rem = ids;
+    std::sort(rem.begin(), rem.end());
+    while (rem.size() >= 2) {
+      int best_i = 0, best_j = 1;
+      int best_cost = std::numeric_limits<int>::max();
+      for (size_t i = 0; i < rem.size(); ++i) {
+        for (size_t j = i + 1; j < rem.size(); ++j) {
+          int c = calculate_moves(rem[i], rem[j]);
+          if (c < best_cost ||
+              (c == best_cost &&
+               std::make_pair(rem[i], rem[j]) < std::make_pair(rem[best_i], rem[best_j]))) {
+            best_cost = c;
+            best_i = static_cast<int>(i);
+            best_j = static_cast<int>(j);
+          }
+        }
+      }
+      out_pairs.push_back({rem[best_i], rem[best_j]});
+      rem.erase(rem.begin() + best_j);
+      rem.erase(rem.begin() + best_i);
+    }
+    if (!rem.empty()) out_leftover.push_back(rem.front());
+  };
+
   std::map<int, std::vector<int>> parity_groups;
   for (const auto &kv : m_stripe_table) {
     int sid = kv.first;
@@ -4925,19 +5015,11 @@ grpc::Status CoordinatorImpl::mergeClusterRTRound(
   std::vector<std::pair<int, int>> pairs;
   std::vector<int> rong;
   for (auto &kv : parity_groups) {
-    auto &ids = kv.second;
-    for (size_t i = 0; i + 1 < ids.size(); i += 2) {
-      pairs.push_back({ids[i], ids[i + 1]});
-    }
-    if (ids.size() % 2 == 1) {
-      rong.push_back(ids.back());
-    }
+    greedy_min_cost_pairs(kv.second, pairs, rong);
   }
-  std::sort(rong.begin(), rong.end());
-  for (size_t i = 0; i + 1 < rong.size(); i += 2) {
-    pairs.push_back({rong[i], rong[i + 1]});
-  }
-  if (rong.size() % 2 == 1) {
+  std::vector<int> rong_left;
+  greedy_min_cost_pairs(rong, pairs, rong_left);
+  if (!rong_left.empty()) {
     reply->set_message("unpaired stripe remains after parity-group and cross pairing");
     return grpc::Status::OK;
   }
