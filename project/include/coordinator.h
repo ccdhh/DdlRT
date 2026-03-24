@@ -152,6 +152,7 @@ namespace ECProject
     bool find_block(char type, int cluster_id, int stripe_id);
 
     void initialize_equiox_stripe_placement(Stripe *stripe);
+    void initialize_srs_ers_stripe_placement(Stripe *stripe);
     void initialize_unilrc_and_azurelrc_stripe_placement(Stripe *stripe);
     void initialize_optimal_lrc_stripe_placement(Stripe *stripe);
     void initialize_uniform_lrc_stripe_placement(Stripe *stripe);
