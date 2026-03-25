@@ -1535,17 +1535,13 @@ namespace ECProject
       coordinator_proto::MergeClusterRTRoundRequest req;
       coordinator_proto::MergeClusterRTRoundReply rep;
       req.set_merge_round(merge_round);
-      auto rt_merge_begin = std::chrono::high_resolution_clock::now();
       grpc::Status st = m_coordinator_ptr->mergeClusterRTRound(&ctx, req, &rep);
-      auto rt_merge_end = std::chrono::high_resolution_clock::now();
-      double rt_merge_sec = std::chrono::duration_cast<std::chrono::duration<double>>(
-                                rt_merge_end - rt_merge_begin)
-                                .count();
       if (!st.ok()) {
         std::cout << "[Client] mergeClusterRTRound failed: " << st.error_message()
                   << std::endl;
-        std::cout << "[Client][MergeTimer] Cluster RT round time = "
-                  << rt_merge_sec << " s" << std::endl;
+        std::cout << "[Client][MergeTimer] Cluster RT merge execution time = "
+                  << rep.merge_execution_seconds() << " s (relocateBlock + parity merge only)"
+                  << std::endl;
         return;
       }
       if (rep.success()) {
@@ -1554,8 +1550,9 @@ namespace ECProject
       } else {
         std::cout << "[Client] Cluster RT round failed: " << rep.message() << std::endl;
       }
-      std::cout << "[Client][MergeTimer] Cluster RT round time = "
-                << rt_merge_sec << " s" << std::endl;
+      std::cout << "[Client][MergeTimer] Cluster RT merge execution time = "
+                << rep.merge_execution_seconds() << " s (relocateBlock + parity merge only)"
+                << std::endl;
       return;
     }
 

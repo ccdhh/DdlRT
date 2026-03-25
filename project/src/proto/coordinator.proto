@@ -216,6 +216,9 @@ message MergeRequest {
 message MergeReply {
   bool success = 1;
   int32 new_stripe_id = 2;
+  // Seconds spent executing relocateBlock + handleStripeMergeParity inside mergeStripesClusterRT.
+  // Excludes pair/planning/metadata update.
+  double execution_seconds = 3;
 }
 
 message MergeClusterRTRoundRequest {
@@ -226,4 +229,6 @@ message MergeClusterRTRoundReply {
   bool success = 1;
   string message = 2;
   int32 merges_done = 3;
+  // Seconds spent inside mergeStripesClusterRT only (excludes pairing / plan build).
+  double merge_execution_seconds = 4;
 }

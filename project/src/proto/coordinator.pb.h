@@ -4618,6 +4618,7 @@ class MergeReply final :
   enum : int {
     kSuccessFieldNumber = 1,
     kNewStripeIdFieldNumber = 2,
+    kExecutionSecondsFieldNumber = 3,
   };
   // bool success = 1;
   void clear_success();
@@ -4637,6 +4638,15 @@ class MergeReply final :
   void _internal_set_new_stripe_id(int32_t value);
   public:
 
+  // double execution_seconds = 3;
+  void clear_execution_seconds();
+  double execution_seconds() const;
+  void set_execution_seconds(double value);
+  private:
+  double _internal_execution_seconds() const;
+  void _internal_set_execution_seconds(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:coordinator_proto.MergeReply)
  private:
   class _Internal;
@@ -4647,6 +4657,7 @@ class MergeReply final :
   struct Impl_ {
     bool success_;
     int32_t new_stripe_id_;
+    double execution_seconds_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4926,6 +4937,7 @@ class MergeClusterRTRoundReply final :
     kMessageFieldNumber = 2,
     kSuccessFieldNumber = 1,
     kMergesDoneFieldNumber = 3,
+    kMergeExecutionSecondsFieldNumber = 4,
   };
   // string message = 2;
   void clear_message();
@@ -4959,6 +4971,15 @@ class MergeClusterRTRoundReply final :
   void _internal_set_merges_done(int32_t value);
   public:
 
+  // double merge_execution_seconds = 4;
+  void clear_merge_execution_seconds();
+  double merge_execution_seconds() const;
+  void set_merge_execution_seconds(double value);
+  private:
+  double _internal_merge_execution_seconds() const;
+  void _internal_set_merge_execution_seconds(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:coordinator_proto.MergeClusterRTRoundReply)
  private:
   class _Internal;
@@ -4970,6 +4991,7 @@ class MergeClusterRTRoundReply final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr message_;
     bool success_;
     int32_t merges_done_;
+    double merge_execution_seconds_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -7091,6 +7113,26 @@ inline void MergeReply::set_new_stripe_id(int32_t value) {
   // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.new_stripe_id)
 }
 
+// double execution_seconds = 3;
+inline void MergeReply::clear_execution_seconds() {
+  _impl_.execution_seconds_ = 0;
+}
+inline double MergeReply::_internal_execution_seconds() const {
+  return _impl_.execution_seconds_;
+}
+inline double MergeReply::execution_seconds() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeReply.execution_seconds)
+  return _internal_execution_seconds();
+}
+inline void MergeReply::_internal_set_execution_seconds(double value) {
+  
+  _impl_.execution_seconds_ = value;
+}
+inline void MergeReply::set_execution_seconds(double value) {
+  _internal_set_execution_seconds(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.execution_seconds)
+}
+
 // -------------------------------------------------------------------
 
 // MergeClusterRTRoundRequest
@@ -7207,6 +7249,26 @@ inline void MergeClusterRTRoundReply::_internal_set_merges_done(int32_t value) {
 inline void MergeClusterRTRoundReply::set_merges_done(int32_t value) {
   _internal_set_merges_done(value);
   // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.merges_done)
+}
+
+// double merge_execution_seconds = 4;
+inline void MergeClusterRTRoundReply::clear_merge_execution_seconds() {
+  _impl_.merge_execution_seconds_ = 0;
+}
+inline double MergeClusterRTRoundReply::_internal_merge_execution_seconds() const {
+  return _impl_.merge_execution_seconds_;
+}
+inline double MergeClusterRTRoundReply::merge_execution_seconds() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeClusterRTRoundReply.merge_execution_seconds)
+  return _internal_merge_execution_seconds();
+}
+inline void MergeClusterRTRoundReply::_internal_set_merge_execution_seconds(double value) {
+  
+  _impl_.merge_execution_seconds_ = value;
+}
+inline void MergeClusterRTRoundReply::set_merge_execution_seconds(double value) {
+  _internal_set_merge_execution_seconds(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.merge_execution_seconds)
 }
 
 #ifdef __GNUC__
