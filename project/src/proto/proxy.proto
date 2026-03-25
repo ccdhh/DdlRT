@@ -100,6 +100,9 @@ message blockRelocPlan {
   repeated string todatanodeip = 4;
   repeated int32 todatanodeport = 5;
   int32 block_size = 6;
+  // When true, do not delete the source block after relocation.
+  // Useful for merge concurrency where another thread may still read the source.
+  bool keep_source = 7;
 }
 
 message blockRelocReply {

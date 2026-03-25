@@ -4427,11 +4427,26 @@ class MergeRequest final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kMergeMethodFieldNumber = 5,
     kStripeIdAFieldNumber = 1,
     kStripeIdBFieldNumber = 2,
     kMergeRoundFieldNumber = 3,
     kNewStripeIdFieldNumber = 4,
   };
+  // string merge_method = 5;
+  void clear_merge_method();
+  const std::string& merge_method() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_merge_method(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_merge_method();
+  PROTOBUF_NODISCARD std::string* release_merge_method();
+  void set_allocated_merge_method(std::string* merge_method);
+  private:
+  const std::string& _internal_merge_method() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_merge_method(const std::string& value);
+  std::string* _internal_mutable_merge_method();
+  public:
+
   // int32 stripe_id_a = 1;
   void clear_stripe_id_a();
   int32_t stripe_id_a() const;
@@ -4476,6 +4491,7 @@ class MergeRequest final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr merge_method_;
     int32_t stripe_id_a_;
     int32_t stripe_id_b_;
     int32_t merge_round_;
@@ -6714,6 +6730,56 @@ inline void MergeRequest::_internal_set_new_stripe_id(int32_t value) {
 inline void MergeRequest::set_new_stripe_id(int32_t value) {
   _internal_set_new_stripe_id(value);
   // @@protoc_insertion_point(field_set:coordinator_proto.MergeRequest.new_stripe_id)
+}
+
+// string merge_method = 5;
+inline void MergeRequest::clear_merge_method() {
+  _impl_.merge_method_.ClearToEmpty();
+}
+inline const std::string& MergeRequest::merge_method() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeRequest.merge_method)
+  return _internal_merge_method();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void MergeRequest::set_merge_method(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.merge_method_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeRequest.merge_method)
+}
+inline std::string* MergeRequest::mutable_merge_method() {
+  std::string* _s = _internal_mutable_merge_method();
+  // @@protoc_insertion_point(field_mutable:coordinator_proto.MergeRequest.merge_method)
+  return _s;
+}
+inline const std::string& MergeRequest::_internal_merge_method() const {
+  return _impl_.merge_method_.Get();
+}
+inline void MergeRequest::_internal_set_merge_method(const std::string& value) {
+  
+  _impl_.merge_method_.Set(value, GetArenaForAllocation());
+}
+inline std::string* MergeRequest::_internal_mutable_merge_method() {
+  
+  return _impl_.merge_method_.Mutable(GetArenaForAllocation());
+}
+inline std::string* MergeRequest::release_merge_method() {
+  // @@protoc_insertion_point(field_release:coordinator_proto.MergeRequest.merge_method)
+  return _impl_.merge_method_.Release();
+}
+inline void MergeRequest::set_allocated_merge_method(std::string* merge_method) {
+  if (merge_method != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.merge_method_.SetAllocated(merge_method, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.merge_method_.IsDefault()) {
+    _impl_.merge_method_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:coordinator_proto.MergeRequest.merge_method)
 }
 
 // -------------------------------------------------------------------

@@ -1366,6 +1366,7 @@ class blockRelocPlan final :
     kTodatanodeipFieldNumber = 4,
     kTodatanodeportFieldNumber = 5,
     kBlockSizeFieldNumber = 6,
+    kKeepSourceFieldNumber = 7,
   };
   // repeated string blocktomove = 1;
   int blocktomove_size() const;
@@ -1492,6 +1493,15 @@ class blockRelocPlan final :
   void _internal_set_block_size(int32_t value);
   public:
 
+  // bool keep_source = 7;
+  void clear_keep_source();
+  bool keep_source() const;
+  void set_keep_source(bool value);
+  private:
+  bool _internal_keep_source() const;
+  void _internal_set_keep_source(bool value);
+  public:
+
   // @@protoc_insertion_point(class_scope:proxy_proto.blockRelocPlan)
  private:
   class _Internal;
@@ -1508,6 +1518,7 @@ class blockRelocPlan final :
     ::PROTOBUF_NAMESPACE_ID::RepeatedField< int32_t > todatanodeport_;
     mutable std::atomic<int> _todatanodeport_cached_byte_size_;
     int32_t block_size_;
+    bool keep_source_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -7317,6 +7328,26 @@ inline void blockRelocPlan::_internal_set_block_size(int32_t value) {
 inline void blockRelocPlan::set_block_size(int32_t value) {
   _internal_set_block_size(value);
   // @@protoc_insertion_point(field_set:proxy_proto.blockRelocPlan.block_size)
+}
+
+// bool keep_source = 7;
+inline void blockRelocPlan::clear_keep_source() {
+  _impl_.keep_source_ = false;
+}
+inline bool blockRelocPlan::_internal_keep_source() const {
+  return _impl_.keep_source_;
+}
+inline bool blockRelocPlan::keep_source() const {
+  // @@protoc_insertion_point(field_get:proxy_proto.blockRelocPlan.keep_source)
+  return _internal_keep_source();
+}
+inline void blockRelocPlan::_internal_set_keep_source(bool value) {
+  
+  _impl_.keep_source_ = value;
+}
+inline void blockRelocPlan::set_keep_source(bool value) {
+  _internal_set_keep_source(value);
+  // @@protoc_insertion_point(field_set:proxy_proto.blockRelocPlan.keep_source)
 }
 
 // -------------------------------------------------------------------

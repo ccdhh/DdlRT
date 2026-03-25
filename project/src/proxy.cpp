@@ -2552,7 +2552,9 @@ namespace ECProject
         continue;
       }
 
-      DelInDatanode(block_key, from_ip + ":" + std::to_string(from_port));
+      if (!plan->keep_source()) {
+        DelInDatanode(block_key, from_ip + ":" + std::to_string(from_port));
+      }
 
       std::cout << "[Proxy" << m_self_cluster_id << "][Relocate] moved " << block_key
                 << " from " << from_ip << ":" << from_port

@@ -209,6 +209,10 @@ message MergeRequest {
   int32 stripe_id_b = 2;
   int32 merge_round = 3;
   int32 new_stripe_id = 4;
+  // Merge method for parity update:
+  // - "SRS"
+  // - "ERS"
+  string merge_method = 5;
 }
 
 message MergeReply {

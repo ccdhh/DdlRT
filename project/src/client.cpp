@@ -4,6 +4,8 @@
 #include <thread>
 #include <assert.h>
 #include <chrono>
+#include <algorithm>
+#include <random>
 #include <cmath>
 #include "unilrc_encoder.h"
 namespace ECProject
@@ -713,6 +715,51 @@ namespace ECProject
     }
   }
 
+  // RS grouping for AppendMode == "SRS&ERS".
+  // Must match CoordinatorImpl::initialize_srs_ers_stripe_placement():
+  // - group_id 0..num_data_groups-1 are data groups
+  // - group_id num_data_groups is the parity group (r global parities)
+  // - first (r - b_rs) data groups have (r-1) blocks, remaining have r blocks
+  void Client::get_rs_block_num_per_group_srs_ers(
+      int k, int r,
+      std::vector<int> &data_block_num_per_group,
+      std::vector<int> &global_parity_block_num_per_group,
+      std::vector<int> &local_parity_block_num_per_group)
+  {
+    data_block_num_per_group.clear();
+    global_parity_block_num_per_group.clear();
+    local_parity_block_num_per_group.clear();
+
+    if (k <= 0 || r <= 0)
+      return;
+
+    const int b_rs = (k - 1) % r + 1;
+    const int num_data_groups = (k + r - 1) / r; // ceil(k/r)
+    int small_data_groups = r - b_rs;
+    if (small_data_groups < 0)
+      small_data_groups = 0;
+    if (small_data_groups > num_data_groups)
+      small_data_groups = num_data_groups;
+
+    int assigned = 0;
+    for (int gid = 0; gid < num_data_groups; gid++)
+    {
+      int group_size = (gid < small_data_groups) ? (r - 1) : r;
+      if (assigned + group_size > k)
+        group_size = std::max(0, k - assigned);
+      assigned += group_size;
+
+      data_block_num_per_group.push_back(group_size);
+      global_parity_block_num_per_group.push_back(0);
+      local_parity_block_num_per_group.push_back(0);
+    }
+
+    // parity group
+    data_block_num_per_group.push_back(0);
+    global_parity_block_num_per_group.push_back(r);
+    local_parity_block_num_per_group.push_back(0);
+  }
+
   void Client::split_for_set_data_and_parity(const coordinator_proto::ReplyProxyIPsPorts *reply_proxy_ips_ports, const std::vector<char *> &cluster_slice_data, const std::vector<int> &data_block_num_per_group, const std::vector<int> &global_parity_block_num_per_group, const std::vector<int> &local_parity_block_num_per_group, std::vector<char *> &data_ptr_array, std::vector<char *> &global_parity_ptr_array, std::vector<char *> &local_parity_ptr_array)
   {
     for (int i = 0; i < cluster_slice_data.size(); i++)
@@ -733,7 +780,8 @@ namespace ECProject
     coordinator_proto::ReplyProxyIPsPorts reply;
     request.set_key(m_clientID);
     request.set_valuesizebytes(static_cast<size_t>(m_sys_config->BlockSize) *static_cast<size_t>(m_sys_config->k));
-    request.set_append_mode("EQUIOX_MODE");
+    // Keep request consistent with config. (Coordinator uploadSetValue() uses server-side config AppendMode.)
+    request.set_append_mode(m_sys_config->AppendMode);
     grpc::Status status = m_coordinator_ptr->uploadSetValue(&get_proxy_ip_port, request, &reply);
 
     if (!status.ok())
@@ -755,14 +803,28 @@ namespace ECProject
       std::vector<int> data_block_num_per_group;
       std::vector<int> global_parity_block_num_per_group;
       std::vector<int> local_parity_block_num_per_group;
-      if (m_sys_config->CodeType == "RS" && reply.append_keys_size() > 0) {
-        int stripe_id = 0;
-        std::string first_key = reply.append_keys(0);
-        size_t pos = first_key.find('_');
-        if (pos != std::string::npos)
-          stripe_id = std::stoi(first_key.substr(0, pos));
-        get_rs_block_num_per_group_from_stripe_id(m_sys_config->k, m_sys_config->r, m_sys_config->z, stripe_id, data_block_num_per_group, global_parity_block_num_per_group, local_parity_block_num_per_group);
-      } else {
+      if (m_sys_config->CodeType == "RS")
+      {
+        if (m_sys_config->AppendMode == "SRS&ERS")
+        {
+          get_rs_block_num_per_group_srs_ers(m_sys_config->k, m_sys_config->r,
+                                             data_block_num_per_group, global_parity_block_num_per_group,
+                                             local_parity_block_num_per_group);
+        }
+        else if (reply.append_keys_size() > 0)
+        {
+          int stripe_id = 0;
+          std::string first_key = reply.append_keys(0);
+          size_t pos = first_key.find('_');
+          if (pos != std::string::npos)
+            stripe_id = std::stoi(first_key.substr(0, pos));
+          get_rs_block_num_per_group_from_stripe_id(m_sys_config->k, m_sys_config->r, m_sys_config->z, stripe_id,
+                                                    data_block_num_per_group, global_parity_block_num_per_group,
+                                                    local_parity_block_num_per_group);
+        }
+      }
+      if (data_block_num_per_group.empty())
+      {
         data_block_num_per_group = get_data_block_num_per_group(m_sys_config->k, m_sys_config->r, m_sys_config->z, m_sys_config->CodeType);
         global_parity_block_num_per_group = get_global_parity_block_num_per_group(m_sys_config->k, m_sys_config->r, m_sys_config->z, m_sys_config->CodeType);
         local_parity_block_num_per_group = get_local_parity_block_num_per_group(m_sys_config->k, m_sys_config->r, m_sys_config->z, m_sys_config->CodeType);
@@ -1515,7 +1577,23 @@ namespace ECProject
       return;
     }
 
+    int merge_method_choice = 0;
+    std::cout << "Please choose merge method for parity update:" << std::endl;
+    std::cout << "  1) SRS" << std::endl;
+    std::cout << "  2) ERS" << std::endl;
+    std::cout << "Your choice: ";
+    std::cin >> merge_method_choice;
+    std::string merge_method = (merge_method_choice == 1 ? "SRS" : "ERS");
+
     // Merge consecutive pairs
+    // Round 1: sequential pairing (0,1), (2,3)...
+    // Later rounds: random non-overlapping pairing
+    if (merge_round_input > 1) {
+      std::random_device rd;
+      std::mt19937 gen(rd());
+      std::shuffle(stripe_ids.begin(), stripe_ids.end(), gen);
+    }
+
     int pairs = stripe_ids.size() / 2;
     std::cout << "[Client] will merge " << pairs << " pairs (round " << merge_round << ")" << std::endl;
     std::chrono::high_resolution_clock::time_point merge_start=std::chrono::high_resolution_clock::now();
@@ -1532,6 +1610,7 @@ namespace ECProject
       req.set_stripe_id_b(sid_b);
       req.set_merge_round(merge_round);
       req.set_new_stripe_id(p);
+      req.set_merge_method(merge_method);
 
       grpc::Status st = m_coordinator_ptr->mergeStripes(&ctx, req, &rep);
       if (!st.ok()) {
