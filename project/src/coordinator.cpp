@@ -4798,6 +4798,8 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
     std::string new_parity_key;
     std::string datanode_ip;
     int datanode_port;
+    std::string parity_b_ip;
+    int parity_b_port;
     unsigned char gf_coeff;
   };
   std::vector<ParityMergeTask> parity_tasks;
@@ -4809,10 +4811,12 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
     unsigned char base = ECProject::gf_pow(2, static_cast<unsigned int>(j_1based));
     unsigned char coeff = ECProject::gf_pow(base, static_cast<unsigned int>(k));
     ECProject::Node &parity_node = m_node_table[pa->map2node];
+    ECProject::Node &parity_b_node = m_node_table[pb->map2node];
     std::string new_key = std::to_string(new_stripe_id) +
                           (j < 10 ? "_G0" : "_G") + std::to_string(j);
     parity_tasks.push_back({pa->block_key, pb->block_key, new_key,
-                            parity_node.node_ip, parity_node.node_port, coeff});
+                            parity_node.node_ip, parity_node.node_port,
+                            parity_b_node.node_ip, parity_b_node.node_port, coeff});
   }
 
   bool parity_ok = true;
@@ -4832,6 +4836,8 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
       info.set_new_parity_key(task.new_parity_key);
       info.set_block_size(block_size);
       info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+      info.set_parity_b_datanode_ip(task.parity_b_ip);
+      info.set_parity_b_datanode_port(task.parity_b_port);
 
       grpc::Status st = stub->handleStripeMergeParity(&ctx, info, &result);
       if (!st.ok() || !result.message()) {
@@ -5357,6 +5363,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
     std::string new_parity_key;
     std::string datanode_ip;
     int datanode_port;
+    std::string parity_b_ip;
+    int parity_b_port;
     unsigned char gf_coeff;
   };
   std::vector<ParityMergeTask> parity_tasks;
@@ -5369,11 +5377,13 @@ grpc::Status CoordinatorImpl::mergeStripes(
     unsigned char coeff = ECProject::gf_pow(base, static_cast<unsigned int>(k));
 
     Node &parity_node = m_node_table[pa->map2node];
+    Node &parity_b_node = m_node_table[pb->map2node];
     std::string new_key = std::to_string(new_stripe_id) +
                           (j < 10 ? "_G0" : "_G") + std::to_string(j);
 
     parity_tasks.push_back({pa->block_key, pb->block_key, new_key,
                             parity_node.node_ip, parity_node.node_port,
+                            parity_b_node.node_ip, parity_b_node.node_port,
                             coeff});
 
     std::cout << "[Coordinator][Merge] parity j=" << j_1based
@@ -5445,6 +5455,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
         info.set_new_parity_key(task.new_parity_key);
         info.set_block_size(block_size);
         info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+        info.set_parity_b_datanode_ip(task.parity_b_ip);
+        info.set_parity_b_datanode_port(task.parity_b_port);
 
         grpc::Status st = stub->handleStripeMergeParity(&ctx, info, &result);
         if (!st.ok() || !result.message()) {
