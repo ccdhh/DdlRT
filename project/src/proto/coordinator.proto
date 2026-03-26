@@ -218,4 +218,9 @@ message MergeRequest {
 message MergeReply {
   bool success = 1;
   int32 new_stripe_id = 2;
+  // Execution time for the "real merge execution" phase inside coordinator.
+  // Does NOT include planning/setup overhead.
+  double parity_exec_sec = 3;
+  double migration_exec_sec = 4;
+  double merge_exec_sec = 5; // wall-clock of the two-thread execution (max(parity,migration))
 }

@@ -1565,6 +1565,13 @@ namespace ECProject
       return;
     }
 
+    // Allocate globally-unique IDs for merged stripes.
+    // Using `p` directly can collide with existing stripe IDs and corrupt
+    // coordinator metadata (because coordinator stores stripes in a map keyed
+    // by stripe_id).
+    int max_stripe_id = stripe_ids.back(); // sorted above
+    int next_new_stripe_id = max_stripe_id + 1;
+
     std::cout << "[Client] available stripes: ";
     for (int sid : stripe_ids) std::cout << sid << " ";
     std::cout << std::endl;
@@ -1596,6 +1603,8 @@ namespace ECProject
 
     int pairs = stripe_ids.size() / 2;
     std::cout << "[Client] will merge " << pairs << " pairs (round " << merge_round << ")" << std::endl;
+    int succ_pairs = 0;
+    double join_exec_sum_sec = 0.0; // sum of parallel-done times (max(parity,migration))
     std::chrono::high_resolution_clock::time_point merge_start=std::chrono::high_resolution_clock::now();
     for (int p = 0; p < pairs; p++) {
       int sid_a = stripe_ids[2 * p];
@@ -1609,7 +1618,7 @@ namespace ECProject
       req.set_stripe_id_a(sid_a);
       req.set_stripe_id_b(sid_b);
       req.set_merge_round(merge_round);
-      req.set_new_stripe_id(p);
+      req.set_new_stripe_id(next_new_stripe_id + p);
       req.set_merge_method(merge_method);
 
       grpc::Status st = m_coordinator_ptr->mergeStripes(&ctx, req, &rep);
@@ -1619,7 +1628,16 @@ namespace ECProject
       }
 
       if (rep.success()) {
-        std::cout << "[Client] merge succeeded -> new stripe " << rep.new_stripe_id() << std::endl;
+        succ_pairs++;
+        const double join_done_sec =
+            std::max(rep.parity_exec_sec(), rep.migration_exec_sec());
+        join_exec_sum_sec += join_done_sec;
+        std::cout << "[Client] merge succeeded -> new stripe "
+                  << rep.new_stripe_id()
+                  << " | parity=" << rep.parity_exec_sec() << "s"
+                  << ", migration=" << rep.migration_exec_sec() << "s"
+                  << ", join_done=" << join_done_sec << "s"
+                  << std::endl;
       } else {
         std::cout << "[Client] merge returned failure for stripes "
                   << sid_a << " + " << sid_b << std::endl;
@@ -1627,7 +1645,13 @@ namespace ECProject
     }
     std::chrono::high_resolution_clock::time_point merge_end=std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> merge_time = std::chrono::duration_cast<std::chrono::duration<double>>(merge_end - merge_start);
-    std::cout << "[merge"<<merge_round<<"time] total spend time: " << merge_time.count() << " seconds" << std::endl;
+    std::cout << "[merge"<<merge_round<<"time] wall total (client sequential): "
+              << merge_time.count() << " seconds"
+              << std::endl;
+    std::cout << "[merge"<<merge_round<<"time] join exec sum: "
+              << join_exec_sum_sec << " seconds"
+              << " (success pairs=" << succ_pairs << ")"
+              << std::endl;
   }
   void Client::get_block_each_stripe_position(int stripe_cnt,const std::vector<int>& pos_list)
   {

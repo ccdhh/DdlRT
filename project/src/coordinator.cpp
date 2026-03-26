@@ -4706,21 +4706,18 @@ grpc::Status CoordinatorImpl::mergeStripes(
   bool parity_ok = true;
   double parity_exec_sec = 0.0;
   double migration_exec_sec = 0.0;
-  auto exec_start = std::chrono::high_resolution_clock::now();
+  // Start both workers at the same logical time, but measure only the
+  // "real execution" parts (exclude planning/allocation overhead).
+  std::mutex start_mtx;
+  std::condition_variable start_cv;
+  bool start_signal = false;
 
   // Thread 1: parity block update.
   std::thread parity_thread([&]() {
-    auto st = std::chrono::high_resolution_clock::now();
-    struct ExecTimer {
-      decltype(st) start_time;
-      double *out;
-      ~ExecTimer() {
-        auto ed = std::chrono::high_resolution_clock::now();
-        *out = std::chrono::duration_cast<std::chrono::duration<double>>(ed - start_time)
-                   .count();
-      }
-    };
-    ExecTimer timer{st, &parity_exec_sec};
+    {
+      std::unique_lock<std::mutex> lk(start_mtx);
+      start_cv.wait(lk, [&]() { return start_signal; });
+    }
     try {
       if (merge_method == "ERS") {
         // ERS: parity = linear-combination of the two parity blocks.
@@ -4728,9 +4725,118 @@ grpc::Status CoordinatorImpl::mergeStripes(
           std::string parity_key_a;
           std::string parity_key_b;
           std::string new_parity_key;
+          // Target datanode where parity A lives (also where we will place
+          // parity B before merging).
           std::string datanode_ip;
           int datanode_port;
+          // Source datanode where parity B currently lives.
+          std::string parity_b_src_ip;
+          int parity_b_src_port;
           unsigned char gf_coeff;
+        };
+
+        const unsigned int bs = static_cast<unsigned int>(block_size);
+
+        // Helper: fetch a block from a datanode (via handleGet + TCP read),
+        // used to move stripe_b parity blocks onto stripe_a parity nodes.
+        auto fetch_from_datanode = [&](const std::string &block_key,
+                                        const std::string &ip, int port,
+                                        std::vector<unsigned char> &out) -> bool {
+          out.resize(bs);
+          auto channel = grpc::CreateChannel(
+              ip + ":" + std::to_string(port), grpc::InsecureChannelCredentials());
+          auto stub = datanode_proto::datanodeService::NewStub(channel);
+
+          grpc::ClientContext ctx;
+          datanode_proto::GetInfo get_info;
+          datanode_proto::RequestResult result;
+          get_info.set_block_key(block_key);
+          get_info.set_block_size(static_cast<int>(bs));
+          get_info.set_proxy_ip("127.0.0.1");
+          get_info.set_proxy_port(0);
+
+          grpc::Status st = stub->handleGet(&ctx, get_info, &result);
+          if (!st.ok())
+            return false;
+
+          asio::io_context io;
+          asio::ip::tcp::resolver resolver(io);
+          asio::ip::tcp::socket socket(io);
+          asio::error_code ec;
+          std::string host = ip;
+          std::string p = std::to_string(port + ECProject::DATANODE_PORT_SHIFT);
+          bool connected = false;
+          for (int attempt = 0; attempt < 50; attempt++) {
+            ec.clear();
+            socket = asio::ip::tcp::socket(io);
+            auto endpoints = resolver.resolve(host, p);
+            asio::connect(socket, endpoints, ec);
+            if (!ec) {
+              connected = true;
+              break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }
+          if (!connected)
+            return false;
+
+          asio::error_code read_ec;
+          asio::read(socket, asio::buffer(out.data(), bs), read_ec);
+          socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+          socket.close(ec);
+          return !read_ec;
+        };
+
+        // Helper: write a block to a datanode (via handleSet + TCP write).
+        auto write_to_datanode = [&](const std::string &block_key,
+                                      const std::string &ip, int port,
+                                      const std::vector<unsigned char> &in) -> bool {
+          if (in.size() != bs)
+            return false;
+
+          auto channel = grpc::CreateChannel(
+              ip + ":" + std::to_string(port), grpc::InsecureChannelCredentials());
+          auto stub = datanode_proto::datanodeService::NewStub(channel);
+
+          grpc::ClientContext ctx;
+          datanode_proto::SetInfo set_info;
+          datanode_proto::RequestResult result;
+          set_info.set_block_key(block_key);
+          set_info.set_block_size(static_cast<int>(bs));
+          set_info.set_proxy_ip("127.0.0.1");
+          set_info.set_proxy_port(0);
+          set_info.set_ispull(false);
+
+          grpc::Status st = stub->handleSet(&ctx, set_info, &result);
+          if (!st.ok())
+            return false;
+
+          asio::io_context io;
+          asio::ip::tcp::resolver resolver(io);
+          asio::ip::tcp::socket socket(io);
+          asio::error_code ec;
+          std::string host = ip;
+          std::string p = std::to_string(port + ECProject::DATANODE_PORT_SHIFT);
+          bool connected = false;
+          for (int attempt = 0; attempt < 50; attempt++) {
+            ec.clear();
+            socket = asio::ip::tcp::socket(io);
+            auto endpoints = resolver.resolve(host, p);
+            asio::connect(socket, endpoints, ec);
+            if (!ec) {
+              connected = true;
+              break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }
+          if (!connected)
+            return false;
+
+          asio::error_code write_ec;
+          asio::write(socket, asio::buffer(in.data(), bs), write_ec);
+          socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+          socket.close(ec);
+          return !write_ec;
         };
 
         // Coefficient for j-th parity (1-based): gf_pow(gf_pow(2, j), k)
@@ -4745,17 +4851,34 @@ grpc::Status CoordinatorImpl::mergeStripes(
           unsigned char coeff = ECProject::gf_pow(base,
                                                     static_cast<unsigned int>(k));
 
-          Node &parity_node = m_node_table[pa->map2node];
+          Node &parity_a_node = m_node_table[pa->map2node];
+          Node &parity_b_node = m_node_table[pb->map2node];
           parity_tasks.push_back({pa->block_key, pb->block_key,
                                    new_parity_keys[j],
-                                   parity_node.node_ip, parity_node.node_port,
+                                   parity_a_node.node_ip, parity_a_node.node_port,
+                                   parity_b_node.node_ip, parity_b_node.node_port,
                                    coeff});
         }
 
-        std::vector<std::thread> sub_threads;
-        sub_threads.reserve(parity_tasks.size());
-        for (auto &task : parity_tasks) {
-          sub_threads.emplace_back([&task, block_size, &parity_ok]() {
+        // Start timer right before the real execution.
+        // Important: we intentionally run parity tasks sequentially to avoid
+        // holding multiple `block_size` buffers in memory at the same time.
+        auto st = std::chrono::high_resolution_clock::now();
+        struct ExecTimer {
+          decltype(st) start_time;
+          double *out;
+          ~ExecTimer() {
+            auto ed = std::chrono::high_resolution_clock::now();
+            *out = std::chrono::duration_cast<std::chrono::duration<double>>(ed - start_time)
+                       .count();
+          }
+        };
+        ExecTimer timer{st, &parity_exec_sec};
+
+        if (merge_round == 1) {
+          // Round 1 ERS: parity A and parity B are already guaranteed to be on
+          // the same datanode, so we can directly do local parity merge.
+          for (auto &task : parity_tasks) {
             auto channel = grpc::CreateChannel(
                 task.datanode_ip + ":" + std::to_string(task.datanode_port),
                 grpc::InsecureChannelCredentials());
@@ -4773,15 +4896,60 @@ grpc::Status CoordinatorImpl::mergeStripes(
             grpc::Status st =
                 stub->handleStripeMergeParity(&ctx, info, &result);
             if (!st.ok() || !result.message()) {
-              std::cerr << "[Coordinator][Merge][ERS] parity merge failed on "
-                        << task.datanode_ip << ":" << task.datanode_port
-                        << " for " << task.new_parity_key << std::endl;
+              std::cerr
+                  << "[Coordinator][Merge][ERS][round1] parity merge failed on "
+                  << task.datanode_ip << ":" << task.datanode_port
+                  << " for " << task.new_parity_key << std::endl;
               parity_ok = false;
+              break;
             }
-          });
+          }
+        } else {
+          // Round >=2 ERS: keep existing logic:
+          // read parity B to the parity-A node, then let datanode do local merge.
+          std::vector<unsigned char> parity_b_buf;
+          parity_b_buf.reserve(bs);
+          for (auto &task : parity_tasks) {
+            if (!fetch_from_datanode(task.parity_key_b,
+                                      task.parity_b_src_ip,
+                                      task.parity_b_src_port,
+                                      parity_b_buf)) {
+              parity_ok = false;
+              break;
+            }
+            if (!write_to_datanode(task.parity_key_b,
+                                    task.datanode_ip, task.datanode_port,
+                                    parity_b_buf)) {
+              parity_ok = false;
+              break;
+            }
+
+            auto channel = grpc::CreateChannel(
+                task.datanode_ip + ":" + std::to_string(task.datanode_port),
+                grpc::InsecureChannelCredentials());
+            auto stub = datanode_proto::datanodeService::NewStub(channel);
+
+            grpc::ClientContext ctx;
+            datanode_proto::StripeMergeParityInfo info;
+            datanode_proto::RequestResult result;
+            info.set_parity_key_a(task.parity_key_a);
+            info.set_parity_key_b(task.parity_key_b);
+            info.set_new_parity_key(task.new_parity_key);
+            info.set_block_size(block_size);
+            info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+
+            grpc::Status st =
+                stub->handleStripeMergeParity(&ctx, info, &result);
+            if (!st.ok() || !result.message()) {
+              std::cerr
+                  << "[Coordinator][Merge][ERS][round>=2] parity merge failed on "
+                  << task.datanode_ip << ":" << task.datanode_port
+                  << " for " << task.new_parity_key << std::endl;
+              parity_ok = false;
+              break;
+            }
+          }
         }
-        for (auto &t : sub_threads)
-          t.join();
       } else {
         // SRS:
         // For each merged parity j:
@@ -4890,7 +5058,22 @@ grpc::Status CoordinatorImpl::mergeStripes(
         };
 
         // parity_acc[j] holds the new parity bytes to be written.
+        // Allocation/setup of buffers is intentionally excluded from timing.
         std::vector<std::vector<unsigned char>> parity_acc(r);
+
+        // Start timer right before the first real fetch/compute/write.
+        auto st = std::chrono::high_resolution_clock::now();
+        struct ExecTimer {
+          decltype(st) start_time;
+          double *out;
+          ~ExecTimer() {
+            auto ed = std::chrono::high_resolution_clock::now();
+            *out = std::chrono::duration_cast<std::chrono::duration<double>>(ed - start_time)
+                       .count();
+          }
+        };
+        ExecTimer timer{st, &parity_exec_sec};
+
         for (int j = 0; j < r; j++) {
           Block *pa = stripe_a.blocks[k + j];
           Node &parity_node = m_node_table[pa->map2node];
@@ -4950,17 +5133,10 @@ grpc::Status CoordinatorImpl::mergeStripes(
 
   // Thread 2: data block migration
   std::thread migration_thread([&]() {
-    auto st = std::chrono::high_resolution_clock::now();
-    struct ExecTimer {
-      decltype(st) start_time;
-      double *out;
-      ~ExecTimer() {
-        auto ed = std::chrono::high_resolution_clock::now();
-        *out = std::chrono::duration_cast<std::chrono::duration<double>>(ed - start_time)
-                   .count();
-      }
-    };
-    ExecTimer timer{st, &migration_exec_sec};
+    {
+      std::unique_lock<std::mutex> lk(start_mtx);
+      start_cv.wait(lk, [&]() { return start_signal; });
+    }
     for (auto &[cluster_id, entries] : proxy_reloc_plans) {
       if (entries.empty()) continue;
 
@@ -4988,7 +5164,13 @@ grpc::Status CoordinatorImpl::mergeStripes(
         plan.add_todatanodeport(e.to_port);
       }
 
+      // Measure only the actual relocation RPC execution (exclude plan setup).
+      auto call_start = std::chrono::high_resolution_clock::now();
       grpc::Status st = m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+      auto call_end = std::chrono::high_resolution_clock::now();
+      migration_exec_sec +=
+          std::chrono::duration_cast<std::chrono::duration<double>>(call_end - call_start)
+              .count();
       if (!st.ok()) {
         std::cerr << "[Coordinator][Merge] relocate failed via " << proxy_addr
                   << ": " << st.error_message() << std::endl;
@@ -5000,6 +5182,16 @@ grpc::Status CoordinatorImpl::mergeStripes(
     }
   });
 
+  // Unblock both threads simultaneously.
+  std::chrono::high_resolution_clock::time_point exec_start;
+  {
+    std::lock_guard<std::mutex> lk(start_mtx);
+    start_signal = true;
+    // Record start time at the same moment we flip the signal.
+    exec_start = std::chrono::high_resolution_clock::now();
+  }
+  start_cv.notify_all();
+
   parity_thread.join();
   migration_thread.join();
 
@@ -5010,6 +5202,11 @@ grpc::Status CoordinatorImpl::mergeStripes(
   std::cout << "[Coordinator][Merge] execute time: total=" << merge_exec_sec
             << "s, parity=" << parity_exec_sec << "s, migration=" << migration_exec_sec
             << "s" << std::endl;
+
+  // Return "real execution" timings to the client.
+  reply->set_parity_exec_sec(parity_exec_sec);
+  reply->set_migration_exec_sec(migration_exec_sec);
+  reply->set_merge_exec_sec(merge_exec_sec);
 
   // Apply in-memory placement updates only after actual relocation completes.
   for (auto &pm : planned_moves) {

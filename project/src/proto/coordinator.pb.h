@@ -4626,6 +4626,9 @@ class MergeReply final :
   enum : int {
     kSuccessFieldNumber = 1,
     kNewStripeIdFieldNumber = 2,
+    kParityExecSecFieldNumber = 3,
+    kMigrationExecSecFieldNumber = 4,
+    kMergeExecSecFieldNumber = 5,
   };
   // bool success = 1;
   void clear_success();
@@ -4645,6 +4648,33 @@ class MergeReply final :
   void _internal_set_new_stripe_id(int32_t value);
   public:
 
+  // double parity_exec_sec = 3;
+  void clear_parity_exec_sec();
+  double parity_exec_sec() const;
+  void set_parity_exec_sec(double value);
+  private:
+  double _internal_parity_exec_sec() const;
+  void _internal_set_parity_exec_sec(double value);
+  public:
+
+  // double migration_exec_sec = 4;
+  void clear_migration_exec_sec();
+  double migration_exec_sec() const;
+  void set_migration_exec_sec(double value);
+  private:
+  double _internal_migration_exec_sec() const;
+  void _internal_set_migration_exec_sec(double value);
+  public:
+
+  // double merge_exec_sec = 5;
+  void clear_merge_exec_sec();
+  double merge_exec_sec() const;
+  void set_merge_exec_sec(double value);
+  private:
+  double _internal_merge_exec_sec() const;
+  void _internal_set_merge_exec_sec(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:coordinator_proto.MergeReply)
  private:
   class _Internal;
@@ -4655,6 +4685,9 @@ class MergeReply final :
   struct Impl_ {
     bool success_;
     int32_t new_stripe_id_;
+    double parity_exec_sec_;
+    double migration_exec_sec_;
+    double merge_exec_sec_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -6824,6 +6857,66 @@ inline void MergeReply::_internal_set_new_stripe_id(int32_t value) {
 inline void MergeReply::set_new_stripe_id(int32_t value) {
   _internal_set_new_stripe_id(value);
   // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.new_stripe_id)
+}
+
+// double parity_exec_sec = 3;
+inline void MergeReply::clear_parity_exec_sec() {
+  _impl_.parity_exec_sec_ = 0;
+}
+inline double MergeReply::_internal_parity_exec_sec() const {
+  return _impl_.parity_exec_sec_;
+}
+inline double MergeReply::parity_exec_sec() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeReply.parity_exec_sec)
+  return _internal_parity_exec_sec();
+}
+inline void MergeReply::_internal_set_parity_exec_sec(double value) {
+  
+  _impl_.parity_exec_sec_ = value;
+}
+inline void MergeReply::set_parity_exec_sec(double value) {
+  _internal_set_parity_exec_sec(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.parity_exec_sec)
+}
+
+// double migration_exec_sec = 4;
+inline void MergeReply::clear_migration_exec_sec() {
+  _impl_.migration_exec_sec_ = 0;
+}
+inline double MergeReply::_internal_migration_exec_sec() const {
+  return _impl_.migration_exec_sec_;
+}
+inline double MergeReply::migration_exec_sec() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeReply.migration_exec_sec)
+  return _internal_migration_exec_sec();
+}
+inline void MergeReply::_internal_set_migration_exec_sec(double value) {
+  
+  _impl_.migration_exec_sec_ = value;
+}
+inline void MergeReply::set_migration_exec_sec(double value) {
+  _internal_set_migration_exec_sec(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.migration_exec_sec)
+}
+
+// double merge_exec_sec = 5;
+inline void MergeReply::clear_merge_exec_sec() {
+  _impl_.merge_exec_sec_ = 0;
+}
+inline double MergeReply::_internal_merge_exec_sec() const {
+  return _impl_.merge_exec_sec_;
+}
+inline double MergeReply::merge_exec_sec() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeReply.merge_exec_sec)
+  return _internal_merge_exec_sec();
+}
+inline void MergeReply::_internal_set_merge_exec_sec(double value) {
+  
+  _impl_.merge_exec_sec_ = value;
+}
+inline void MergeReply::set_merge_exec_sec(double value) {
+  _internal_set_merge_exec_sec(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.merge_exec_sec)
 }
 
 #ifdef __GNUC__
