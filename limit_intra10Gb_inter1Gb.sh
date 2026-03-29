@@ -13,6 +13,10 @@
 INTRA_RACK_Kbps=10485760   # 10 Gb/s 机架内
 INTER_RACK_Kbps=1048576    # 1 Gb/s 机架间
 
+# shellcheck source=/dev/null
+. "$(cd "$(dirname "$0")" && pwd)/shape_prep.sh"
+shape_prep_load_modules
+
 # enp6s0f0: 机架内 (intra-rack)
 if ip link show enp6s0f0 &> /dev/null && ip link show enp6s0f0 | grep -q 'state UP'; then
     wondershaper -a enp6s0f0 -d $INTRA_RACK_Kbps -u $INTRA_RACK_Kbps
