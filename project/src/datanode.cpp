@@ -1,7 +1,6 @@
 #include "datanode.h"
 #include "toolbox.h"
 #include "unilrc_encoder.h"
-#include <cstring>
 #include <fstream>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -766,39 +765,6 @@ namespace ECProject
         return grpc::Status::OK;
     }
 
-    grpc::Status DatanodeImpl::readBlockBytes(
-        grpc::ServerContext *context,
-        const datanode_proto::ReadBlockBytesRequest *request,
-        datanode_proto::ReadBlockBytesReply *response)
-    {
-        (void)context;
-        std::string targetdir = "./storage/" + std::to_string(m_port) + "/";
-        std::string readpath = targetdir + request->block_key();
-        int block_size = request->block_size();
-        if (block_size <= 0 || block_size > 256 * 1024 * 1024) {
-            response->set_ok(false);
-            return grpc::Status::OK;
-        }
-        if (access(readpath.c_str(), 0) == -1) {
-            std::cerr << "[Datanode" << m_port << "][readBlockBytes] not found: " << readpath << std::endl;
-            response->set_ok(false);
-            return grpc::Status::OK;
-        }
-        std::string data;
-        data.resize(static_cast<size_t>(block_size));
-        std::ifstream ifs(readpath, std::ios::binary);
-        ifs.read(&data[0], block_size);
-        ifs.close();
-        if (ifs.gcount() != block_size) {
-            std::cerr << "[Datanode" << m_port << "][readBlockBytes] short read: " << readpath << std::endl;
-            response->set_ok(false);
-            return grpc::Status::OK;
-        }
-        response->set_ok(true);
-        response->set_data(std::move(data));
-        return grpc::Status::OK;
-    }
-
     grpc::Status DatanodeImpl::handleStripeMergeParity(
         grpc::ServerContext *context,
         const datanode_proto::StripeMergeParityInfo *info,
@@ -820,6 +786,11 @@ namespace ECProject
             response->set_message(false);
             return grpc::Status::OK;
         }
+        if (access(path_b.c_str(), 0) == -1) {
+            std::cerr << "[Datanode" << m_port << "][StripeMergeParity] parity B not found: " << path_b << std::endl;
+            response->set_message(false);
+            return grpc::Status::OK;
+        }
 
         std::unique_ptr<char[]> buf_a(new char[block_size]);
         std::unique_ptr<char[]> buf_b(new char[block_size]);
@@ -829,41 +800,9 @@ namespace ECProject
         ifs_a.read(buf_a.get(), block_size);
         ifs_a.close();
 
-        std::string remote_b_ip = info->parity_b_datanode_ip();
-        int remote_b_port = info->parity_b_datanode_port();
-        bool b_same_as_this =
-            (remote_b_ip.empty()) ||
-            (remote_b_ip == m_ip && remote_b_port == m_port);
-
-        if (b_same_as_this) {
-            if (access(path_b.c_str(), 0) == -1) {
-                std::cerr << "[Datanode" << m_port << "][StripeMergeParity] parity B not found: " << path_b << std::endl;
-                response->set_message(false);
-                return grpc::Status::OK;
-            }
-            std::ifstream ifs_b(path_b, std::ios::binary);
-            ifs_b.read(buf_b.get(), block_size);
-            ifs_b.close();
-        } else {
-            auto channel = grpc::CreateChannel(
-                remote_b_ip + ":" + std::to_string(remote_b_port),
-                grpc::InsecureChannelCredentials());
-            auto stub = datanode_proto::datanodeService::NewStub(channel);
-            grpc::ClientContext ctx;
-            datanode_proto::ReadBlockBytesRequest rb_req;
-            datanode_proto::ReadBlockBytesReply rb_rep;
-            rb_req.set_block_key(parity_key_b);
-            rb_req.set_block_size(block_size);
-            grpc::Status rst = stub->readBlockBytes(&ctx, rb_req, &rb_rep);
-            if (!rst.ok() || !rb_rep.ok() ||
-                static_cast<int>(rb_rep.data().size()) != block_size) {
-                std::cerr << "[Datanode" << m_port << "][StripeMergeParity] remote parity B fetch failed from "
-                          << remote_b_ip << ":" << remote_b_port << " key=" << parity_key_b << std::endl;
-                response->set_message(false);
-                return grpc::Status::OK;
-            }
-            memcpy(buf_b.get(), rb_rep.data().data(), static_cast<size_t>(block_size));
-        }
+        std::ifstream ifs_b(path_b, std::ios::binary);
+        ifs_b.read(buf_b.get(), block_size);
+        ifs_b.close();
 
         // P'_j = P^A_j XOR gf_mul(coeff, P^B_j)
         for (int i = 0; i < block_size; i++) {

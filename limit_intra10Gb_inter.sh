@@ -14,11 +14,13 @@ set -u
 
 # shellcheck source=/dev/null
 . "$(cd "$(dirname "$0")" && pwd)/shape_prep.sh"
+shape_prep_env
 shape_prep_load_modules
+shape_prep_tc_resolve || { echo "Error: tc (iproute2) not found." >&2; exit 127; }
 
 WS_BIN="$(command -v wondershaper || true)"
 if [ -z "$WS_BIN" ]; then
-  for p in /usr/sbin/wondershaper /sbin/wondershaper /usr/bin/wondershaper; do
+  for p in /usr/sbin/wondershaper /sbin/wondershaper /usr/local/sbin/wondershaper /usr/bin/wondershaper; do
     if [ -x "$p" ]; then
       WS_BIN="$p"
       break
@@ -26,7 +28,8 @@ if [ -z "$WS_BIN" ]; then
   done
 fi
 if [ -z "$WS_BIN" ]; then
-  echo "Error: wondershaper not found. Please install it or add it to PATH." >&2
+  echo "Error: wondershaper if not found。Debian/Ubuntu can: sudo apt-get install -y wondershaper" >&2
+  echo "  if use install_wondershaper.sh to install from source code; if only pdsh to send to all nodes，can not install on node0." >&2
   exit 127
 fi
 
@@ -49,15 +52,17 @@ INTRA_RACK_Kbps=10485760   # 10 Gb/s 机架内（固定）
 # magnific0 / Debian 包装均使用 -a -d -u；勿再用位置参数
 # enp6s0f0: 机架内
 if ip link show enp6s0f0 &> /dev/null && ip link show enp6s0f0 | grep -q 'state UP'; then
+    shape_prep_clear_iface_qdisc enp6s0f0
     "$WS_BIN" -a enp6s0f0 -d "$INTRA_RACK_Kbps" -u "$INTRA_RACK_Kbps" || exit 1
-    echo "enp6s0f0: $INTRA_RACK_Kbps Kbps (10 Gb/s 机架内)"
+    echo "enp6s0f0: $INTRA_RACK_Kbps Kbps (10 Gb/s intra-rack)"
     applied=1
 fi
 
 # enp6s0f1: 机架间
 if ip link show enp6s0f1 &> /dev/null && ip link show enp6s0f1 | grep -q 'state UP'; then
+    shape_prep_clear_iface_qdisc enp6s0f1
     "$WS_BIN" -a enp6s0f1 -d "$INTER_RACK_Kbps" -u "$INTER_RACK_Kbps" || exit 1
-    echo "enp6s0f1: $INTER_RACK_Kbps Kbps (机架间 ${INTER_GB} Gb/s)"
+    echo "enp6s0f1: $INTER_RACK_Kbps Kbps (inter-rack ${INTER_GB} Gb/s)"
     applied=1
 fi
 
