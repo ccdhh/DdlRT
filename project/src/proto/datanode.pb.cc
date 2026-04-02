@@ -41,6 +41,7 @@ PROTOBUF_CONSTEXPR RequestResult::RequestResult(
   , /*decltype(_impl_.disk_io_start_time_)*/0
   , /*decltype(_impl_.disk_io_end_time_)*/0
   , /*decltype(_impl_.grpc_start_time_)*/0
+  , /*decltype(_impl_.execution_seconds_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct RequestResultDefaultTypeInternal {
   PROTOBUF_CONSTEXPR RequestResultDefaultTypeInternal()
@@ -201,6 +202,7 @@ const uint32_t TableStruct_datanode_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   PROTOBUF_FIELD_OFFSET(::datanode_proto::RequestResult, _impl_.disk_io_start_time_),
   PROTOBUF_FIELD_OFFSET(::datanode_proto::RequestResult, _impl_.disk_io_end_time_),
   PROTOBUF_FIELD_OFFSET(::datanode_proto::RequestResult, _impl_.grpc_start_time_),
+  PROTOBUF_FIELD_OFFSET(::datanode_proto::RequestResult, _impl_.execution_seconds_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::datanode_proto::SetInfo, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -283,14 +285,14 @@ const uint32_t TableStruct_datanode_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::datanode_proto::CheckaliveCMD)},
   { 7, -1, -1, sizeof(::datanode_proto::RequestResult)},
-  { 18, -1, -1, sizeof(::datanode_proto::SetInfo)},
-  { 30, -1, -1, sizeof(::datanode_proto::AppendInfo)},
-  { 41, -1, -1, sizeof(::datanode_proto::MergeParityInfo)},
-  { 49, -1, -1, sizeof(::datanode_proto::GetInfo)},
-  { 60, -1, -1, sizeof(::datanode_proto::StripeMergeParityInfo)},
-  { 73, -1, -1, sizeof(::datanode_proto::ReadBlockBytesRequest)},
-  { 81, -1, -1, sizeof(::datanode_proto::ReadBlockBytesReply)},
-  { 89, -1, -1, sizeof(::datanode_proto::DelInfo)},
+  { 19, -1, -1, sizeof(::datanode_proto::SetInfo)},
+  { 31, -1, -1, sizeof(::datanode_proto::AppendInfo)},
+  { 42, -1, -1, sizeof(::datanode_proto::MergeParityInfo)},
+  { 50, -1, -1, sizeof(::datanode_proto::GetInfo)},
+  { 61, -1, -1, sizeof(::datanode_proto::StripeMergeParityInfo)},
+  { 74, -1, -1, sizeof(::datanode_proto::ReadBlockBytesRequest)},
+  { 82, -1, -1, sizeof(::datanode_proto::ReadBlockBytesReply)},
+  { 90, -1, -1, sizeof(::datanode_proto::DelInfo)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -308,58 +310,59 @@ static const ::_pb::Message* const file_default_instances[] = {
 
 const char descriptor_table_protodef_datanode_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\016datanode.proto\022\016datanode_proto\"\035\n\rChec"
-  "kaliveCMD\022\014\n\004name\030\001 \001(\t\"\207\001\n\rRequestResul"
+  "kaliveCMD\022\014\n\004name\030\001 \001(\t\"\242\001\n\rRequestResul"
   "t\022\017\n\007message\030\001 \001(\010\022\026\n\016valuesizebytes\030\002 \001"
   "(\005\022\032\n\022disk_io_start_time\030\003 \001(\001\022\030\n\020disk_i"
   "o_end_time\030\004 \001(\001\022\027\n\017grpc_start_time\030\005 \001("
-  "\001\"x\n\007SetInfo\022\021\n\tblock_key\030\001 \001(\t\022\022\n\nblock"
-  "_size\030\002 \001(\005\022\020\n\010block_id\030\003 \001(\005\022\020\n\010proxy_i"
-  "p\030\004 \001(\t\022\022\n\nproxy_port\030\005 \001(\005\022\016\n\006ispull\030\006 "
-  "\001(\010\"t\n\nAppendInfo\022\021\n\tblock_key\030\001 \001(\t\022\020\n\010"
-  "block_id\030\002 \001(\005\022\023\n\013append_size\030\003 \001(\005\022\025\n\ra"
-  "ppend_offset\030\004 \001(\005\022\025\n\ris_serialized\030\005 \001("
-  "\010\"6\n\017MergeParityInfo\022\021\n\tblock_key\030\001 \001(\t\022"
-  "\020\n\010block_id\030\002 \001(\005\"h\n\007GetInfo\022\021\n\tblock_ke"
-  "y\030\001 \001(\t\022\022\n\nblock_size\030\002 \001(\005\022\020\n\010block_id\030"
-  "\003 \001(\005\022\020\n\010proxy_ip\030\004 \001(\t\022\022\n\nproxy_port\030\005 "
-  "\001(\005\"\277\001\n\025StripeMergeParityInfo\022\024\n\014parity_"
-  "key_a\030\001 \001(\t\022\024\n\014parity_key_b\030\002 \001(\t\022\026\n\016new"
-  "_parity_key\030\003 \001(\t\022\022\n\nblock_size\030\004 \001(\005\022\020\n"
-  "\010gf_coeff\030\005 \001(\005\022\034\n\024parity_b_datanode_ip\030"
-  "\006 \001(\t\022\036\n\026parity_b_datanode_port\030\007 \001(\005\">\n"
-  "\025ReadBlockBytesRequest\022\021\n\tblock_key\030\001 \001("
-  "\t\022\022\n\nblock_size\030\002 \001(\005\"/\n\023ReadBlockBytesR"
-  "eply\022\n\n\002ok\030\001 \001(\010\022\014\n\004data\030\002 \001(\014\"\034\n\007DelInf"
-  "o\022\021\n\tblock_key\030\001 \001(\t2\345\007\n\017datanodeService"
-  "\022J\n\ncheckalive\022\035.datanode_proto.Checkali"
-  "veCMD\032\035.datanode_proto.RequestResult\022C\n\t"
-  "handleSet\022\027.datanode_proto.SetInfo\032\035.dat"
-  "anode_proto.RequestResult\022I\n\014handleAppen"
-  "d\022\032.datanode_proto.AppendInfo\032\035.datanode"
-  "_proto.RequestResult\022S\n\021handleMergeParit"
-  "y\022\037.datanode_proto.MergeParityInfo\032\035.dat"
-  "anode_proto.RequestResult\022Z\n\030handleMerge"
-  "ParityWithRep\022\037.datanode_proto.MergePari"
-  "tyInfo\032\035.datanode_proto.RequestResult\022P\n"
-  "\016handleRecovery\022\037.datanode_proto.MergePa"
-  "rityInfo\032\035.datanode_proto.RequestResult\022"
-  "Y\n\027handleRecoveryBreakdown\022\037.datanode_pr"
-  "oto.MergeParityInfo\032\035.datanode_proto.Req"
-  "uestResult\022C\n\thandleGet\022\027.datanode_proto"
-  ".GetInfo\032\035.datanode_proto.RequestResult\022"
-  "L\n\022handleGetBreakdown\022\027.datanode_proto.G"
-  "etInfo\032\035.datanode_proto.RequestResult\022_\n"
-  "\027handleStripeMergeParity\022%.datanode_prot"
-  "o.StripeMergeParityInfo\032\035.datanode_proto"
-  ".RequestResult\022\\\n\016readBlockBytes\022%.datan"
-  "ode_proto.ReadBlockBytesRequest\032#.datano"
-  "de_proto.ReadBlockBytesReply\022F\n\014handleDe"
-  "lete\022\027.datanode_proto.DelInfo\032\035.datanode"
-  "_proto.RequestResultb\006proto3"
+  "\001\022\031\n\021execution_seconds\030\006 \001(\001\"x\n\007SetInfo\022"
+  "\021\n\tblock_key\030\001 \001(\t\022\022\n\nblock_size\030\002 \001(\005\022\020"
+  "\n\010block_id\030\003 \001(\005\022\020\n\010proxy_ip\030\004 \001(\t\022\022\n\npr"
+  "oxy_port\030\005 \001(\005\022\016\n\006ispull\030\006 \001(\010\"t\n\nAppend"
+  "Info\022\021\n\tblock_key\030\001 \001(\t\022\020\n\010block_id\030\002 \001("
+  "\005\022\023\n\013append_size\030\003 \001(\005\022\025\n\rappend_offset\030"
+  "\004 \001(\005\022\025\n\ris_serialized\030\005 \001(\010\"6\n\017MergePar"
+  "ityInfo\022\021\n\tblock_key\030\001 \001(\t\022\020\n\010block_id\030\002"
+  " \001(\005\"h\n\007GetInfo\022\021\n\tblock_key\030\001 \001(\t\022\022\n\nbl"
+  "ock_size\030\002 \001(\005\022\020\n\010block_id\030\003 \001(\005\022\020\n\010prox"
+  "y_ip\030\004 \001(\t\022\022\n\nproxy_port\030\005 \001(\005\"\277\001\n\025Strip"
+  "eMergeParityInfo\022\024\n\014parity_key_a\030\001 \001(\t\022\024"
+  "\n\014parity_key_b\030\002 \001(\t\022\026\n\016new_parity_key\030\003"
+  " \001(\t\022\022\n\nblock_size\030\004 \001(\005\022\020\n\010gf_coeff\030\005 \001"
+  "(\005\022\034\n\024parity_b_datanode_ip\030\006 \001(\t\022\036\n\026pari"
+  "ty_b_datanode_port\030\007 \001(\005\">\n\025ReadBlockByt"
+  "esRequest\022\021\n\tblock_key\030\001 \001(\t\022\022\n\nblock_si"
+  "ze\030\002 \001(\005\"/\n\023ReadBlockBytesReply\022\n\n\002ok\030\001 "
+  "\001(\010\022\014\n\004data\030\002 \001(\014\"\034\n\007DelInfo\022\021\n\tblock_ke"
+  "y\030\001 \001(\t2\345\007\n\017datanodeService\022J\n\ncheckaliv"
+  "e\022\035.datanode_proto.CheckaliveCMD\032\035.datan"
+  "ode_proto.RequestResult\022C\n\thandleSet\022\027.d"
+  "atanode_proto.SetInfo\032\035.datanode_proto.R"
+  "equestResult\022I\n\014handleAppend\022\032.datanode_"
+  "proto.AppendInfo\032\035.datanode_proto.Reques"
+  "tResult\022S\n\021handleMergeParity\022\037.datanode_"
+  "proto.MergeParityInfo\032\035.datanode_proto.R"
+  "equestResult\022Z\n\030handleMergeParityWithRep"
+  "\022\037.datanode_proto.MergeParityInfo\032\035.data"
+  "node_proto.RequestResult\022P\n\016handleRecove"
+  "ry\022\037.datanode_proto.MergeParityInfo\032\035.da"
+  "tanode_proto.RequestResult\022Y\n\027handleReco"
+  "veryBreakdown\022\037.datanode_proto.MergePari"
+  "tyInfo\032\035.datanode_proto.RequestResult\022C\n"
+  "\thandleGet\022\027.datanode_proto.GetInfo\032\035.da"
+  "tanode_proto.RequestResult\022L\n\022handleGetB"
+  "reakdown\022\027.datanode_proto.GetInfo\032\035.data"
+  "node_proto.RequestResult\022_\n\027handleStripe"
+  "MergeParity\022%.datanode_proto.StripeMerge"
+  "ParityInfo\032\035.datanode_proto.RequestResul"
+  "t\022\\\n\016readBlockBytes\022%.datanode_proto.Rea"
+  "dBlockBytesRequest\032#.datanode_proto.Read"
+  "BlockBytesReply\022F\n\014handleDelete\022\027.datano"
+  "de_proto.DelInfo\032\035.datanode_proto.Reques"
+  "tResultb\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_datanode_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_datanode_2eproto = {
-    false, false, 1948, descriptor_table_protodef_datanode_2eproto,
+    false, false, 1975, descriptor_table_protodef_datanode_2eproto,
     "datanode.proto",
     &descriptor_table_datanode_2eproto_once, nullptr, 0, 10,
     schemas, file_default_instances, TableStruct_datanode_2eproto::offsets,
@@ -598,12 +601,13 @@ RequestResult::RequestResult(const RequestResult& from)
     , decltype(_impl_.disk_io_start_time_){}
     , decltype(_impl_.disk_io_end_time_){}
     , decltype(_impl_.grpc_start_time_){}
+    , decltype(_impl_.execution_seconds_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::memcpy(&_impl_.message_, &from._impl_.message_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.grpc_start_time_) -
-    reinterpret_cast<char*>(&_impl_.message_)) + sizeof(_impl_.grpc_start_time_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.execution_seconds_) -
+    reinterpret_cast<char*>(&_impl_.message_)) + sizeof(_impl_.execution_seconds_));
   // @@protoc_insertion_point(copy_constructor:datanode_proto.RequestResult)
 }
 
@@ -617,6 +621,7 @@ inline void RequestResult::SharedCtor(
     , decltype(_impl_.disk_io_start_time_){0}
     , decltype(_impl_.disk_io_end_time_){0}
     , decltype(_impl_.grpc_start_time_){0}
+    , decltype(_impl_.execution_seconds_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -645,8 +650,8 @@ void RequestResult::Clear() {
   (void) cached_has_bits;
 
   ::memset(&_impl_.message_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.grpc_start_time_) -
-      reinterpret_cast<char*>(&_impl_.message_)) + sizeof(_impl_.grpc_start_time_));
+      reinterpret_cast<char*>(&_impl_.execution_seconds_) -
+      reinterpret_cast<char*>(&_impl_.message_)) + sizeof(_impl_.execution_seconds_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -692,6 +697,14 @@ const char* RequestResult::_InternalParse(const char* ptr, ::_pbi::ParseContext*
       case 5:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 41)) {
           _impl_.grpc_start_time_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
+          ptr += sizeof(double);
+        } else
+          goto handle_unusual;
+        continue;
+      // double execution_seconds = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 49)) {
+          _impl_.execution_seconds_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
           ptr += sizeof(double);
         } else
           goto handle_unusual;
@@ -767,6 +780,16 @@ uint8_t* RequestResult::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteDoubleToArray(5, this->_internal_grpc_start_time(), target);
   }
 
+  // double execution_seconds = 6;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_execution_seconds = this->_internal_execution_seconds();
+  uint64_t raw_execution_seconds;
+  memcpy(&raw_execution_seconds, &tmp_execution_seconds, sizeof(tmp_execution_seconds));
+  if (raw_execution_seconds != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteDoubleToArray(6, this->_internal_execution_seconds(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -820,6 +843,15 @@ size_t RequestResult::ByteSizeLong() const {
     total_size += 1 + 8;
   }
 
+  // double execution_seconds = 6;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_execution_seconds = this->_internal_execution_seconds();
+  uint64_t raw_execution_seconds;
+  memcpy(&raw_execution_seconds, &tmp_execution_seconds, sizeof(tmp_execution_seconds));
+  if (raw_execution_seconds != 0) {
+    total_size += 1 + 8;
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -865,6 +897,13 @@ void RequestResult::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::
   if (raw_grpc_start_time != 0) {
     _this->_internal_set_grpc_start_time(from._internal_grpc_start_time());
   }
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_execution_seconds = from._internal_execution_seconds();
+  uint64_t raw_execution_seconds;
+  memcpy(&raw_execution_seconds, &tmp_execution_seconds, sizeof(tmp_execution_seconds));
+  if (raw_execution_seconds != 0) {
+    _this->_internal_set_execution_seconds(from._internal_execution_seconds());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -883,8 +922,8 @@ void RequestResult::InternalSwap(RequestResult* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(RequestResult, _impl_.grpc_start_time_)
-      + sizeof(RequestResult::_impl_.grpc_start_time_)
+      PROTOBUF_FIELD_OFFSET(RequestResult, _impl_.execution_seconds_)
+      + sizeof(RequestResult::_impl_.execution_seconds_)
       - PROTOBUF_FIELD_OFFSET(RequestResult, _impl_.message_)>(
           reinterpret_cast<char*>(&_impl_.message_),
           reinterpret_cast<char*>(&other->_impl_.message_));

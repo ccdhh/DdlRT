@@ -398,6 +398,8 @@ PROTOBUF_CONSTEXPR MergeReply::MergeReply(
     /*decltype(_impl_.success_)*/false
   , /*decltype(_impl_.new_stripe_id_)*/0
   , /*decltype(_impl_.execution_seconds_)*/0
+  , /*decltype(_impl_.migration_seconds_)*/0
+  , /*decltype(_impl_.parity_seconds_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct MergeReplyDefaultTypeInternal {
   PROTOBUF_CONSTEXPR MergeReplyDefaultTypeInternal()
@@ -427,6 +429,8 @@ PROTOBUF_CONSTEXPR MergeClusterRTRoundReply::MergeClusterRTRoundReply(
   , /*decltype(_impl_.success_)*/false
   , /*decltype(_impl_.merges_done_)*/0
   , /*decltype(_impl_.merge_execution_seconds_)*/0
+  , /*decltype(_impl_.migration_execution_seconds_)*/0
+  , /*decltype(_impl_.parity_execution_seconds_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct MergeClusterRTRoundReplyDefaultTypeInternal {
   PROTOBUF_CONSTEXPR MergeClusterRTRoundReplyDefaultTypeInternal()
@@ -669,6 +673,8 @@ const uint32_t TableStruct_coordinator_2eproto::offsets[] PROTOBUF_SECTION_VARIA
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeReply, _impl_.success_),
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeReply, _impl_.new_stripe_id_),
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeReply, _impl_.execution_seconds_),
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeReply, _impl_.migration_seconds_),
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeReply, _impl_.parity_seconds_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -686,6 +692,8 @@ const uint32_t TableStruct_coordinator_2eproto::offsets[] PROTOBUF_SECTION_VARIA
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.message_),
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.merges_done_),
   PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.merge_execution_seconds_),
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.migration_execution_seconds_),
+  PROTOBUF_FIELD_OFFSET(::coordinator_proto::MergeClusterRTRoundReply, _impl_.parity_execution_seconds_),
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::coordinator_proto::Parameter)},
@@ -714,8 +722,8 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 198, -1, -1, sizeof(::coordinator_proto::StripePosListAndClient)},
   { 207, -1, -1, sizeof(::coordinator_proto::MergeRequest)},
   { 217, -1, -1, sizeof(::coordinator_proto::MergeReply)},
-  { 226, -1, -1, sizeof(::coordinator_proto::MergeClusterRTRoundRequest)},
-  { 233, -1, -1, sizeof(::coordinator_proto::MergeClusterRTRoundReply)},
+  { 228, -1, -1, sizeof(::coordinator_proto::MergeClusterRTRoundRequest)},
+  { 235, -1, -1, sizeof(::coordinator_proto::MergeClusterRTRoundReply)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -798,81 +806,84 @@ const char descriptor_table_protodef_coordinator_2eproto[] PROTOBUF_SECTION_VARI
   "StripePos\022\020\n\010clientip\030\002 \001(\t\022\022\n\nclientpor"
   "t\030\003 \001(\005\"d\n\014MergeRequest\022\023\n\013stripe_id_a\030\001"
   " \001(\005\022\023\n\013stripe_id_b\030\002 \001(\005\022\023\n\013merge_round"
-  "\030\003 \001(\005\022\025\n\rnew_stripe_id\030\004 \001(\005\"O\n\nMergeRe"
-  "ply\022\017\n\007success\030\001 \001(\010\022\025\n\rnew_stripe_id\030\002 "
-  "\001(\005\022\031\n\021execution_seconds\030\003 \001(\001\"1\n\032MergeC"
-  "lusterRTRoundRequest\022\023\n\013merge_round\030\001 \001("
-  "\005\"r\n\030MergeClusterRTRoundReply\022\017\n\007success"
-  "\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\022\023\n\013merges_done\030\003"
-  " \001(\005\022\037\n\027merge_execution_seconds\030\004 \001(\0012\330\023"
-  "\n\022coordinatorService\022k\n\025sayHelloToCoordi"
-  "nator\022\'.coordinator_proto.RequestToCoord"
-  "inator\032\'.coordinator_proto.ReplyFromCoor"
-  "dinator\"\000\022`\n\ncheckalive\022\'.coordinator_pr"
-  "oto.RequestToCoordinator\032\'.coordinator_p"
-  "roto.ReplyFromCoordinator\"\000\022V\n\014setParame"
-  "ter\022\034.coordinator_proto.Parameter\032&.coor"
-  "dinator_proto.RepIfSetParaSuccess\"\000\022d\n\024u"
-  "ploadOriginKeyValue\022%.coordinator_proto."
-  "RequestProxyIPPort\032#.coordinator_proto.R"
-  "eplyProxyIPPort\"\000\022a\n\021reportCommitAbort\022!"
-  ".coordinator_proto.CommitAbortKey\032\'.coor"
-  "dinator_proto.ReplyFromCoordinator\"\000\022V\n\020"
-  "checkCommitAbort\022\037.coordinator_proto.Ask"
-  "IfSuccess\032\037.coordinator_proto.RepIfSucce"
-  "ss\"\000\022`\n\016uploadSetValue\022%.coordinator_pro"
-  "to.RequestProxyIPPort\032%.coordinator_prot"
-  "o.ReplyProxyIPsPorts\"\000\022c\n\021uploadSubsetVa"
-  "lue\022%.coordinator_proto.RequestProxyIPPo"
-  "rt\032%.coordinator_proto.ReplyProxyIPsPort"
-  "s\"\000\022c\n\021uploadAppendValue\022%.coordinator_p"
-  "roto.RequestProxyIPPort\032%.coordinator_pr"
-  "oto.ReplyProxyIPsPorts\"\000\022S\n\010getValue\022!.c"
-  "oordinator_proto.KeyAndClientIP\032\".coordi"
-  "nator_proto.RepIfGetSuccess\"\000\022W\n\tgetStri"
-  "pe\022!.coordinator_proto.KeyAndClientIP\032%."
-  "coordinator_proto.ReplyProxyIPsPorts\"\000\022\\"
-  "\n\tgetBlocks\022&.coordinator_proto.BlockIDs"
-  "AndClientIP\032%.coordinator_proto.ReplyPro"
-  "xyIPsPorts\"\000\022j\n\024getBlocksByStripePos\022).c"
-  "oordinator_proto.StripePosListAndClient\032"
-  "%.coordinator_proto.ReplyProxyIPsPorts\"\000"
-  "\022h\n\025getDegradedReadBlocks\022&.coordinator_"
-  "proto.BlockIDsAndClientIP\032%.coordinator_"
-  "proto.ReplyProxyIPsPorts\"\000\022a\n\024getDegrade"
-  "dReadBlock\022!.coordinator_proto.KeyAndCli"
-  "entIP\032$.coordinator_proto.DegradedReadRe"
-  "ply\"\000\022j\n\035getDegradedReadBlockBreakdown\022!"
-  ".coordinator_proto.KeyAndClientIP\032$.coor"
-  "dinator_proto.DegradedReadReply\"\000\022T\n\013get"
-  "Recovery\022!.coordinator_proto.KeyAndClien"
-  "tIP\032 .coordinator_proto.RecoveryReply\"\000\022"
-  "]\n\024getRecoveryBreakdown\022!.coordinator_pr"
-  "oto.KeyAndClientIP\032 .coordinator_proto.R"
-  "ecoveryReply\"\000\022Y\n\020fullNodeRecovery\022#.coo"
-  "rdinator_proto.NodeIdFromClient\032\036.coordi"
-  "nator_proto.RepBlockNum\"\000\022j\n\022multiBlockR"
-  "ecovery\0220.coordinator_proto.StripeIdAndB"
-  "lockIDsFromClient\032 .coordinator_proto.Re"
-  "coveryReply\"\000\022N\n\010delByKey\022 .coordinator_"
-  "proto.KeyFromClient\032\036.coordinator_proto."
-  "RepIfDeling\"\000\022V\n\013delByStripe\022%.coordinat"
-  "or_proto.StripeIdFromClient\032\036.coordinato"
-  "r_proto.RepIfDeling\"\000\022P\n\014mergeStripes\022\037."
-  "coordinator_proto.MergeRequest\032\035.coordin"
-  "ator_proto.MergeReply\"\000\022s\n\023mergeClusterR"
-  "TRound\022-.coordinator_proto.MergeClusterR"
-  "TRoundRequest\032+.coordinator_proto.MergeC"
-  "lusterRTRoundReply\"\000\022Y\n\013listStripes\022\'.co"
-  "ordinator_proto.RequestToCoordinator\032\037.c"
-  "oordinator_proto.RepStripeIds\"\000\022W\n\ndecod"
-  "eTest\022!.coordinator_proto.KeyAndClientIP"
-  "\032$.coordinator_proto.DegradedReadReply\"\000"
-  "b\006proto3"
+  "\030\003 \001(\005\022\025\n\rnew_stripe_id\030\004 \001(\005\"\202\001\n\nMergeR"
+  "eply\022\017\n\007success\030\001 \001(\010\022\025\n\rnew_stripe_id\030\002"
+  " \001(\005\022\031\n\021execution_seconds\030\003 \001(\001\022\031\n\021migra"
+  "tion_seconds\030\004 \001(\001\022\026\n\016parity_seconds\030\005 \001"
+  "(\001\"1\n\032MergeClusterRTRoundRequest\022\023\n\013merg"
+  "e_round\030\001 \001(\005\"\271\001\n\030MergeClusterRTRoundRep"
+  "ly\022\017\n\007success\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\022\023\n\013"
+  "merges_done\030\003 \001(\005\022\037\n\027merge_execution_sec"
+  "onds\030\004 \001(\001\022#\n\033migration_execution_second"
+  "s\030\005 \001(\001\022 \n\030parity_execution_seconds\030\006 \001("
+  "\0012\330\023\n\022coordinatorService\022k\n\025sayHelloToCo"
+  "ordinator\022\'.coordinator_proto.RequestToC"
+  "oordinator\032\'.coordinator_proto.ReplyFrom"
+  "Coordinator\"\000\022`\n\ncheckalive\022\'.coordinato"
+  "r_proto.RequestToCoordinator\032\'.coordinat"
+  "or_proto.ReplyFromCoordinator\"\000\022V\n\014setPa"
+  "rameter\022\034.coordinator_proto.Parameter\032&."
+  "coordinator_proto.RepIfSetParaSuccess\"\000\022"
+  "d\n\024uploadOriginKeyValue\022%.coordinator_pr"
+  "oto.RequestProxyIPPort\032#.coordinator_pro"
+  "to.ReplyProxyIPPort\"\000\022a\n\021reportCommitAbo"
+  "rt\022!.coordinator_proto.CommitAbortKey\032\'."
+  "coordinator_proto.ReplyFromCoordinator\"\000"
+  "\022V\n\020checkCommitAbort\022\037.coordinator_proto"
+  ".AskIfSuccess\032\037.coordinator_proto.RepIfS"
+  "uccess\"\000\022`\n\016uploadSetValue\022%.coordinator"
+  "_proto.RequestProxyIPPort\032%.coordinator_"
+  "proto.ReplyProxyIPsPorts\"\000\022c\n\021uploadSubs"
+  "etValue\022%.coordinator_proto.RequestProxy"
+  "IPPort\032%.coordinator_proto.ReplyProxyIPs"
+  "Ports\"\000\022c\n\021uploadAppendValue\022%.coordinat"
+  "or_proto.RequestProxyIPPort\032%.coordinato"
+  "r_proto.ReplyProxyIPsPorts\"\000\022S\n\010getValue"
+  "\022!.coordinator_proto.KeyAndClientIP\032\".co"
+  "ordinator_proto.RepIfGetSuccess\"\000\022W\n\tget"
+  "Stripe\022!.coordinator_proto.KeyAndClientI"
+  "P\032%.coordinator_proto.ReplyProxyIPsPorts"
+  "\"\000\022\\\n\tgetBlocks\022&.coordinator_proto.Bloc"
+  "kIDsAndClientIP\032%.coordinator_proto.Repl"
+  "yProxyIPsPorts\"\000\022j\n\024getBlocksByStripePos"
+  "\022).coordinator_proto.StripePosListAndCli"
+  "ent\032%.coordinator_proto.ReplyProxyIPsPor"
+  "ts\"\000\022h\n\025getDegradedReadBlocks\022&.coordina"
+  "tor_proto.BlockIDsAndClientIP\032%.coordina"
+  "tor_proto.ReplyProxyIPsPorts\"\000\022a\n\024getDeg"
+  "radedReadBlock\022!.coordinator_proto.KeyAn"
+  "dClientIP\032$.coordinator_proto.DegradedRe"
+  "adReply\"\000\022j\n\035getDegradedReadBlockBreakdo"
+  "wn\022!.coordinator_proto.KeyAndClientIP\032$."
+  "coordinator_proto.DegradedReadReply\"\000\022T\n"
+  "\013getRecovery\022!.coordinator_proto.KeyAndC"
+  "lientIP\032 .coordinator_proto.RecoveryRepl"
+  "y\"\000\022]\n\024getRecoveryBreakdown\022!.coordinato"
+  "r_proto.KeyAndClientIP\032 .coordinator_pro"
+  "to.RecoveryReply\"\000\022Y\n\020fullNodeRecovery\022#"
+  ".coordinator_proto.NodeIdFromClient\032\036.co"
+  "ordinator_proto.RepBlockNum\"\000\022j\n\022multiBl"
+  "ockRecovery\0220.coordinator_proto.StripeId"
+  "AndBlockIDsFromClient\032 .coordinator_prot"
+  "o.RecoveryReply\"\000\022N\n\010delByKey\022 .coordina"
+  "tor_proto.KeyFromClient\032\036.coordinator_pr"
+  "oto.RepIfDeling\"\000\022V\n\013delByStripe\022%.coord"
+  "inator_proto.StripeIdFromClient\032\036.coordi"
+  "nator_proto.RepIfDeling\"\000\022P\n\014mergeStripe"
+  "s\022\037.coordinator_proto.MergeRequest\032\035.coo"
+  "rdinator_proto.MergeReply\"\000\022s\n\023mergeClus"
+  "terRTRound\022-.coordinator_proto.MergeClus"
+  "terRTRoundRequest\032+.coordinator_proto.Me"
+  "rgeClusterRTRoundReply\"\000\022Y\n\013listStripes\022"
+  "\'.coordinator_proto.RequestToCoordinator"
+  "\032\037.coordinator_proto.RepStripeIds\"\000\022W\n\nd"
+  "ecodeTest\022!.coordinator_proto.KeyAndClie"
+  "ntIP\032$.coordinator_proto.DegradedReadRep"
+  "ly\"\000b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_coordinator_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_coordinator_2eproto = {
-    false, false, 4728, descriptor_table_protodef_coordinator_2eproto,
+    false, false, 4852, descriptor_table_protodef_coordinator_2eproto,
     "coordinator.proto",
     &descriptor_table_coordinator_2eproto_once, nullptr, 0, 28,
     schemas, file_default_instances, TableStruct_coordinator_2eproto::offsets,
@@ -7003,12 +7014,14 @@ MergeReply::MergeReply(const MergeReply& from)
       decltype(_impl_.success_){}
     , decltype(_impl_.new_stripe_id_){}
     , decltype(_impl_.execution_seconds_){}
+    , decltype(_impl_.migration_seconds_){}
+    , decltype(_impl_.parity_seconds_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::memcpy(&_impl_.success_, &from._impl_.success_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.execution_seconds_) -
-    reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.execution_seconds_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.parity_seconds_) -
+    reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.parity_seconds_));
   // @@protoc_insertion_point(copy_constructor:coordinator_proto.MergeReply)
 }
 
@@ -7020,6 +7033,8 @@ inline void MergeReply::SharedCtor(
       decltype(_impl_.success_){false}
     , decltype(_impl_.new_stripe_id_){0}
     , decltype(_impl_.execution_seconds_){0}
+    , decltype(_impl_.migration_seconds_){0}
+    , decltype(_impl_.parity_seconds_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -7048,8 +7063,8 @@ void MergeReply::Clear() {
   (void) cached_has_bits;
 
   ::memset(&_impl_.success_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.execution_seconds_) -
-      reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.execution_seconds_));
+      reinterpret_cast<char*>(&_impl_.parity_seconds_) -
+      reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.parity_seconds_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -7079,6 +7094,22 @@ const char* MergeReply::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 25)) {
           _impl_.execution_seconds_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
+          ptr += sizeof(double);
+        } else
+          goto handle_unusual;
+        continue;
+      // double migration_seconds = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 33)) {
+          _impl_.migration_seconds_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
+          ptr += sizeof(double);
+        } else
+          goto handle_unusual;
+        continue;
+      // double parity_seconds = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 41)) {
+          _impl_.parity_seconds_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
           ptr += sizeof(double);
         } else
           goto handle_unusual;
@@ -7134,6 +7165,26 @@ uint8_t* MergeReply::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteDoubleToArray(3, this->_internal_execution_seconds(), target);
   }
 
+  // double migration_seconds = 4;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_migration_seconds = this->_internal_migration_seconds();
+  uint64_t raw_migration_seconds;
+  memcpy(&raw_migration_seconds, &tmp_migration_seconds, sizeof(tmp_migration_seconds));
+  if (raw_migration_seconds != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteDoubleToArray(4, this->_internal_migration_seconds(), target);
+  }
+
+  // double parity_seconds = 5;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_parity_seconds = this->_internal_parity_seconds();
+  uint64_t raw_parity_seconds;
+  memcpy(&raw_parity_seconds, &tmp_parity_seconds, sizeof(tmp_parity_seconds));
+  if (raw_parity_seconds != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteDoubleToArray(5, this->_internal_parity_seconds(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -7169,6 +7220,24 @@ size_t MergeReply::ByteSizeLong() const {
     total_size += 1 + 8;
   }
 
+  // double migration_seconds = 4;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_migration_seconds = this->_internal_migration_seconds();
+  uint64_t raw_migration_seconds;
+  memcpy(&raw_migration_seconds, &tmp_migration_seconds, sizeof(tmp_migration_seconds));
+  if (raw_migration_seconds != 0) {
+    total_size += 1 + 8;
+  }
+
+  // double parity_seconds = 5;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_parity_seconds = this->_internal_parity_seconds();
+  uint64_t raw_parity_seconds;
+  memcpy(&raw_parity_seconds, &tmp_parity_seconds, sizeof(tmp_parity_seconds));
+  if (raw_parity_seconds != 0) {
+    total_size += 1 + 8;
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -7200,6 +7269,20 @@ void MergeReply::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PRO
   if (raw_execution_seconds != 0) {
     _this->_internal_set_execution_seconds(from._internal_execution_seconds());
   }
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_migration_seconds = from._internal_migration_seconds();
+  uint64_t raw_migration_seconds;
+  memcpy(&raw_migration_seconds, &tmp_migration_seconds, sizeof(tmp_migration_seconds));
+  if (raw_migration_seconds != 0) {
+    _this->_internal_set_migration_seconds(from._internal_migration_seconds());
+  }
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_parity_seconds = from._internal_parity_seconds();
+  uint64_t raw_parity_seconds;
+  memcpy(&raw_parity_seconds, &tmp_parity_seconds, sizeof(tmp_parity_seconds));
+  if (raw_parity_seconds != 0) {
+    _this->_internal_set_parity_seconds(from._internal_parity_seconds());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -7218,8 +7301,8 @@ void MergeReply::InternalSwap(MergeReply* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(MergeReply, _impl_.execution_seconds_)
-      + sizeof(MergeReply::_impl_.execution_seconds_)
+      PROTOBUF_FIELD_OFFSET(MergeReply, _impl_.parity_seconds_)
+      + sizeof(MergeReply::_impl_.parity_seconds_)
       - PROTOBUF_FIELD_OFFSET(MergeReply, _impl_.success_)>(
           reinterpret_cast<char*>(&_impl_.success_),
           reinterpret_cast<char*>(&other->_impl_.success_));
@@ -7429,6 +7512,8 @@ MergeClusterRTRoundReply::MergeClusterRTRoundReply(const MergeClusterRTRoundRepl
     , decltype(_impl_.success_){}
     , decltype(_impl_.merges_done_){}
     , decltype(_impl_.merge_execution_seconds_){}
+    , decltype(_impl_.migration_execution_seconds_){}
+    , decltype(_impl_.parity_execution_seconds_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -7441,8 +7526,8 @@ MergeClusterRTRoundReply::MergeClusterRTRoundReply(const MergeClusterRTRoundRepl
       _this->GetArenaForAllocation());
   }
   ::memcpy(&_impl_.success_, &from._impl_.success_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.merge_execution_seconds_) -
-    reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.merge_execution_seconds_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.parity_execution_seconds_) -
+    reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.parity_execution_seconds_));
   // @@protoc_insertion_point(copy_constructor:coordinator_proto.MergeClusterRTRoundReply)
 }
 
@@ -7455,6 +7540,8 @@ inline void MergeClusterRTRoundReply::SharedCtor(
     , decltype(_impl_.success_){false}
     , decltype(_impl_.merges_done_){0}
     , decltype(_impl_.merge_execution_seconds_){0}
+    , decltype(_impl_.migration_execution_seconds_){0}
+    , decltype(_impl_.parity_execution_seconds_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.message_.InitDefault();
@@ -7489,8 +7576,8 @@ void MergeClusterRTRoundReply::Clear() {
 
   _impl_.message_.ClearToEmpty();
   ::memset(&_impl_.success_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.merge_execution_seconds_) -
-      reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.merge_execution_seconds_));
+      reinterpret_cast<char*>(&_impl_.parity_execution_seconds_) -
+      reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.parity_execution_seconds_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -7530,6 +7617,22 @@ const char* MergeClusterRTRoundReply::_InternalParse(const char* ptr, ::_pbi::Pa
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 33)) {
           _impl_.merge_execution_seconds_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
+          ptr += sizeof(double);
+        } else
+          goto handle_unusual;
+        continue;
+      // double migration_execution_seconds = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 41)) {
+          _impl_.migration_execution_seconds_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
+          ptr += sizeof(double);
+        } else
+          goto handle_unusual;
+        continue;
+      // double parity_execution_seconds = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 49)) {
+          _impl_.parity_execution_seconds_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
           ptr += sizeof(double);
         } else
           goto handle_unusual;
@@ -7595,6 +7698,26 @@ uint8_t* MergeClusterRTRoundReply::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteDoubleToArray(4, this->_internal_merge_execution_seconds(), target);
   }
 
+  // double migration_execution_seconds = 5;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_migration_execution_seconds = this->_internal_migration_execution_seconds();
+  uint64_t raw_migration_execution_seconds;
+  memcpy(&raw_migration_execution_seconds, &tmp_migration_execution_seconds, sizeof(tmp_migration_execution_seconds));
+  if (raw_migration_execution_seconds != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteDoubleToArray(5, this->_internal_migration_execution_seconds(), target);
+  }
+
+  // double parity_execution_seconds = 6;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_parity_execution_seconds = this->_internal_parity_execution_seconds();
+  uint64_t raw_parity_execution_seconds;
+  memcpy(&raw_parity_execution_seconds, &tmp_parity_execution_seconds, sizeof(tmp_parity_execution_seconds));
+  if (raw_parity_execution_seconds != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteDoubleToArray(6, this->_internal_parity_execution_seconds(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -7637,6 +7760,24 @@ size_t MergeClusterRTRoundReply::ByteSizeLong() const {
     total_size += 1 + 8;
   }
 
+  // double migration_execution_seconds = 5;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_migration_execution_seconds = this->_internal_migration_execution_seconds();
+  uint64_t raw_migration_execution_seconds;
+  memcpy(&raw_migration_execution_seconds, &tmp_migration_execution_seconds, sizeof(tmp_migration_execution_seconds));
+  if (raw_migration_execution_seconds != 0) {
+    total_size += 1 + 8;
+  }
+
+  // double parity_execution_seconds = 6;
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_parity_execution_seconds = this->_internal_parity_execution_seconds();
+  uint64_t raw_parity_execution_seconds;
+  memcpy(&raw_parity_execution_seconds, &tmp_parity_execution_seconds, sizeof(tmp_parity_execution_seconds));
+  if (raw_parity_execution_seconds != 0) {
+    total_size += 1 + 8;
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -7671,6 +7812,20 @@ void MergeClusterRTRoundReply::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_ms
   if (raw_merge_execution_seconds != 0) {
     _this->_internal_set_merge_execution_seconds(from._internal_merge_execution_seconds());
   }
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_migration_execution_seconds = from._internal_migration_execution_seconds();
+  uint64_t raw_migration_execution_seconds;
+  memcpy(&raw_migration_execution_seconds, &tmp_migration_execution_seconds, sizeof(tmp_migration_execution_seconds));
+  if (raw_migration_execution_seconds != 0) {
+    _this->_internal_set_migration_execution_seconds(from._internal_migration_execution_seconds());
+  }
+  static_assert(sizeof(uint64_t) == sizeof(double), "Code assumes uint64_t and double are the same size.");
+  double tmp_parity_execution_seconds = from._internal_parity_execution_seconds();
+  uint64_t raw_parity_execution_seconds;
+  memcpy(&raw_parity_execution_seconds, &tmp_parity_execution_seconds, sizeof(tmp_parity_execution_seconds));
+  if (raw_parity_execution_seconds != 0) {
+    _this->_internal_set_parity_execution_seconds(from._internal_parity_execution_seconds());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -7695,8 +7850,8 @@ void MergeClusterRTRoundReply::InternalSwap(MergeClusterRTRoundReply* other) {
       &other->_impl_.message_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(MergeClusterRTRoundReply, _impl_.merge_execution_seconds_)
-      + sizeof(MergeClusterRTRoundReply::_impl_.merge_execution_seconds_)
+      PROTOBUF_FIELD_OFFSET(MergeClusterRTRoundReply, _impl_.parity_execution_seconds_)
+      + sizeof(MergeClusterRTRoundReply::_impl_.parity_execution_seconds_)
       - PROTOBUF_FIELD_OFFSET(MergeClusterRTRoundReply, _impl_.success_)>(
           reinterpret_cast<char*>(&_impl_.success_),
           reinterpret_cast<char*>(&other->_impl_.success_));

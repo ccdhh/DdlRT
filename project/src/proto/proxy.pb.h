@@ -1637,6 +1637,7 @@ class blockRelocReply final :
 
   enum : int {
     kResultFieldNumber = 1,
+    kExecutionSecondsFieldNumber = 2,
   };
   // string result = 1;
   void clear_result();
@@ -1652,6 +1653,15 @@ class blockRelocReply final :
   std::string* _internal_mutable_result();
   public:
 
+  // double execution_seconds = 2;
+  void clear_execution_seconds();
+  double execution_seconds() const;
+  void set_execution_seconds(double value);
+  private:
+  double _internal_execution_seconds() const;
+  void _internal_set_execution_seconds(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:proxy_proto.blockRelocReply)
  private:
   class _Internal;
@@ -1661,6 +1671,7 @@ class blockRelocReply final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr result_;
+    double execution_seconds_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -7371,6 +7382,26 @@ inline void blockRelocReply::set_allocated_result(std::string* result) {
   }
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   // @@protoc_insertion_point(field_set_allocated:proxy_proto.blockRelocReply.result)
+}
+
+// double execution_seconds = 2;
+inline void blockRelocReply::clear_execution_seconds() {
+  _impl_.execution_seconds_ = 0;
+}
+inline double blockRelocReply::_internal_execution_seconds() const {
+  return _impl_.execution_seconds_;
+}
+inline double blockRelocReply::execution_seconds() const {
+  // @@protoc_insertion_point(field_get:proxy_proto.blockRelocReply.execution_seconds)
+  return _internal_execution_seconds();
+}
+inline void blockRelocReply::_internal_set_execution_seconds(double value) {
+  
+  _impl_.execution_seconds_ = value;
+}
+inline void blockRelocReply::set_execution_seconds(double value) {
+  _internal_set_execution_seconds(value);
+  // @@protoc_insertion_point(field_set:proxy_proto.blockRelocReply.execution_seconds)
 }
 
 // -------------------------------------------------------------------

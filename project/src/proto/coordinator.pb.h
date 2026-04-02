@@ -4619,6 +4619,8 @@ class MergeReply final :
     kSuccessFieldNumber = 1,
     kNewStripeIdFieldNumber = 2,
     kExecutionSecondsFieldNumber = 3,
+    kMigrationSecondsFieldNumber = 4,
+    kParitySecondsFieldNumber = 5,
   };
   // bool success = 1;
   void clear_success();
@@ -4647,6 +4649,24 @@ class MergeReply final :
   void _internal_set_execution_seconds(double value);
   public:
 
+  // double migration_seconds = 4;
+  void clear_migration_seconds();
+  double migration_seconds() const;
+  void set_migration_seconds(double value);
+  private:
+  double _internal_migration_seconds() const;
+  void _internal_set_migration_seconds(double value);
+  public:
+
+  // double parity_seconds = 5;
+  void clear_parity_seconds();
+  double parity_seconds() const;
+  void set_parity_seconds(double value);
+  private:
+  double _internal_parity_seconds() const;
+  void _internal_set_parity_seconds(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:coordinator_proto.MergeReply)
  private:
   class _Internal;
@@ -4658,6 +4678,8 @@ class MergeReply final :
     bool success_;
     int32_t new_stripe_id_;
     double execution_seconds_;
+    double migration_seconds_;
+    double parity_seconds_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4938,6 +4960,8 @@ class MergeClusterRTRoundReply final :
     kSuccessFieldNumber = 1,
     kMergesDoneFieldNumber = 3,
     kMergeExecutionSecondsFieldNumber = 4,
+    kMigrationExecutionSecondsFieldNumber = 5,
+    kParityExecutionSecondsFieldNumber = 6,
   };
   // string message = 2;
   void clear_message();
@@ -4980,6 +5004,24 @@ class MergeClusterRTRoundReply final :
   void _internal_set_merge_execution_seconds(double value);
   public:
 
+  // double migration_execution_seconds = 5;
+  void clear_migration_execution_seconds();
+  double migration_execution_seconds() const;
+  void set_migration_execution_seconds(double value);
+  private:
+  double _internal_migration_execution_seconds() const;
+  void _internal_set_migration_execution_seconds(double value);
+  public:
+
+  // double parity_execution_seconds = 6;
+  void clear_parity_execution_seconds();
+  double parity_execution_seconds() const;
+  void set_parity_execution_seconds(double value);
+  private:
+  double _internal_parity_execution_seconds() const;
+  void _internal_set_parity_execution_seconds(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:coordinator_proto.MergeClusterRTRoundReply)
  private:
   class _Internal;
@@ -4992,6 +5034,8 @@ class MergeClusterRTRoundReply final :
     bool success_;
     int32_t merges_done_;
     double merge_execution_seconds_;
+    double migration_execution_seconds_;
+    double parity_execution_seconds_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -7133,6 +7177,46 @@ inline void MergeReply::set_execution_seconds(double value) {
   // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.execution_seconds)
 }
 
+// double migration_seconds = 4;
+inline void MergeReply::clear_migration_seconds() {
+  _impl_.migration_seconds_ = 0;
+}
+inline double MergeReply::_internal_migration_seconds() const {
+  return _impl_.migration_seconds_;
+}
+inline double MergeReply::migration_seconds() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeReply.migration_seconds)
+  return _internal_migration_seconds();
+}
+inline void MergeReply::_internal_set_migration_seconds(double value) {
+  
+  _impl_.migration_seconds_ = value;
+}
+inline void MergeReply::set_migration_seconds(double value) {
+  _internal_set_migration_seconds(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.migration_seconds)
+}
+
+// double parity_seconds = 5;
+inline void MergeReply::clear_parity_seconds() {
+  _impl_.parity_seconds_ = 0;
+}
+inline double MergeReply::_internal_parity_seconds() const {
+  return _impl_.parity_seconds_;
+}
+inline double MergeReply::parity_seconds() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeReply.parity_seconds)
+  return _internal_parity_seconds();
+}
+inline void MergeReply::_internal_set_parity_seconds(double value) {
+  
+  _impl_.parity_seconds_ = value;
+}
+inline void MergeReply::set_parity_seconds(double value) {
+  _internal_set_parity_seconds(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeReply.parity_seconds)
+}
+
 // -------------------------------------------------------------------
 
 // MergeClusterRTRoundRequest
@@ -7269,6 +7353,46 @@ inline void MergeClusterRTRoundReply::_internal_set_merge_execution_seconds(doub
 inline void MergeClusterRTRoundReply::set_merge_execution_seconds(double value) {
   _internal_set_merge_execution_seconds(value);
   // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.merge_execution_seconds)
+}
+
+// double migration_execution_seconds = 5;
+inline void MergeClusterRTRoundReply::clear_migration_execution_seconds() {
+  _impl_.migration_execution_seconds_ = 0;
+}
+inline double MergeClusterRTRoundReply::_internal_migration_execution_seconds() const {
+  return _impl_.migration_execution_seconds_;
+}
+inline double MergeClusterRTRoundReply::migration_execution_seconds() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeClusterRTRoundReply.migration_execution_seconds)
+  return _internal_migration_execution_seconds();
+}
+inline void MergeClusterRTRoundReply::_internal_set_migration_execution_seconds(double value) {
+  
+  _impl_.migration_execution_seconds_ = value;
+}
+inline void MergeClusterRTRoundReply::set_migration_execution_seconds(double value) {
+  _internal_set_migration_execution_seconds(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.migration_execution_seconds)
+}
+
+// double parity_execution_seconds = 6;
+inline void MergeClusterRTRoundReply::clear_parity_execution_seconds() {
+  _impl_.parity_execution_seconds_ = 0;
+}
+inline double MergeClusterRTRoundReply::_internal_parity_execution_seconds() const {
+  return _impl_.parity_execution_seconds_;
+}
+inline double MergeClusterRTRoundReply::parity_execution_seconds() const {
+  // @@protoc_insertion_point(field_get:coordinator_proto.MergeClusterRTRoundReply.parity_execution_seconds)
+  return _internal_parity_execution_seconds();
+}
+inline void MergeClusterRTRoundReply::_internal_set_parity_execution_seconds(double value) {
+  
+  _impl_.parity_execution_seconds_ = value;
+}
+inline void MergeClusterRTRoundReply::set_parity_execution_seconds(double value) {
+  _internal_set_parity_execution_seconds(value);
+  // @@protoc_insertion_point(field_set:coordinator_proto.MergeClusterRTRoundReply.parity_execution_seconds)
 }
 
 #ifdef __GNUC__

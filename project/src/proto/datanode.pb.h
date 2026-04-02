@@ -371,6 +371,7 @@ class RequestResult final :
     kDiskIoStartTimeFieldNumber = 3,
     kDiskIoEndTimeFieldNumber = 4,
     kGrpcStartTimeFieldNumber = 5,
+    kExecutionSecondsFieldNumber = 6,
   };
   // bool message = 1;
   void clear_message();
@@ -417,6 +418,15 @@ class RequestResult final :
   void _internal_set_grpc_start_time(double value);
   public:
 
+  // double execution_seconds = 6;
+  void clear_execution_seconds();
+  double execution_seconds() const;
+  void set_execution_seconds(double value);
+  private:
+  double _internal_execution_seconds() const;
+  void _internal_set_execution_seconds(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:datanode_proto.RequestResult)
  private:
   class _Internal;
@@ -430,6 +440,7 @@ class RequestResult final :
     double disk_io_start_time_;
     double disk_io_end_time_;
     double grpc_start_time_;
+    double execution_seconds_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -2089,6 +2100,26 @@ inline void RequestResult::_internal_set_grpc_start_time(double value) {
 inline void RequestResult::set_grpc_start_time(double value) {
   _internal_set_grpc_start_time(value);
   // @@protoc_insertion_point(field_set:datanode_proto.RequestResult.grpc_start_time)
+}
+
+// double execution_seconds = 6;
+inline void RequestResult::clear_execution_seconds() {
+  _impl_.execution_seconds_ = 0;
+}
+inline double RequestResult::_internal_execution_seconds() const {
+  return _impl_.execution_seconds_;
+}
+inline double RequestResult::execution_seconds() const {
+  // @@protoc_insertion_point(field_get:datanode_proto.RequestResult.execution_seconds)
+  return _internal_execution_seconds();
+}
+inline void RequestResult::_internal_set_execution_seconds(double value) {
+  
+  _impl_.execution_seconds_ = value;
+}
+inline void RequestResult::set_execution_seconds(double value) {
+  _internal_set_execution_seconds(value);
+  // @@protoc_insertion_point(field_set:datanode_proto.RequestResult.execution_seconds)
 }
 
 // -------------------------------------------------------------------
