@@ -54,6 +54,8 @@ message RequestResult {
     double disk_io_start_time = 3;
     double disk_io_end_time = 4;
     double grpc_start_time = 5;
+    // Pure execution time on the datanode side (seconds) for handling an RPC, if set by the handler.
+    double execution_seconds = 6;
 }
 
 message SetInfo {

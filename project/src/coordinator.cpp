@@ -4820,29 +4820,52 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
 
   std::atomic<bool> migration_ok{true};
   std::atomic<bool> parity_ok{true};
+  // "Pure execution" times returned by the server handlers:
+  // - proxy::relocateBlock -> proxy_proto::blockRelocReply.execution_seconds
+  // - datanode::handleStripeMergeParity -> datanode_proto::RequestResult.execution_seconds
+  //
+  // Since migration and parity are executed concurrently, the pure merge time is max().
+  std::atomic<long long> migration_ns{0};
+  std::atomic<long long> parity_ns{0};
 
-  auto exec_t0 = std::chrono::high_resolution_clock::now();
-
-  std::thread migration_thread([&]() {
-    for (auto &rpc : migration_rpcs) {
-      grpc::ClientContext ctx;
-      proxy_proto::blockRelocReply reloc_reply;
-      grpc::Status st =
-          m_proxy_ptrs[rpc.proxy_addr]->relocateBlock(&ctx, rpc.plan, &reloc_reply);
-      if (!st.ok()) {
-        migration_ok = false;
-        std::cerr << "[ClusterRT][Merge] relocateBlock failed via "
-                  << rpc.proxy_addr << ": " << st.error_message()
-                  << std::endl;
-      }
+  auto atomic_max_ns = [](std::atomic<long long> &target, long long value) {
+    long long cur = target.load();
+    while (value > cur && !target.compare_exchange_weak(cur, value)) {
+      // cur will be updated with the latest value by compare_exchange_weak.
     }
+  };
+
+  std::thread migration_thread([&migration_ok, &migration_ns, this, &migration_rpcs, &atomic_max_ns]() {
+    std::vector<std::thread> sub_threads;
+    sub_threads.reserve(migration_rpcs.size());
+    for (auto rpc : migration_rpcs) {
+      sub_threads.emplace_back([this, rpc, &migration_ok, &migration_ns, &atomic_max_ns]() {
+        grpc::ClientContext ctx;
+        proxy_proto::blockRelocReply reloc_reply;
+        grpc::Status st =
+            m_proxy_ptrs[rpc.proxy_addr]->relocateBlock(&ctx, rpc.plan, &reloc_reply);
+        if (!st.ok()) {
+          migration_ok = false;
+          std::cerr << "[ClusterRT][Merge] relocateBlock failed via "
+                    << rpc.proxy_addr << ": " << st.error_message()
+                    << std::endl;
+          return;
+        }
+        // Pure handler execution time (seconds -> ns).
+        const double exec_seconds = reloc_reply.execution_seconds();
+        const long long exec_ns = static_cast<long long>(exec_seconds * 1e9);
+        atomic_max_ns(migration_ns, exec_ns);
+      });
+    }
+    for (auto &t : sub_threads)
+      t.join();
   });
 
-  std::thread parity_thread([&]() {
+  std::thread parity_thread([&parity_ok, &parity_ns, &parity_tasks, block_size, &atomic_max_ns]() {
     std::vector<std::thread> sub_threads;
     sub_threads.reserve(parity_tasks.size());
     for (auto task : parity_tasks) {
-      sub_threads.emplace_back([task, block_size, &parity_ok]() {
+      sub_threads.emplace_back([task, block_size, &parity_ok, &parity_ns, &atomic_max_ns]() {
         auto channel = grpc::CreateChannel(
             task.datanode_ip + ":" + std::to_string(task.datanode_port),
             grpc::InsecureChannelCredentials());
@@ -4864,7 +4887,11 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
           parity_ok = false;
           std::cerr << "[ClusterRT][Merge] parity merge failed on "
                     << task.datanode_ip << ":" << task.datanode_port << std::endl;
+          // Even on failure, keep any non-zero execution_seconds for diagnostics.
         }
+        const double exec_seconds = result.execution_seconds();
+        const long long exec_ns = static_cast<long long>(exec_seconds * 1e9);
+        atomic_max_ns(parity_ns, exec_ns);
       });
     }
     for (auto &t : sub_threads)
@@ -4874,9 +4901,13 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
   migration_thread.join();
   parity_thread.join();
 
-  auto exec_t1 = std::chrono::high_resolution_clock::now();
-  reply->set_execution_seconds(
-      std::chrono::duration<double>(exec_t1 - exec_t0).count());
+  const double migration_seconds = static_cast<double>(migration_ns.load()) / 1e9;
+  const double parity_seconds = static_cast<double>(parity_ns.load()) / 1e9;
+  const double merge_seconds = std::max(migration_seconds, parity_seconds);
+
+  reply->set_execution_seconds(merge_seconds);
+  reply->set_migration_seconds(migration_seconds);
+  reply->set_parity_seconds(parity_seconds);
 
   if (!migration_ok.load() || !parity_ok.load()) {
     reply->set_success(false);
@@ -5056,11 +5087,15 @@ grpc::Status CoordinatorImpl::mergeClusterRTRound(
   if (!rong_left.empty()) {
     reply->set_message("unpaired stripe remains after parity-group and cross pairing");
     reply->set_merge_execution_seconds(0.0);
+    reply->set_migration_execution_seconds(0.0);
+    reply->set_parity_execution_seconds(0.0);
     return grpc::Status::OK;
   }
 
   int merges_done = 0;
   double total_exec_seconds = 0.0;
+  double total_migration_exec_seconds = 0.0;
+  double total_parity_exec_seconds = 0.0;
   for (const auto &pr : pairs) {
     coordinator_proto::MergeRequest req;
     coordinator_proto::MergeReply rep;
@@ -5072,10 +5107,14 @@ grpc::Status CoordinatorImpl::mergeClusterRTRound(
     if (!st.ok()) {
       reply->set_merge_execution_seconds(
           total_exec_seconds);
+      reply->set_migration_execution_seconds(total_migration_exec_seconds);
+      reply->set_parity_execution_seconds(total_parity_exec_seconds);
       reply->set_message("mergeStripesClusterRT failed: " + st.error_message());
       return st;
     }
     total_exec_seconds += rep.execution_seconds();
+    total_migration_exec_seconds += rep.migration_seconds();
+    total_parity_exec_seconds += rep.parity_seconds();
     if (!rep.success()) {
       reply->set_merge_execution_seconds(
           total_exec_seconds);
@@ -5086,6 +5125,8 @@ grpc::Status CoordinatorImpl::mergeClusterRTRound(
   }
   reply->set_merge_execution_seconds(
       total_exec_seconds);
+  reply->set_migration_execution_seconds(total_migration_exec_seconds);
+  reply->set_parity_execution_seconds(total_parity_exec_seconds);
   reply->set_success(true);
   reply->set_merges_done(merges_done);
   reply->set_message("ok");

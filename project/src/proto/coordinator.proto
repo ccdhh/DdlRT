@@ -219,6 +219,12 @@ message MergeReply {
   // Seconds spent executing relocateBlock + handleStripeMergeParity inside mergeStripesClusterRT.
   // Excludes pair/planning/metadata update.
   double execution_seconds = 3;
+  // Seconds spent only on data relocation (proxy::relocateBlock part) inside mergeStripesClusterRT.
+  // Measured as the wall time of the relocation phase (including its internal parallelism).
+  double migration_seconds = 4;
+  // Seconds spent only on parity update (handleStripeMergeParity part) inside mergeStripesClusterRT.
+  // Measured as the wall time of the parity phase (including its internal parallelism).
+  double parity_seconds = 5;
 }
 
 message MergeClusterRTRoundRequest {
@@ -231,4 +237,8 @@ message MergeClusterRTRoundReply {
   int32 merges_done = 3;
   // Seconds spent inside mergeStripesClusterRT only (excludes pairing / plan build).
   double merge_execution_seconds = 4;
+  // Sum of migration_seconds across all merged stripe pairs in this round.
+  double migration_execution_seconds = 5;
+  // Sum of parity_seconds across all merged stripe pairs in this round.
+  double parity_execution_seconds = 6;
 }

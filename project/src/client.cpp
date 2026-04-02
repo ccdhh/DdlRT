@@ -1539,9 +1539,11 @@ namespace ECProject
       if (!st.ok()) {
         std::cout << "[Client] mergeClusterRTRound failed: " << st.error_message()
                   << std::endl;
-        std::cout << "[Client][MergeTimer] Cluster RT merge execution time = "
-                  << rep.merge_execution_seconds() << " s (relocateBlock + parity merge only)"
-                  << std::endl;
+        std::cout << "[Client][MergeTimer] Cluster RT merge timing (pure, partial): "
+                  << "pure_merge=" << rep.merge_execution_seconds() << "s"
+                  << ", pure_migration=" << rep.migration_execution_seconds() << "s"
+                  << ", pure_parity=" << rep.parity_execution_seconds() << "s"
+                  << " (relocateBlock + handleStripeMergeParity only)" << std::endl;
         return;
       }
       if (rep.success()) {
@@ -1550,9 +1552,11 @@ namespace ECProject
       } else {
         std::cout << "[Client] Cluster RT round failed: " << rep.message() << std::endl;
       }
-      std::cout << "[Client][MergeTimer] Cluster RT merge execution time = "
-                << rep.merge_execution_seconds() << " s (relocateBlock + parity merge only)"
-                << std::endl;
+      std::cout << "[Client][MergeTimer] Cluster RT merge timing: "
+                << "pure_merge=" << rep.merge_execution_seconds() << "s"
+                << ", pure_migration=" << rep.migration_execution_seconds() << "s"
+                << ", pure_parity=" << rep.parity_execution_seconds() << "s"
+                << " (relocateBlock + handleStripeMergeParity only)" << std::endl;
       return;
     }
 

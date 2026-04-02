@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <chrono>
+#include <cstring>
 namespace ECProject
 {
     grpc::Status DatanodeImpl::checkalive(
@@ -765,11 +766,50 @@ namespace ECProject
         return grpc::Status::OK;
     }
 
+    grpc::Status DatanodeImpl::readBlockBytes(
+        grpc::ServerContext *context,
+        const datanode_proto::ReadBlockBytesRequest *request,
+        datanode_proto::ReadBlockBytesReply *response)
+    {
+        (void)context;
+        const std::string &block_key = request->block_key();
+        const int block_size = request->block_size();
+        if (block_size <= 0)
+        {
+            response->set_ok(false);
+            return grpc::Status::OK;
+        }
+
+        std::string targetdir = "./storage/" + std::to_string(m_port) + "/";
+        std::string readpath = targetdir + block_key;
+        if (access(readpath.c_str(), 0) == -1)
+        {
+            response->set_ok(false);
+            return grpc::Status::OK;
+        }
+
+        std::string buf(static_cast<size_t>(block_size), '\0');
+        std::ifstream ifs(readpath, std::ios::binary);
+        if (!ifs.is_open())
+        {
+            response->set_ok(false);
+            return grpc::Status::OK;
+        }
+
+        ifs.read(buf.data(), block_size);
+        ifs.close();
+
+        response->set_ok(true);
+        response->set_data(buf);
+        return grpc::Status::OK;
+    }
+
     grpc::Status DatanodeImpl::handleStripeMergeParity(
         grpc::ServerContext *context,
         const datanode_proto::StripeMergeParityInfo *info,
         datanode_proto::RequestResult *response)
     {
+        auto t0 = std::chrono::high_resolution_clock::now();
         std::string parity_key_a = info->parity_key_a();
         std::string parity_key_b = info->parity_key_b();
         std::string new_parity_key = info->new_parity_key();
@@ -786,11 +826,6 @@ namespace ECProject
             response->set_message(false);
             return grpc::Status::OK;
         }
-        if (access(path_b.c_str(), 0) == -1) {
-            std::cerr << "[Datanode" << m_port << "][StripeMergeParity] parity B not found: " << path_b << std::endl;
-            response->set_message(false);
-            return grpc::Status::OK;
-        }
 
         std::unique_ptr<char[]> buf_a(new char[block_size]);
         std::unique_ptr<char[]> buf_b(new char[block_size]);
@@ -800,9 +835,51 @@ namespace ECProject
         ifs_a.read(buf_a.get(), block_size);
         ifs_a.close();
 
-        std::ifstream ifs_b(path_b, std::ios::binary);
-        ifs_b.read(buf_b.get(), block_size);
-        ifs_b.close();
+        if (access(path_b.c_str(), 0) == -1)
+        {
+            // parity B is on a different datanode: pull raw bytes via gRPC.
+            const std::string &remote_ip = info->parity_b_datanode_ip();
+            const int remote_port = info->parity_b_datanode_port();
+            if (remote_ip.empty() || remote_port <= 0)
+            {
+                std::cerr << "[Datanode" << m_port
+                          << "][StripeMergeParity] parity B not found locally and remote info invalid: "
+                          << remote_ip << ":" << remote_port << std::endl;
+                response->set_message(false);
+                return grpc::Status::OK;
+            }
+
+            auto channel = grpc::CreateChannel(
+                remote_ip + ":" + std::to_string(remote_port),
+                grpc::InsecureChannelCredentials());
+            auto stub = datanode_proto::datanodeService::NewStub(channel);
+
+            datanode_proto::ReadBlockBytesRequest req;
+            req.set_block_key(parity_key_b);
+            req.set_block_size(block_size);
+
+            datanode_proto::ReadBlockBytesReply rep;
+            grpc::ClientContext cctx;
+            grpc::Status st = stub->readBlockBytes(&cctx, req, &rep);
+            if (!st.ok() || !rep.ok() || static_cast<int>(rep.data().size()) != block_size)
+            {
+                std::cerr << "[Datanode" << m_port
+                          << "][StripeMergeParity] failed to read remote parity B "
+                          << parity_key_b << " from " << remote_ip << ":" << remote_port
+                          << " st.ok=" << st.ok() << " rep.ok=" << rep.ok()
+                          << " size=" << rep.data().size() << std::endl;
+                response->set_message(false);
+                return grpc::Status::OK;
+            }
+
+            std::memcpy(buf_b.get(), rep.data().data(), static_cast<size_t>(block_size));
+        }
+        else
+        {
+            std::ifstream ifs_b(path_b, std::ios::binary);
+            ifs_b.read(buf_b.get(), block_size);
+            ifs_b.close();
+        }
 
         // P'_j = P^A_j XOR gf_mul(coeff, P^B_j)
         for (int i = 0; i < block_size; i++) {
@@ -825,6 +902,9 @@ namespace ECProject
                   << " -> " << new_parity_key << std::endl;
 
         response->set_message(true);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        response->set_execution_seconds(
+            std::chrono::duration<double>(t1 - t0).count());
         return grpc::Status::OK;
     }
 

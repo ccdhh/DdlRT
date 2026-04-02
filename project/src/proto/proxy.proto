@@ -104,6 +104,9 @@ message blockRelocPlan {
 
 message blockRelocReply {
   string result = 1;
+  // Pure execution time on the proxy side (seconds) for handling relocateBlock.
+  // Measured inside ProxyImpl::relocateBlock, covering data read/write and delete.
+  double execution_seconds = 2;
 }
 
 message AskIfSuccess {

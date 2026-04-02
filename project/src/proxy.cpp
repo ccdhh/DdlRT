@@ -2521,6 +2521,8 @@ namespace ECProject
       const proxy_proto::blockRelocPlan *plan,
       proxy_proto::blockRelocReply *response)
   {
+    (void)context;
+    auto t0 = std::chrono::high_resolution_clock::now();
     int block_size = plan->block_size();
     int num_blocks = plan->blocktomove_size();
     bool all_ok = true;
@@ -2560,6 +2562,9 @@ namespace ECProject
     }
 
     response->set_result(all_ok ? "ok" : "partial_failure");
+    auto t1 = std::chrono::high_resolution_clock::now();
+    response->set_execution_seconds(
+        std::chrono::duration<double>(t1 - t0).count());
     return grpc::Status::OK;
   }
 
