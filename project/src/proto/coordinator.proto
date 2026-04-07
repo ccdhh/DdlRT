@@ -220,7 +220,14 @@ message MergeReply {
   int32 new_stripe_id = 2;
   // Execution time for the "real merge execution" phase inside coordinator.
   // Does NOT include planning/setup overhead.
+  // parity_exec_sec / merge_exec_sec mirror the active merge_method (SRS or ERS).
   double parity_exec_sec = 3;
   double migration_exec_sec = 4;
-  double merge_exec_sec = 5; // wall-clock of the two-thread execution (max(parity,migration))
+  double merge_exec_sec = 5; // wall-clock: parity_thread || migration_thread
+  // Populated only when merge_method == "SRS"; ERS fields stay 0.
+  double srs_parity_exec_sec = 6;
+  double srs_merge_exec_sec = 7;
+  // Populated only when merge_method == "ERS"; SRS fields stay 0.
+  double ers_parity_exec_sec = 8;
+  double ers_merge_exec_sec = 9;
 }

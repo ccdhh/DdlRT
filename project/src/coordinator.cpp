@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <asio.hpp>
+#include <atomic>
 #include <vector>
 template <typename T> inline T ceil(T const &A, T const &B) {
   return T((A + B - 1) / B);
@@ -4702,8 +4703,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
   }
 
   // ====== Execute in two threads ======
-  bool migration_ok = true;
-  bool parity_ok = true;
+  std::atomic<bool> migration_ok{true};
+  std::atomic<bool> parity_ok{true};
   double parity_exec_sec = 0.0;
   double migration_exec_sec = 0.0;
   // Start both workers at the same logical time, but measure only the
@@ -4860,96 +4861,101 @@ grpc::Status CoordinatorImpl::mergeStripes(
                                    coeff});
         }
 
-        // Start timer right before the real execution.
-        // Important: we intentionally run parity tasks sequentially to avoid
-        // holding multiple `block_size` buffers in memory at the same time.
-        auto st = std::chrono::high_resolution_clock::now();
-        struct ExecTimer {
-          decltype(st) start_time;
-          double *out;
-          ~ExecTimer() {
-            auto ed = std::chrono::high_resolution_clock::now();
-            *out = std::chrono::duration_cast<std::chrono::duration<double>>(ed - start_time)
-                       .count();
-          }
-        };
-        ExecTimer timer{st, &parity_exec_sec};
+        // Parity columns are independent: run one task per thread (each uses
+        // its own buffers on round>=2).
+        auto parity_ers_t0 = std::chrono::high_resolution_clock::now();
 
         if (merge_round == 1) {
           // Round 1 ERS: parity A and parity B are already guaranteed to be on
           // the same datanode, so we can directly do local parity merge.
-          for (auto &task : parity_tasks) {
-            auto channel = grpc::CreateChannel(
-                task.datanode_ip + ":" + std::to_string(task.datanode_port),
-                grpc::InsecureChannelCredentials());
-            auto stub = datanode_proto::datanodeService::NewStub(channel);
+          std::vector<std::thread> ers_workers;
+          ers_workers.reserve(parity_tasks.size());
+          for (size_t ti = 0; ti < parity_tasks.size(); ++ti) {
+            ers_workers.emplace_back([&, ti]() {
+              const ParityMergeTask &task = parity_tasks[ti];
+              auto channel = grpc::CreateChannel(
+                  task.datanode_ip + ":" + std::to_string(task.datanode_port),
+                  grpc::InsecureChannelCredentials());
+              auto stub = datanode_proto::datanodeService::NewStub(channel);
 
-            grpc::ClientContext ctx;
-            datanode_proto::StripeMergeParityInfo info;
-            datanode_proto::RequestResult result;
-            info.set_parity_key_a(task.parity_key_a);
-            info.set_parity_key_b(task.parity_key_b);
-            info.set_new_parity_key(task.new_parity_key);
-            info.set_block_size(block_size);
-            info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+              grpc::ClientContext ctx;
+              datanode_proto::StripeMergeParityInfo info;
+              datanode_proto::RequestResult result;
+              info.set_parity_key_a(task.parity_key_a);
+              info.set_parity_key_b(task.parity_key_b);
+              info.set_new_parity_key(task.new_parity_key);
+              info.set_block_size(block_size);
+              info.set_gf_coeff(static_cast<int>(task.gf_coeff));
 
-            grpc::Status st =
-                stub->handleStripeMergeParity(&ctx, info, &result);
-            if (!st.ok() || !result.message()) {
-              std::cerr
-                  << "[Coordinator][Merge][ERS][round1] parity merge failed on "
-                  << task.datanode_ip << ":" << task.datanode_port
-                  << " for " << task.new_parity_key << std::endl;
-              parity_ok = false;
-              break;
-            }
+              grpc::Status merge_st =
+                  stub->handleStripeMergeParity(&ctx, info, &result);
+              if (!merge_st.ok() || !result.message()) {
+                std::cerr
+                    << "[Coordinator][Merge][ERS][round1] parity merge failed on "
+                    << task.datanode_ip << ":" << task.datanode_port
+                    << " for " << task.new_parity_key << std::endl;
+                parity_ok.store(false);
+              }
+            });
           }
+          for (auto &w : ers_workers)
+            w.join();
         } else {
-          // Round >=2 ERS: keep existing logic:
-          // read parity B to the parity-A node, then let datanode do local merge.
-          std::vector<unsigned char> parity_b_buf;
-          parity_b_buf.reserve(bs);
-          for (auto &task : parity_tasks) {
-            if (!fetch_from_datanode(task.parity_key_b,
-                                      task.parity_b_src_ip,
-                                      task.parity_b_src_port,
-                                      parity_b_buf)) {
-              parity_ok = false;
-              break;
-            }
-            if (!write_to_datanode(task.parity_key_b,
-                                    task.datanode_ip, task.datanode_port,
-                                    parity_b_buf)) {
-              parity_ok = false;
-              break;
-            }
+          // Round >=2 ERS: read parity B to the parity-A node, then local merge.
+          std::vector<std::thread> ers_workers;
+          ers_workers.reserve(parity_tasks.size());
+          for (size_t ti = 0; ti < parity_tasks.size(); ++ti) {
+            ers_workers.emplace_back([&, ti]() {
+              const ParityMergeTask &task = parity_tasks[ti];
+              std::vector<unsigned char> parity_b_buf_local;
+              parity_b_buf_local.reserve(bs);
+              if (!fetch_from_datanode(task.parity_key_b,
+                                        task.parity_b_src_ip,
+                                        task.parity_b_src_port,
+                                        parity_b_buf_local)) {
+                parity_ok.store(false);
+                return;
+              }
+              if (!write_to_datanode(task.parity_key_b,
+                                     task.datanode_ip, task.datanode_port,
+                                     parity_b_buf_local)) {
+                parity_ok.store(false);
+                return;
+              }
 
-            auto channel = grpc::CreateChannel(
-                task.datanode_ip + ":" + std::to_string(task.datanode_port),
-                grpc::InsecureChannelCredentials());
-            auto stub = datanode_proto::datanodeService::NewStub(channel);
+              auto channel = grpc::CreateChannel(
+                  task.datanode_ip + ":" + std::to_string(task.datanode_port),
+                  grpc::InsecureChannelCredentials());
+              auto stub = datanode_proto::datanodeService::NewStub(channel);
 
-            grpc::ClientContext ctx;
-            datanode_proto::StripeMergeParityInfo info;
-            datanode_proto::RequestResult result;
-            info.set_parity_key_a(task.parity_key_a);
-            info.set_parity_key_b(task.parity_key_b);
-            info.set_new_parity_key(task.new_parity_key);
-            info.set_block_size(block_size);
-            info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+              grpc::ClientContext ctx;
+              datanode_proto::StripeMergeParityInfo info;
+              datanode_proto::RequestResult result;
+              info.set_parity_key_a(task.parity_key_a);
+              info.set_parity_key_b(task.parity_key_b);
+              info.set_new_parity_key(task.new_parity_key);
+              info.set_block_size(block_size);
+              info.set_gf_coeff(static_cast<int>(task.gf_coeff));
 
-            grpc::Status st =
-                stub->handleStripeMergeParity(&ctx, info, &result);
-            if (!st.ok() || !result.message()) {
-              std::cerr
-                  << "[Coordinator][Merge][ERS][round>=2] parity merge failed on "
-                  << task.datanode_ip << ":" << task.datanode_port
-                  << " for " << task.new_parity_key << std::endl;
-              parity_ok = false;
-              break;
-            }
+              grpc::Status merge_st =
+                  stub->handleStripeMergeParity(&ctx, info, &result);
+              if (!merge_st.ok() || !result.message()) {
+                std::cerr
+                    << "[Coordinator][Merge][ERS][round>=2] parity merge failed on "
+                    << task.datanode_ip << ":" << task.datanode_port
+                    << " for " << task.new_parity_key << std::endl;
+                parity_ok.store(false);
+              }
+            });
           }
+          for (auto &w : ers_workers)
+            w.join();
         }
+        auto parity_ers_t1 = std::chrono::high_resolution_clock::now();
+        parity_exec_sec =
+            std::chrono::duration_cast<std::chrono::duration<double>>(parity_ers_t1 -
+                                                                      parity_ers_t0)
+                .count();
       } else {
         // SRS:
         // For each merged parity j:
@@ -5058,35 +5064,41 @@ grpc::Status CoordinatorImpl::mergeStripes(
         };
 
         // parity_acc[j] holds the new parity bytes to be written.
-        // Allocation/setup of buffers is intentionally excluded from timing.
         std::vector<std::vector<unsigned char>> parity_acc(r);
 
-        // Start timer right before the first real fetch/compute/write.
-        auto st = std::chrono::high_resolution_clock::now();
-        struct ExecTimer {
-          decltype(st) start_time;
-          double *out;
-          ~ExecTimer() {
-            auto ed = std::chrono::high_resolution_clock::now();
-            *out = std::chrono::duration_cast<std::chrono::duration<double>>(ed - start_time)
-                       .count();
-          }
+        auto parity_srs_t0 = std::chrono::high_resolution_clock::now();
+        auto srs_finish_timing = [&]() {
+          auto parity_srs_t1 = std::chrono::high_resolution_clock::now();
+          parity_exec_sec =
+              std::chrono::duration_cast<std::chrono::duration<double>>(parity_srs_t1 -
+                                                                        parity_srs_t0)
+                  .count();
         };
-        ExecTimer timer{st, &parity_exec_sec};
 
-        for (int j = 0; j < r; j++) {
-          Block *pa = stripe_a.blocks[k + j];
-          Node &parity_node = m_node_table[pa->map2node];
-          if (!fetch_from_datanode(pa->block_key, parity_node.node_ip,
-                                    parity_node.node_port, parity_acc[j])) {
-            std::cerr << "[Coordinator][Merge][SRS] failed to fetch parity A "
-                      << pa->block_key << std::endl;
-            parity_ok = false;
-            return;
+        {
+          std::vector<std::thread> srs_fetch_workers;
+          srs_fetch_workers.reserve(static_cast<size_t>(r));
+          for (int j = 0; j < r; j++) {
+            srs_fetch_workers.emplace_back([&, j]() {
+              Block *pa = stripe_a.blocks[k + j];
+              Node &parity_node = m_node_table[pa->map2node];
+              if (!fetch_from_datanode(pa->block_key, parity_node.node_ip,
+                                       parity_node.node_port, parity_acc[j])) {
+                std::cerr << "[Coordinator][Merge][SRS] failed to fetch parity A "
+                          << pa->block_key << std::endl;
+                parity_ok.store(false);
+              }
+            });
           }
+          for (auto &w : srs_fetch_workers)
+            w.join();
+        }
+        if (!parity_ok.load()) {
+          srs_finish_timing();
+          return;
         }
 
-        // Add contributions from all stripe_b data blocks.
+        // Add contributions from all stripe_b data blocks (order-dependent).
         for (int i = 0; i < k; i++) {
           Block *bd = stripe_b.blocks[i];
           Node &src_node = m_node_table[bd->map2node];
@@ -5095,7 +5107,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
                                     src_node.node_port, data_buf)) {
             std::cerr << "[Coordinator][Merge][SRS] failed to fetch data B "
                       << bd->block_key << std::endl;
-            parity_ok = false;
+            parity_ok.store(false);
+            srs_finish_timing();
             return;
           }
 
@@ -5111,75 +5124,92 @@ grpc::Status CoordinatorImpl::mergeStripes(
           }
         }
 
-        // Write new parity blocks to the same nodes as parity A.
-        for (int j = 0; j < r; j++) {
-          Block *pa = stripe_a.blocks[k + j];
-          Node &parity_node = m_node_table[pa->map2node];
-          if (!write_to_datanode(new_parity_keys[j], parity_node.node_ip,
-                                  parity_node.node_port, parity_acc[j])) {
-            std::cerr << "[Coordinator][Merge][SRS] failed to write new parity "
-                      << new_parity_keys[j] << std::endl;
-            parity_ok = false;
-            return;
+        {
+          std::vector<std::thread> srs_write_workers;
+          srs_write_workers.reserve(static_cast<size_t>(r));
+          for (int j = 0; j < r; j++) {
+            srs_write_workers.emplace_back([&, j]() {
+              Block *pa = stripe_a.blocks[k + j];
+              Node &parity_node = m_node_table[pa->map2node];
+              if (!write_to_datanode(new_parity_keys[j], parity_node.node_ip,
+                                     parity_node.node_port, parity_acc[j])) {
+                std::cerr << "[Coordinator][Merge][SRS] failed to write new parity "
+                          << new_parity_keys[j] << std::endl;
+                parity_ok.store(false);
+              }
+            });
           }
+          for (auto &w : srs_write_workers)
+            w.join();
         }
+        srs_finish_timing();
       }
     } catch (const std::exception &e) {
       std::cerr << "[Coordinator][Merge] parity_thread exception: " << e.what()
                 << std::endl;
-      parity_ok = false;
+      parity_ok.store(false);
     }
   });
 
-  // Thread 2: data block migration
+  // Thread 2: data block migration (one relocateBlock RPC per block, in parallel)
   std::thread migration_thread([&]() {
     {
       std::unique_lock<std::mutex> lk(start_mtx);
       start_cv.wait(lk, [&]() { return start_signal; });
     }
-    for (auto &[cluster_id, entries] : proxy_reloc_plans) {
+    auto migr_wall_t0 = std::chrono::high_resolution_clock::now();
+    std::vector<std::thread> mig_workers;
+    size_t total_moves = 0;
+    for (const auto &kv : proxy_reloc_plans) total_moves += kv.second.size();
+    mig_workers.reserve(total_moves);
+
+    for (const auto &kv : proxy_reloc_plans) {
+      const int cluster_id = kv.first;
+      const auto &entries = kv.second;
       if (entries.empty()) continue;
 
-      std::string proxy_addr =
+      const std::string proxy_addr =
           m_cluster_table[cluster_id].proxy_ip + ":" +
           std::to_string(m_cluster_table[cluster_id].proxy_port);
 
       if (m_proxy_ptrs.find(proxy_addr) == m_proxy_ptrs.end()) {
-        std::cerr << "[Coordinator][Merge] proxy not found: " << proxy_addr << std::endl;
-        migration_ok = false;
+        std::cerr << "[Coordinator][Merge] proxy not found: " << proxy_addr
+                  << std::endl;
+        migration_ok.store(false);
         continue;
       }
 
-      grpc::ClientContext ctx;
-      proxy_proto::blockRelocPlan plan;
-      proxy_proto::blockRelocReply reloc_reply;
+      for (const auto &e : entries) {
+        mig_workers.emplace_back([&, proxy_addr, e]() {
+          grpc::ClientContext ctx;
+          proxy_proto::blockRelocPlan plan;
+          proxy_proto::blockRelocReply reloc_reply;
+          plan.set_block_size(block_size);
+          plan.set_keep_source(true); // merge concurrency: keep source blocks
+          plan.add_blocktomove(e.block_key);
+          plan.add_fromdatanodeip(e.from_ip);
+          plan.add_fromdatanodeport(e.from_port);
+          plan.add_todatanodeip(e.to_ip);
+          plan.add_todatanodeport(e.to_port);
 
-      plan.set_block_size(block_size);
-      plan.set_keep_source(true); // merge concurrency: keep source blocks
-      for (auto &e : entries) {
-        plan.add_blocktomove(e.block_key);
-        plan.add_fromdatanodeip(e.from_ip);
-        plan.add_fromdatanodeport(e.from_port);
-        plan.add_todatanodeip(e.to_ip);
-        plan.add_todatanodeport(e.to_port);
-      }
-
-      // Measure only the actual relocation RPC execution (exclude plan setup).
-      auto call_start = std::chrono::high_resolution_clock::now();
-      grpc::Status st = m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
-      auto call_end = std::chrono::high_resolution_clock::now();
-      migration_exec_sec +=
-          std::chrono::duration_cast<std::chrono::duration<double>>(call_end - call_start)
-              .count();
-      if (!st.ok()) {
-        std::cerr << "[Coordinator][Merge] relocate failed via " << proxy_addr
-                  << ": " << st.error_message() << std::endl;
-        migration_ok = false;
-      } else {
-        std::cout << "[Coordinator][Merge] relocated " << entries.size()
-                  << " blocks via " << proxy_addr << std::endl;
+          grpc::Status st =
+              m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+          if (!st.ok()) {
+            std::cerr << "[Coordinator][Merge] relocate failed via " << proxy_addr
+                      << ": " << st.error_message()
+                      << " block=" << e.block_key << std::endl;
+            migration_ok.store(false);
+          }
+        });
       }
     }
+    for (auto &w : mig_workers)
+      w.join();
+    auto migr_wall_t1 = std::chrono::high_resolution_clock::now();
+    migration_exec_sec =
+        std::chrono::duration_cast<std::chrono::duration<double>>(migr_wall_t1 -
+                                                                  migr_wall_t0)
+            .count();
   });
 
   // Unblock both threads simultaneously.
@@ -5199,14 +5229,25 @@ grpc::Status CoordinatorImpl::mergeStripes(
   double merge_exec_sec =
       std::chrono::duration_cast<std::chrono::duration<double>>(exec_end - exec_start)
           .count();
-  std::cout << "[Coordinator][Merge] execute time: total=" << merge_exec_sec
-            << "s, parity=" << parity_exec_sec << "s, migration=" << migration_exec_sec
-            << "s" << std::endl;
+  std::cout << "[Coordinator][Merge] execute time (method=" << merge_method
+            << "): total=" << merge_exec_sec << "s, parity=" << parity_exec_sec
+            << "s, migration=" << migration_exec_sec << "s" << std::endl;
 
   // Return "real execution" timings to the client.
   reply->set_parity_exec_sec(parity_exec_sec);
   reply->set_migration_exec_sec(migration_exec_sec);
   reply->set_merge_exec_sec(merge_exec_sec);
+  reply->set_srs_parity_exec_sec(0.0);
+  reply->set_srs_merge_exec_sec(0.0);
+  reply->set_ers_parity_exec_sec(0.0);
+  reply->set_ers_merge_exec_sec(0.0);
+  if (merge_method == "SRS") {
+    reply->set_srs_parity_exec_sec(parity_exec_sec);
+    reply->set_srs_merge_exec_sec(merge_exec_sec);
+  } else if (merge_method == "ERS") {
+    reply->set_ers_parity_exec_sec(parity_exec_sec);
+    reply->set_ers_merge_exec_sec(merge_exec_sec);
+  }
 
   // Apply in-memory placement updates only after actual relocation completes.
   for (auto &pm : planned_moves) {
@@ -5286,7 +5327,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
   // Insert merged stripe metadata after deleting old entries.
   m_stripe_table[new_stripe_id] = std::move(new_stripe);
 
-  bool success = migration_ok && parity_ok;
+  bool success = migration_ok.load() && parity_ok.load();
   reply->set_success(success);
   reply->set_new_stripe_id(new_stripe_id);
 

@@ -4,6 +4,7 @@
 #include <thread>
 #include <assert.h>
 #include <chrono>
+#include <iomanip>
 #include <algorithm>
 #include <random>
 #include <cmath>
@@ -1604,8 +1605,13 @@ namespace ECProject
     int pairs = stripe_ids.size() / 2;
     std::cout << "[Client] will merge " << pairs << " pairs (round " << merge_round << ")" << std::endl;
     int succ_pairs = 0;
-    double join_exec_sum_sec = 0.0; // sum of parallel-done times (max(parity,migration))
-    std::chrono::high_resolution_clock::time_point merge_start=std::chrono::high_resolution_clock::now();
+    double sum_migration_sec = 0.0;
+    double sum_srs_parity_sec = 0.0;
+    double sum_srs_merge_sec = 0.0;
+    double sum_ers_parity_sec = 0.0;
+    double sum_ers_merge_sec = 0.0;
+    std::chrono::high_resolution_clock::time_point merge_start =
+        std::chrono::high_resolution_clock::now();
     for (int p = 0; p < pairs; p++) {
       int sid_a = stripe_ids[2 * p];
       int sid_b = stripe_ids[2 * p + 1];
@@ -1629,29 +1635,53 @@ namespace ECProject
 
       if (rep.success()) {
         succ_pairs++;
-        const double join_done_sec =
-            std::max(rep.parity_exec_sec(), rep.migration_exec_sec());
-        join_exec_sum_sec += join_done_sec;
-        std::cout << "[Client] merge succeeded -> new stripe "
-                  << rep.new_stripe_id()
-                  << " | parity=" << rep.parity_exec_sec() << "s"
-                  << ", migration=" << rep.migration_exec_sec() << "s"
-                  << ", join_done=" << join_done_sec << "s"
-                  << std::endl;
+        sum_migration_sec += rep.migration_exec_sec();
+        sum_srs_parity_sec += rep.srs_parity_exec_sec();
+        sum_srs_merge_sec += rep.srs_merge_exec_sec();
+        sum_ers_parity_sec += rep.ers_parity_exec_sec();
+        sum_ers_merge_sec += rep.ers_merge_exec_sec();
+        std::cout << "[Client] merge succeeded -> new stripe " << rep.new_stripe_id()
+                  << std::fixed << std::setprecision(6) << std::endl;
+        std::cout << "  data migration: " << rep.migration_exec_sec() << " s" << std::endl;
+        if (merge_method == "SRS") {
+          std::cout << "  SRS parity update: " << rep.srs_parity_exec_sec() << " s" << std::endl;
+          std::cout << "  SRS total exec (parallel phase): " << rep.srs_merge_exec_sec() << " s"
+                    << std::endl;
+        } else if (merge_method == "ERS") {
+          std::cout << "  ERS parity update: " << rep.ers_parity_exec_sec() << " s" << std::endl;
+          std::cout << "  ERS total exec (parallel phase): " << rep.ers_merge_exec_sec() << " s"
+                    << std::endl;
+        } else {
+          std::cout << "  parity update: " << rep.parity_exec_sec() << " s" << std::endl;
+          std::cout << "  total exec (parallel phase): " << rep.merge_exec_sec() << " s"
+                    << std::endl;
+        }
+        std::cout << std::defaultfloat;
       } else {
         std::cout << "[Client] merge returned failure for stripes "
                   << sid_a << " + " << sid_b << std::endl;
       }
     }
-    std::chrono::high_resolution_clock::time_point merge_end=std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> merge_time = std::chrono::duration_cast<std::chrono::duration<double>>(merge_end - merge_start);
-    std::cout << "[merge"<<merge_round<<"time] wall total (client sequential): "
-              << merge_time.count() << " seconds"
+    std::chrono::high_resolution_clock::time_point merge_end =
+        std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> merge_time =
+        std::chrono::duration_cast<std::chrono::duration<double>>(merge_end - merge_start);
+    std::cout << std::fixed << std::setprecision(6);
+    std::cout << "[Client][merge round " << merge_round << "] timing summary (method=" << merge_method
+              << ", success pairs=" << succ_pairs << "):" << std::endl;
+    std::cout << "  data migration (sum over pairs): " << sum_migration_sec << " s" << std::endl;
+    if (merge_method == "SRS") {
+      std::cout << "  SRS parity update (sum): " << sum_srs_parity_sec << " s" << std::endl;
+      std::cout << "  SRS total exec — parallel phase (sum): " << sum_srs_merge_sec << " s"
+                << std::endl;
+    } else if (merge_method == "ERS") {
+      std::cout << "  ERS parity update (sum): " << sum_ers_parity_sec << " s" << std::endl;
+      std::cout << "  ERS total exec — parallel phase (sum): " << sum_ers_merge_sec << " s"
+                << std::endl;
+    }
+    std::cout << "  client round-trip wall time (incl. RPC): " << merge_time.count() << " s"
               << std::endl;
-    std::cout << "[merge"<<merge_round<<"time] join exec sum: "
-              << join_exec_sum_sec << " seconds"
-              << " (success pairs=" << succ_pairs << ")"
-              << std::endl;
+    std::cout << std::defaultfloat;
   }
   void Client::get_block_each_stripe_position(int stripe_cnt,const std::vector<int>& pos_list)
   {

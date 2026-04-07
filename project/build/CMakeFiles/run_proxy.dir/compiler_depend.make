@@ -5734,7 +5734,12 @@ CMakeFiles/run_proxy.dir/src/proto/coordinator.grpc.pb.cc.o: ../src/proto/coordi
   ../third_party/grpc/include/google/protobuf/arenaz_sampler.h \
   ../third_party/grpc/include/google/protobuf/arenastring.h \
   ../third_party/grpc/include/google/protobuf/explicitly_constructed.h \
-  ../third_party/grpc/include/google/protobuf/generated_message_util.h \
+  /usr/include/google/protobuf/generated_message_table_driven.h \
+  ../third_party/grpc/include/google/protobuf/map.h \
+  /usr/include/c++/11/iterator \
+  /usr/include/c++/11/bits/stream_iterator.h \
+  ../third_party/grpc/include/google/protobuf/generated_enum_util.h \
+  ../third_party/grpc/include/google/protobuf/message_lite.h \
   ../third_party/grpc/include/google/protobuf/stubs/once.h \
   /usr/include/c++/11/mutex \
   /usr/include/c++/11/chrono \
@@ -5743,33 +5748,31 @@ CMakeFiles/run_proxy.dir/src/proto/coordinator.grpc.pb.cc.o: ../src/proto/coordi
   /usr/include/c++/11/bits/parse_numbers.h \
   /usr/include/c++/11/bits/std_mutex.h \
   /usr/include/c++/11/bits/unique_lock.h \
-  ../third_party/grpc/include/google/protobuf/any.h \
-  ../third_party/grpc/include/google/protobuf/message_lite.h \
   ../third_party/grpc/include/google/protobuf/metadata_lite.h \
-  ../third_party/grpc/include/google/protobuf/has_bits.h \
+  ../third_party/grpc/include/google/protobuf/map_type_handler.h \
+  ../third_party/grpc/include/google/protobuf/parse_context.h \
+  ../third_party/grpc/include/google/protobuf/io/zero_copy_stream.h \
+  ../third_party/grpc/include/google/protobuf/endian.h \
   ../third_party/grpc/include/google/protobuf/implicit_weak_message.h \
   ../third_party/grpc/include/google/protobuf/repeated_field.h \
-  /usr/include/c++/11/iterator \
-  /usr/include/c++/11/bits/stream_iterator.h \
   ../third_party/grpc/include/google/protobuf/repeated_ptr_field.h \
+  ../third_party/grpc/include/google/protobuf/inlined_string_field.h \
   ../third_party/grpc/include/google/protobuf/wire_format_lite.h \
   ../third_party/grpc/include/google/protobuf/stubs/casts.h \
+  ../third_party/grpc/include/google/protobuf/map_entry_lite.h \
+  ../third_party/grpc/include/google/protobuf/generated_message_util.h \
+  ../third_party/grpc/include/google/protobuf/any.h \
+  ../third_party/grpc/include/google/protobuf/has_bits.h \
+  ../third_party/grpc/include/google/protobuf/map_field_lite.h \
   ../third_party/grpc/include/google/protobuf/generated_message_reflection.h \
   ../third_party/grpc/include/google/protobuf/descriptor.h \
   ../third_party/grpc/include/google/protobuf/stubs/mutex.h \
   ../third_party/grpc/include/google/protobuf/generated_enum_reflection.h \
-  ../third_party/grpc/include/google/protobuf/generated_enum_util.h \
   ../third_party/grpc/include/google/protobuf/unknown_field_set.h \
   ../third_party/grpc/include/google/protobuf/io/zero_copy_stream_impl_lite.h \
   ../third_party/grpc/include/google/protobuf/stubs/callback.h \
-  ../third_party/grpc/include/google/protobuf/io/zero_copy_stream.h \
   ../third_party/grpc/include/google/protobuf/stubs/stl_util.h \
-  ../third_party/grpc/include/google/protobuf/parse_context.h \
-  ../third_party/grpc/include/google/protobuf/endian.h \
-  ../third_party/grpc/include/google/protobuf/inlined_string_field.h \
   ../third_party/grpc/include/google/protobuf/message.h \
-  ../third_party/grpc/include/google/protobuf/map.h \
-  ../third_party/grpc/include/google/protobuf/map_type_handler.h \
   ../third_party/grpc/include/google/protobuf/extension_set.h \
   /usr/include/c++/11/cassert \
   ../src/proto/coordinator.grpc.pb.h \
@@ -6220,7 +6223,12 @@ CMakeFiles/run_proxy.dir/src/proto/coordinator.pb.cc.o: ../src/proto/coordinator
   ../third_party/grpc/include/google/protobuf/arenaz_sampler.h \
   ../third_party/grpc/include/google/protobuf/arenastring.h \
   ../third_party/grpc/include/google/protobuf/explicitly_constructed.h \
-  ../third_party/grpc/include/google/protobuf/generated_message_util.h \
+  /usr/include/google/protobuf/generated_message_table_driven.h \
+  ../third_party/grpc/include/google/protobuf/map.h \
+  /usr/include/c++/11/iterator \
+  /usr/include/c++/11/bits/stream_iterator.h \
+  ../third_party/grpc/include/google/protobuf/generated_enum_util.h \
+  ../third_party/grpc/include/google/protobuf/message_lite.h \
   ../third_party/grpc/include/google/protobuf/stubs/once.h \
   /usr/include/c++/11/mutex \
   /usr/include/c++/11/chrono \
@@ -6229,33 +6237,31 @@ CMakeFiles/run_proxy.dir/src/proto/coordinator.pb.cc.o: ../src/proto/coordinator
   /usr/include/c++/11/bits/parse_numbers.h \
   /usr/include/c++/11/bits/std_mutex.h \
   /usr/include/c++/11/bits/unique_lock.h \
-  ../third_party/grpc/include/google/protobuf/any.h \
-  ../third_party/grpc/include/google/protobuf/message_lite.h \
   ../third_party/grpc/include/google/protobuf/metadata_lite.h \
-  ../third_party/grpc/include/google/protobuf/has_bits.h \
+  ../third_party/grpc/include/google/protobuf/map_type_handler.h \
+  ../third_party/grpc/include/google/protobuf/parse_context.h \
+  ../third_party/grpc/include/google/protobuf/io/zero_copy_stream.h \
+  ../third_party/grpc/include/google/protobuf/endian.h \
   ../third_party/grpc/include/google/protobuf/implicit_weak_message.h \
   ../third_party/grpc/include/google/protobuf/repeated_field.h \
-  /usr/include/c++/11/iterator \
-  /usr/include/c++/11/bits/stream_iterator.h \
   ../third_party/grpc/include/google/protobuf/repeated_ptr_field.h \
+  ../third_party/grpc/include/google/protobuf/inlined_string_field.h \
   ../third_party/grpc/include/google/protobuf/wire_format_lite.h \
   ../third_party/grpc/include/google/protobuf/stubs/casts.h \
+  ../third_party/grpc/include/google/protobuf/map_entry_lite.h \
+  ../third_party/grpc/include/google/protobuf/generated_message_util.h \
+  ../third_party/grpc/include/google/protobuf/any.h \
+  ../third_party/grpc/include/google/protobuf/has_bits.h \
+  ../third_party/grpc/include/google/protobuf/map_field_lite.h \
   ../third_party/grpc/include/google/protobuf/generated_message_reflection.h \
   ../third_party/grpc/include/google/protobuf/descriptor.h \
   ../third_party/grpc/include/google/protobuf/stubs/mutex.h \
   ../third_party/grpc/include/google/protobuf/generated_enum_reflection.h \
-  ../third_party/grpc/include/google/protobuf/generated_enum_util.h \
   ../third_party/grpc/include/google/protobuf/unknown_field_set.h \
   ../third_party/grpc/include/google/protobuf/io/zero_copy_stream_impl_lite.h \
   ../third_party/grpc/include/google/protobuf/stubs/callback.h \
-  ../third_party/grpc/include/google/protobuf/io/zero_copy_stream.h \
   ../third_party/grpc/include/google/protobuf/stubs/stl_util.h \
-  ../third_party/grpc/include/google/protobuf/parse_context.h \
-  ../third_party/grpc/include/google/protobuf/endian.h \
-  ../third_party/grpc/include/google/protobuf/inlined_string_field.h \
   ../third_party/grpc/include/google/protobuf/message.h \
-  ../third_party/grpc/include/google/protobuf/map.h \
-  ../third_party/grpc/include/google/protobuf/map_type_handler.h \
   ../third_party/grpc/include/google/protobuf/extension_set.h \
   /usr/include/c++/11/cassert \
   ../third_party/grpc/include/google/protobuf/reflection_ops.h \
@@ -9811,6 +9817,8 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../third_party/grpc/include/grpcpp/impl/codegen/client_unary_call.h:
 
+../third_party/grpc/include/google/protobuf/map_entry_lite.h:
+
 ../src/lrc.cpp:
 
 ../include/datanode.h:
@@ -10807,6 +10815,8 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/fp-logb.h:
 
+../third_party/grpc/include/google/protobuf/map_field_lite.h:
+
 /usr/include/x86_64-linux-gnu/bits/wchar2.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/clock_t.h:
@@ -11052,6 +11062,8 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 /usr/include/c++/11/bits/align.h:
 
 /usr/include/c++/11/bits/stl_uninitialized.h:
+
+/usr/include/google/protobuf/generated_message_table_driven.h:
 
 /usr/include/c++/11/bits/hashtable.h:
 
