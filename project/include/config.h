@@ -7,6 +7,12 @@ namespace ECProject
 {
   const int DATANODE_PORT_SHIFT = 50;
   const int PROXY_PORT_SHIFT = 1;
+  // Merge / relocate / parity pull: gRPC deadline and Linux TCP SO_RCVTIMEO/SO_SNDTIMEO (seconds).
+  const int MERGE_GRPC_TCP_TIMEOUT_SEC = 30;
+  // ClusterRT merge: max concurrent single-hop relocateBlock calls per wave (coordinator).
+  const int RELOC_WAVE_PARALLEL_MAX = 32;
+  // Proxy relocateBlock: max worker threads executing independent rows in one wave.
+  const int RELOC_ROW_PARALLEL_MAX = 32;
 
   class Config
   {  

@@ -40,7 +40,7 @@ CMAKE_ASM_NASM_FLAGS_RELWITHDEBINFO:STRING=
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=
+CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -234,7 +234,7 @@ ENABLE_AVX2_ASM:BOOL=OFF
 ENABLE_MARCH_NATIVE:BOOL=OFF
 
 //The directory containing a CMake configuration file for Protobuf.
-Protobuf_DIR:PATH=/users/qiliang/UniLRC/project/third_party/grpc/lib/cmake/protobuf
+Protobuf_DIR:PATH=Protobuf_DIR-NOTFOUND
 
 //The directory containing a CMake configuration file for absl.
 absl_DIR:PATH=/users/qiliang/UniLRC/project/third_party/grpc/lib/cmake/absl

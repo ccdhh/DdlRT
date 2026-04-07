@@ -16,6 +16,7 @@
 #include <thread>
 #include <sys/time.h>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 template <typename T> inline T ceil(T const &A, T const &B) {
   return T((A + B - 1) / B);
@@ -4465,18 +4466,17 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
   };
   std::vector<MigrationRPC> migration_rpcs;
 
-  // --- Data rows: [block*, stripe_for_node_pick] ---
+  // --- Data rows: merged stripe data blocks (both source stripes) ---
   struct Row {
     ECProject::Block *blk;
-    int sid_pick;
   };
   std::vector<Row> rows;
   rows.reserve(static_cast<size_t>(new_k));
   for (int i = 0; i < k; ++i) {
-    rows.push_back({stripe_a.blocks[i], stripe_id_a});
+    rows.push_back({stripe_a.blocks[i]});
   }
   for (int i = 0; i < k; ++i) {
-    rows.push_back({stripe_b.blocks[i], stripe_id_b});
+    rows.push_back({stripe_b.blocks[i]});
   }
 
   auto cluster_counts = [&rows]() {
@@ -4499,6 +4499,37 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
                 return a.first < b.first;
               });
     return racks;
+  };
+
+  // For merge, avoid two data blocks from stripe_a / stripe_b sharing the same
+  // node within a rack; randomly_select_a_node only checks one stripe_id against
+  // m_node_table and misses cross-stripe conflicts. Use live placement in rows.
+  auto pick_merge_data_node = [&](int target_cluster,
+                                  ECProject::Block *ignore_block) -> int {
+    std::set<int> occupied;
+    for (const auto &row : rows) {
+      if (row.blk->map2cluster != target_cluster) {
+        continue;
+      }
+      if (ignore_block != nullptr && row.blk == ignore_block) {
+        continue;
+      }
+      occupied.insert(row.blk->map2node);
+    }
+    const auto &nodes_vec = m_cluster_table[target_cluster].nodes;
+    std::vector<int> candidates;
+    for (int nid : nodes_vec) {
+      if (!occupied.count(nid)) {
+        candidates.push_back(nid);
+      }
+    }
+    if (!candidates.empty()) {
+      std::mt19937 gen(std::random_device{}());
+      std::uniform_int_distribution<int> dis(
+          0, static_cast<int>(candidates.size()) - 1);
+      return candidates[dis(gen)];
+    }
+    return randomly_select_a_node(target_cluster, stripe_id_a);
   };
 
   // Greedy balancing loop (multiple passes until counts multiset matches aim)
@@ -4696,9 +4727,8 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
 
     for (size_t e = 0; e < mv; ++e) {
       ECProject::Block *blk = outgoing[e].blk;
-      int sid_pick = outgoing[e].sid_pick;
       int to_c = dests[e].first;
-      int new_node_id = randomly_select_a_node(to_c, sid_pick);
+      int new_node_id = pick_merge_data_node(to_c, nullptr);
       ECProject::Node &old_node = m_node_table[blk->map2node];
       ECProject::Node &to_node = m_node_table[new_node_id];
       RelocEntry re;
@@ -4764,8 +4794,7 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
           continue;
         for (size_t u = 1; u < vec.size(); ++u) {
           ECProject::Block *blk = vec[u];
-          int sid_pick = (blk->map2stripe == stripe_id_b) ? stripe_id_b : stripe_id_a;
-          int nn = randomly_select_a_node(cid, sid_pick);
+          int nn = pick_merge_data_node(cid, blk);
           ECProject::Node &old_node = m_node_table[blk->map2node];
           ECProject::Node &new_node = m_node_table[nn];
           std::string proxy_addr = m_cluster_table[cid].proxy_ip + ":" +
@@ -4835,30 +4864,154 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
     }
   };
 
-  std::thread migration_thread([&migration_ok, &migration_ns, this, &migration_rpcs, &atomic_max_ns]() {
-    std::vector<std::thread> sub_threads;
-    sub_threads.reserve(migration_rpcs.size());
-    for (auto rpc : migration_rpcs) {
-      sub_threads.emplace_back([this, rpc, &migration_ok, &migration_ns, &atomic_max_ns]() {
-        grpc::ClientContext ctx;
-        proxy_proto::blockRelocReply reloc_reply;
-        grpc::Status st =
-            m_proxy_ptrs[rpc.proxy_addr]->relocateBlock(&ctx, rpc.plan, &reloc_reply);
-        if (!st.ok()) {
-          migration_ok = false;
-          std::cerr << "[ClusterRT][Merge] relocateBlock failed via "
-                    << rpc.proxy_addr << ": " << st.error_message()
-                    << std::endl;
-          return;
-        }
-        // Pure handler execution time (seconds -> ns).
-        const double exec_seconds = reloc_reply.execution_seconds();
-        const long long exec_ns = static_cast<long long>(exec_seconds * 1e9);
-        atomic_max_ns(migration_ns, exec_ns);
-      });
+  std::cout << "[ClusterRT][Merge] merge phase start " << stripe_id_a << "+"
+            << stripe_id_b << " -> " << new_stripe_id << " reloc_plans="
+            << migration_rpcs.size() << " parity_tasks=" << parity_tasks.size()
+            << " (wave-parallel single-hop)" << std::endl;
+
+  std::thread migration_thread([&migration_ok, &migration_ns, this, &migration_rpcs,
+                                &atomic_max_ns, block_size]() {
+    struct RelocHop {
+      std::string proxy_addr;
+      std::string block_key;
+      std::string from_ip;
+      int from_port;
+      std::string to_ip;
+      int to_port;
+    };
+    std::vector<RelocHop> hops;
+    for (const auto &rpc : migration_rpcs) {
+      const auto &p = rpc.plan;
+      const int nb = p.blocktomove_size();
+      for (int i = 0; i < nb; ++i) {
+        RelocHop h;
+        h.proxy_addr = rpc.proxy_addr;
+        h.block_key = p.blocktomove(i);
+        h.from_ip = p.fromdatanodeip(i);
+        h.from_port = p.fromdatanodeport(i);
+        h.to_ip = p.todatanodeip(i);
+        h.to_port = p.todatanodeport(i);
+        hops.push_back(std::move(h));
+      }
     }
-    for (auto &t : sub_threads)
-      t.join();
+
+    if (hops.empty())
+      return;
+
+    std::vector<int> pred(hops.size(), -1);
+    std::unordered_map<std::string, int> last_for_key;
+    last_for_key.reserve(hops.size() * 2);
+    for (size_t i = 0; i < hops.size(); ++i) {
+      const std::string &k = hops[i].block_key;
+      auto it = last_for_key.find(k);
+      if (it != last_for_key.end())
+        pred[i] = it->second;
+      last_for_key[k] = static_cast<int>(i);
+    }
+
+    enum HopState : char { StPending = 0, StSuccess = 1, StFailed = 2 };
+    std::vector<char> state(hops.size(), StPending);
+    size_t n_success = 0;
+    const int wave_max = ECProject::RELOC_WAVE_PARALLEL_MAX;
+
+    while (migration_ok.load() && n_success < hops.size()) {
+      std::vector<int> ready;
+      ready.reserve(hops.size());
+      for (size_t i = 0; i < hops.size(); ++i) {
+        if (state[i] != StPending)
+          continue;
+        int p = pred[i];
+        if (p >= 0) {
+          if (state[static_cast<size_t>(p)] == StPending)
+            continue;
+          if (state[static_cast<size_t>(p)] == StFailed)
+            continue;
+        }
+        ready.push_back(static_cast<int>(i));
+      }
+
+      if (ready.empty()) {
+        for (size_t i = 0; i < hops.size(); ++i) {
+          if (state[i] == StPending) {
+            migration_ok = false;
+            std::cerr << "[ClusterRT][Merge] relocation scheduler cannot progress hop_index="
+                      << i << " block_key=" << hops[i].block_key << std::endl;
+          }
+        }
+        break;
+      }
+
+      for (size_t base = 0; base < ready.size() && migration_ok.load();
+           base += static_cast<size_t>(wave_max)) {
+        const size_t end =
+            std::min(base + static_cast<size_t>(wave_max), ready.size());
+        std::vector<std::thread> threads;
+        threads.reserve(end - base);
+        std::vector<char> slot_ok(end - base, 0);
+
+        for (size_t j = base; j < end; ++j) {
+          const size_t slot = j - base;
+          const int hop_idx = ready[j];
+          threads.emplace_back(
+              [this, block_size, hop_idx, slot, &hops, &slot_ok, &migration_ok, &migration_ns,
+               &atomic_max_ns]() {
+                const RelocHop &h = hops[static_cast<size_t>(hop_idx)];
+                grpc::ClientContext ctx;
+                long long reloc_deadline_sec =
+                    static_cast<long long>(ECProject::MERGE_GRPC_TCP_TIMEOUT_SEC) *
+                    std::max(1, 3);
+                reloc_deadline_sec = std::min(reloc_deadline_sec, 3600LL);
+                ctx.set_deadline(std::chrono::system_clock::now() +
+                                 std::chrono::seconds(reloc_deadline_sec));
+                proxy_proto::blockRelocPlan plan;
+                plan.set_block_size(block_size);
+                plan.add_blocktomove(h.block_key);
+                plan.add_fromdatanodeip(h.from_ip);
+                plan.add_fromdatanodeport(h.from_port);
+                plan.add_todatanodeip(h.to_ip);
+                plan.add_todatanodeport(h.to_port);
+                proxy_proto::blockRelocReply reloc_reply;
+                grpc::Status st =
+                    m_proxy_ptrs[h.proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+                if (!st.ok()) {
+                  migration_ok = false;
+                  std::cerr << "[ClusterRT][Merge] relocateBlock failed via "
+                            << h.proxy_addr << ": " << st.error_message()
+                            << std::endl;
+                  return;
+                }
+                if (reloc_reply.result() != "ok") {
+                  migration_ok = false;
+                  std::cerr << "[ClusterRT][Merge] relocateBlock partial/failure via "
+                            << h.proxy_addr << " result=" << reloc_reply.result()
+                            << std::endl;
+                  return;
+                }
+                const double exec_seconds = reloc_reply.execution_seconds();
+                const long long exec_ns =
+                    static_cast<long long>(exec_seconds * 1e9);
+                atomic_max_ns(migration_ns, exec_ns);
+                slot_ok[slot] = 1;
+              });
+        }
+        for (auto &t : threads)
+          t.join();
+
+        for (size_t j = base; j < end; ++j) {
+          const size_t slot = j - base;
+          const int hop_idx = ready[j];
+          if (slot_ok[slot]) {
+            state[static_cast<size_t>(hop_idx)] = StSuccess;
+            ++n_success;
+          } else {
+            state[static_cast<size_t>(hop_idx)] = StFailed;
+          }
+        }
+
+        if (!migration_ok.load())
+          break;
+      }
+    }
   });
 
   std::thread parity_thread([&parity_ok, &parity_ns, &parity_tasks, block_size, &atomic_max_ns]() {
@@ -4872,6 +5025,8 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
         auto stub = datanode_proto::datanodeService::NewStub(channel);
 
         grpc::ClientContext ctx;
+        ctx.set_deadline(std::chrono::system_clock::now() +
+                         std::chrono::seconds(ECProject::MERGE_GRPC_TCP_TIMEOUT_SEC * 2));
         datanode_proto::StripeMergeParityInfo info;
         datanode_proto::RequestResult result;
         info.set_parity_key_a(task.parity_key_a);
@@ -4899,7 +5054,11 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
   });
 
   migration_thread.join();
+  std::cout << "[ClusterRT][Merge] relocation finished " << stripe_id_a << "+"
+            << stripe_id_b << " -> " << new_stripe_id << std::endl;
   parity_thread.join();
+  std::cout << "[ClusterRT][Merge] parity RPCs finished " << stripe_id_a << "+"
+            << stripe_id_b << " -> " << new_stripe_id << std::endl;
 
   const double migration_seconds = static_cast<double>(migration_ns.load()) / 1e9;
   const double parity_seconds = static_cast<double>(parity_ns.load()) / 1e9;
@@ -5491,6 +5650,12 @@ grpc::Status CoordinatorImpl::mergeStripes(
       }
 
       grpc::ClientContext ctx;
+      long long reloc_deadline_sec =
+          static_cast<long long>(ECProject::MERGE_GRPC_TCP_TIMEOUT_SEC) *
+          std::max(1, static_cast<int>(entries.size()) * 3);
+      reloc_deadline_sec = std::min(reloc_deadline_sec, 3600LL);
+      ctx.set_deadline(std::chrono::system_clock::now() +
+                       std::chrono::seconds(reloc_deadline_sec));
       proxy_proto::blockRelocPlan plan;
       proxy_proto::blockRelocReply reloc_reply;
 
@@ -5526,6 +5691,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
         auto stub = datanode_proto::datanodeService::NewStub(channel);
 
         grpc::ClientContext ctx;
+        ctx.set_deadline(std::chrono::system_clock::now() +
+                         std::chrono::seconds(ECProject::MERGE_GRPC_TCP_TIMEOUT_SEC * 2));
         datanode_proto::StripeMergeParityInfo info;
         datanode_proto::RequestResult result;
         info.set_parity_key_a(task.parity_key_a);
