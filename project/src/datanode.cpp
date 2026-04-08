@@ -144,7 +144,10 @@ namespace ECProject
                 // only send data
                 asio::error_code ec;
                 asio::ip::tcp::socket socket(io_context);
-                acceptor.accept(socket);
+                {
+                    std::lock_guard<std::mutex> lk(acceptor_mtx);
+                    acceptor.accept(socket);
+                }
                 asio::read(socket, asio::buffer(buf.data(), append_size), ec);
 
                 asio::error_code ignore_ec;
@@ -197,7 +200,10 @@ namespace ECProject
                 // only send data
                 asio::error_code ec;
                 asio::ip::tcp::socket socket(io_context);
-                acceptor.accept(socket);
+                {
+                    std::lock_guard<std::mutex> lk(acceptor_mtx);
+                    acceptor.accept(socket);
+                }
                 asio::read(socket, asio::buffer(buf, append_size), ec);
 
                 asio::error_code ignore_ec;
@@ -288,7 +294,10 @@ namespace ECProject
                 // only send data
                 asio::error_code ec;
                 asio::ip::tcp::socket socket(io_context);
-                acceptor.accept(socket);
+                {
+                    std::lock_guard<std::mutex> lk(acceptor_mtx);
+                    acceptor.accept(socket);
+                }
                 asio::read(socket, asio::buffer(buf.data(), m_sys_config->BlockSize), ec);
 
                 asio::error_code ignore_ec;
@@ -356,7 +365,10 @@ namespace ECProject
                 // only send data
                 asio::error_code ec;
                 asio::ip::tcp::socket socket(io_context);
-                acceptor.accept(socket);
+                {
+                    std::lock_guard<std::mutex> lk(acceptor_mtx);
+                    acceptor.accept(socket);
+                }
                 asio::read(socket, asio::buffer(buf.data(), m_sys_config->BlockSize), ec);
 
                 asio::error_code ignore_ec;
@@ -526,11 +538,13 @@ namespace ECProject
         const datanode_proto::SetInfo *set_info,
         datanode_proto::RequestResult *response)
     {
+        auto exec_t0 = std::chrono::high_resolution_clock::now();
         std::string block_key = set_info->block_key();
         int block_size = set_info->block_size();
         std::string proxy_ip = set_info->proxy_ip();
         int proxy_port = set_info->proxy_port();
         bool ispull = set_info->ispull();
+        bool sync_write = set_info->sync_write();
         auto handler1 = [this](std::string block_key, int block_size) mutable
         {
             try
@@ -540,7 +554,10 @@ namespace ECProject
                 // only send data
                 asio::error_code ec;
                 asio::ip::tcp::socket socket(io_context);
-                acceptor.accept(socket);
+                {
+                    std::lock_guard<std::mutex> lk(acceptor_mtx);
+                    acceptor.accept(socket);
+                }
                 asio::read(socket, asio::buffer(buf.data(), block_size), ec);
 
                 asio::error_code ignore_ec;
@@ -626,7 +643,14 @@ namespace ECProject
             else
             {
                 std::thread my_thread(handler1, block_key, block_size);
-                my_thread.detach();
+                if (sync_write)
+                {
+                    my_thread.join();
+                }
+                else
+                {
+                    my_thread.detach();
+                }
             }
             response->set_message(true);
         }
@@ -634,7 +658,11 @@ namespace ECProject
         {
             std::cout << "exception" << std::endl;
             std::cout << e.what() << std::endl;
+            response->set_message(false);
         }
+        auto exec_t1 = std::chrono::high_resolution_clock::now();
+        response->set_execution_seconds(
+            std::chrono::duration_cast<std::chrono::duration<double>>(exec_t1 - exec_t0).count());
         return grpc::Status::OK;
     }
 
@@ -677,7 +705,10 @@ namespace ECProject
         {
             asio::error_code error;
             asio::ip::tcp::socket socket(io_context);
-            acceptor.accept(socket);
+            {
+                std::lock_guard<std::mutex> lk(acceptor_mtx);
+                acceptor.accept(socket);
+            }
             asio::write(socket, asio::buffer(buf, block_size), error);
             asio::error_code ignore_ec;
             socket.shutdown(asio::ip::tcp::socket::shutdown_both, ignore_ec);
@@ -736,7 +767,10 @@ namespace ECProject
         {
             asio::error_code error;
             asio::ip::tcp::socket socket(io_context);
-            acceptor.accept(socket);
+            {
+                std::lock_guard<std::mutex> lk(acceptor_mtx);
+                acceptor.accept(socket);
+            }
             asio::write(socket, asio::buffer(buf, block_size), error);
             asio::error_code ignore_ec;
             socket.shutdown(asio::ip::tcp::socket::shutdown_both, ignore_ec);
@@ -770,6 +804,7 @@ namespace ECProject
         const datanode_proto::StripeMergeParityInfo *info,
         datanode_proto::RequestResult *response)
     {
+        auto exec_t0 = std::chrono::high_resolution_clock::now();
         std::string parity_key_a = info->parity_key_a();
         std::string parity_key_b = info->parity_key_b();
         std::string new_parity_key = info->new_parity_key();
@@ -784,11 +819,13 @@ namespace ECProject
         if (access(path_a.c_str(), 0) == -1) {
             std::cerr << "[Datanode" << m_port << "][StripeMergeParity] parity A not found: " << path_a << std::endl;
             response->set_message(false);
+            response->set_execution_seconds(0.0);
             return grpc::Status::OK;
         }
         if (access(path_b.c_str(), 0) == -1) {
             std::cerr << "[Datanode" << m_port << "][StripeMergeParity] parity B not found: " << path_b << std::endl;
             response->set_message(false);
+            response->set_execution_seconds(0.0);
             return grpc::Status::OK;
         }
 
@@ -825,6 +862,9 @@ namespace ECProject
                   << " -> " << new_parity_key << std::endl;
 
         response->set_message(true);
+        auto exec_t1 = std::chrono::high_resolution_clock::now();
+        response->set_execution_seconds(
+            std::chrono::duration_cast<std::chrono::duration<double>>(exec_t1 - exec_t0).count());
         return grpc::Status::OK;
     }
 

@@ -406,6 +406,17 @@ namespace ECProject
       get_info.set_proxy_port(m_port + offset);
       std::string node_ip_port = std::string(ip) + ":" + std::to_string(port);
       grpc::Status stat = m_datanode_ptrs[node_ip_port]->handleGet(&context, get_info, &result);
+      if (!stat.ok())
+      {
+        if (IF_DEBUG)
+        {
+          std::cout << "[Proxy" << m_self_cluster_id << "][GET]"
+                    << " Call datanode to handle get " << key
+                    << " failed: " << stat.error_message() << std::endl;
+        }
+        delete buf;
+        return false;
+      }
       if (IF_DEBUG)
       {
         std::cout << "[Proxy" << m_self_cluster_id << "][GET]"
@@ -455,16 +466,20 @@ namespace ECProject
       get_info.set_proxy_port(m_port);
       std::string node_ip_port = std::string(ip) + ":" + std::to_string(port);
       grpc::Status stat = m_datanode_ptrs[node_ip_port]->handleGet(&context, get_info, &result);
-      if (stat.ok() && IF_DEBUG)
+      if (!stat.ok())
+      {
+        if (IF_DEBUG)
+        {
+          std::cout << "[Proxy" << m_self_cluster_id << "][GET]"
+                    << " Call datanode to handle get " << key
+                    << " failed: " << stat.error_message() << std::endl;
+        }
+        return false;
+      }
+      if (IF_DEBUG)
       {
         std::cout << "[Proxy" << m_self_cluster_id << "][GET]"
                   << " Call datanode to handle get " << key << std::endl;
-      }
-      else if (IF_DEBUG)
-      {
-        std::cout << "[Proxy" << m_self_cluster_id << "][GET]"
-                  << " Call datanode to handle get " << key << " failed!" << std::endl;
-        return false;
       }
 
       asio::io_context io_context;

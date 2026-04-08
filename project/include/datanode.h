@@ -8,6 +8,7 @@
 #include <asio.hpp>
 #include <string>
 #include <vector>
+#include <mutex>
 #include "meta_definition.h"
 #include "config.h"
 // #define IF_DEBUG true
@@ -92,6 +93,7 @@ namespace ECProject
         int m_download_port;
         asio::io_context io_context;
         asio::ip::tcp::acceptor acceptor;
+        std::mutex acceptor_mtx;
     };
 
     class DataNode

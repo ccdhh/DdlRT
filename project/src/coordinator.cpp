@@ -4789,9 +4789,15 @@ grpc::Status CoordinatorImpl::mergeStripes(
         };
 
         // Helper: write a block to a datanode (via handleSet + TCP write).
+        //
+        // IMPORTANT: when sync_write==true, the datanode's handleSet will block
+        // until the TCP payload has been received+persisted. To avoid deadlock
+        // (gRPC waiting for TCP while sender waits for gRPC to return),
+        // we start the TCP sender concurrently.
         auto write_to_datanode = [&](const std::string &block_key,
                                       const std::string &ip, int port,
-                                      const std::vector<unsigned char> &in) -> bool {
+                                      const std::vector<unsigned char> &in,
+                                      bool sync_write) -> bool {
           if (in.size() != bs)
             return false;
 
@@ -4807,10 +4813,54 @@ grpc::Status CoordinatorImpl::mergeStripes(
           set_info.set_proxy_ip("127.0.0.1");
           set_info.set_proxy_port(0);
           set_info.set_ispull(false);
+          set_info.set_sync_write(sync_write);
+
+          std::atomic<bool> tcp_ok{false};
+          std::thread tcp_sender;
+          if (sync_write) {
+            tcp_sender = std::thread([&]() {
+              try {
+                asio::io_context io;
+                asio::ip::tcp::resolver resolver(io);
+                asio::ip::tcp::socket socket(io);
+                asio::error_code ec;
+                std::string host = ip;
+                std::string p = std::to_string(port + ECProject::DATANODE_PORT_SHIFT);
+                bool connected = false;
+                for (int attempt = 0; attempt < 200; attempt++) {
+                  ec.clear();
+                  socket = asio::ip::tcp::socket(io);
+                  auto endpoints = resolver.resolve(host, p);
+                  asio::connect(socket, endpoints, ec);
+                  if (!ec) {
+                    connected = true;
+                    break;
+                  }
+                  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                if (!connected) {
+                  tcp_ok.store(false);
+                  return;
+                }
+                asio::error_code write_ec;
+                asio::write(socket, asio::buffer(in.data(), bs), write_ec);
+                socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+                socket.close(ec);
+                tcp_ok.store(!write_ec);
+              } catch (...) {
+                tcp_ok.store(false);
+              }
+            });
+          }
 
           grpc::Status st = stub->handleSet(&ctx, set_info, &result);
+          if (sync_write && tcp_sender.joinable())
+            tcp_sender.join();
           if (!st.ok())
             return false;
+
+          if (sync_write)
+            return tcp_ok.load();
 
           asio::io_context io;
           asio::ip::tcp::resolver resolver(io);
@@ -4918,7 +4968,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
               }
               if (!write_to_datanode(task.parity_key_b,
                                      task.datanode_ip, task.datanode_port,
-                                     parity_b_buf_local)) {
+                                     parity_b_buf_local, true)) {
                 parity_ok.store(false);
                 return;
               }
@@ -5014,7 +5064,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
 
         auto write_to_datanode = [&](const std::string &block_key,
                                       const std::string &ip, int port,
-                                      const std::vector<unsigned char> &in) -> bool {
+                                      const std::vector<unsigned char> &in,
+                                      bool sync_write) -> bool {
           if (in.size() != bs)
             return false;
 
@@ -5030,10 +5081,54 @@ grpc::Status CoordinatorImpl::mergeStripes(
           set_info.set_proxy_ip("127.0.0.1");
           set_info.set_proxy_port(0);
           set_info.set_ispull(false);
+          set_info.set_sync_write(sync_write);
+
+          std::atomic<bool> tcp_ok{false};
+          std::thread tcp_sender;
+          if (sync_write) {
+            tcp_sender = std::thread([&]() {
+              try {
+                asio::io_context io;
+                asio::ip::tcp::resolver resolver(io);
+                asio::ip::tcp::socket socket(io);
+                asio::error_code ec;
+                std::string host = ip;
+                std::string p = std::to_string(port + ECProject::DATANODE_PORT_SHIFT);
+                bool connected = false;
+                for (int attempt = 0; attempt < 200; attempt++) {
+                  ec.clear();
+                  socket = asio::ip::tcp::socket(io);
+                  auto endpoints = resolver.resolve(host, p);
+                  asio::connect(socket, endpoints, ec);
+                  if (!ec) {
+                    connected = true;
+                    break;
+                  }
+                  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                if (!connected) {
+                  tcp_ok.store(false);
+                  return;
+                }
+                asio::error_code write_ec;
+                asio::write(socket, asio::buffer(in.data(), bs), write_ec);
+                socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+                socket.close(ec);
+                tcp_ok.store(!write_ec);
+              } catch (...) {
+                tcp_ok.store(false);
+              }
+            });
+          }
 
           grpc::Status st = stub->handleSet(&ctx, set_info, &result);
+          if (sync_write && tcp_sender.joinable())
+            tcp_sender.join();
           if (!st.ok())
             return false;
+
+          if (sync_write)
+            return tcp_ok.load();
 
           asio::io_context io;
           asio::ip::tcp::resolver resolver(io);
@@ -5132,7 +5227,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
               Block *pa = stripe_a.blocks[k + j];
               Node &parity_node = m_node_table[pa->map2node];
               if (!write_to_datanode(new_parity_keys[j], parity_node.node_ip,
-                                     parity_node.node_port, parity_acc[j])) {
+                                     parity_node.node_port, parity_acc[j], true)) {
                 std::cerr << "[Coordinator][Merge][SRS] failed to write new parity "
                           << new_parity_keys[j] << std::endl;
                 parity_ok.store(false);
@@ -5249,87 +5344,87 @@ grpc::Status CoordinatorImpl::mergeStripes(
     reply->set_ers_merge_exec_sec(merge_exec_sec);
   }
 
-  // Apply in-memory placement updates only after actual relocation completes.
-  for (auto &pm : planned_moves) {
-    if (pm.blk) {
-      pm.blk->map2cluster = pm.to_cluster;
-      pm.blk->map2node = pm.to_node;
-    }
-  }
-
-  // ====== Update metadata ======
-  // Build new stripe's block list
-  for (int i = 0; i < k; i++) {
-    Block *blk = stripe_a.blocks[i];
-    blk->map2stripe = new_stripe_id;
-    blk->block_id = i;
-    new_stripe.blocks.push_back(blk);
-    new_stripe.place2clusters.insert(blk->map2cluster);
-  }
-  for (int i = 0; i < k; i++) {
-    Block *blk = stripe_b.blocks[i];
-    blk->map2stripe = new_stripe_id;
-    blk->block_id = k + i;
-    new_stripe.blocks.push_back(blk);
-    new_stripe.place2clusters.insert(blk->map2cluster);
-  }
-  // New parity blocks: update keys and add to stripe
-  for (int j = 0; j < r; j++) {
-    Block *pa = stripe_a.blocks[k + j];
-    pa->block_key = new_parity_keys[j];
-    pa->map2stripe = new_stripe_id;
-    pa->block_id = new_k + j;
-    pa->block_type = 'G';
-    new_stripe.blocks.push_back(pa);
-    new_stripe.place2clusters.insert(pa->map2cluster);
-  }
-
-  // Rebuild merged stripe grouping metadata for recovery/append paths.
-
-  // RS + AppendMode == "SRS&ERS": deterministic group sizing based on new_k and r.
-  new_stripe.group_to_blocks.clear();
-  const int num_data_groups = (new_k + r - 1) / r; // zu
-  const int b_rs_new = (new_k - 1) % r + 1;
-  int small_data_groups = r - b_rs_new;
-  if (small_data_groups < 0)
-    small_data_groups = 0;
-  if (small_data_groups > num_data_groups)
-    small_data_groups = num_data_groups;
-  const int parity_group_id = num_data_groups; // last group
-
-  // Data blocks: indices [0..new_k-1]
-  int idx = 0;
-  for (int gid = 0; gid < num_data_groups; gid++) {
-    const int group_size = (gid < small_data_groups) ? (r - 1) : r;
-    for (int t = 0; t < group_size && idx < new_k; t++) {
-      const int bid = idx;
-      Block *blk = new_stripe.blocks[bid];
-      blk->map2group = gid;
-      add_to_map(new_stripe.group_to_blocks, gid, bid);
-      idx++;
-    }
-  }
-
-  // Parity blocks: indices [new_k .. new_k+r-1]
-  for (int j = 0; j < r; j++) {
-    const int bid = new_k + j;
-    Block *blk = new_stripe.blocks[bid];
-    blk->map2group = parity_group_id;
-    add_to_map(new_stripe.group_to_blocks, parity_group_id, bid);
-  }
-
-  new_stripe.num_groups = num_data_groups + 1;
-
-  // Remove old stripes from table
-  m_stripe_table.erase(stripe_id_a);
-  m_stripe_table.erase(stripe_id_b);
-
-  // Insert merged stripe metadata after deleting old entries.
-  m_stripe_table[new_stripe_id] = std::move(new_stripe);
-
   bool success = migration_ok.load() && parity_ok.load();
   reply->set_success(success);
-  reply->set_new_stripe_id(new_stripe_id);
+  reply->set_new_stripe_id(success ? new_stripe_id : -1);
+
+  if (success) {
+    // Apply in-memory placement updates only after overall merge succeeds.
+    for (auto &pm : planned_moves) {
+      if (pm.blk) {
+        pm.blk->map2cluster = pm.to_cluster;
+        pm.blk->map2node = pm.to_node;
+      }
+    }
+
+    // ====== Update metadata ======
+    // Build new stripe's block list
+    for (int i = 0; i < k; i++) {
+      Block *blk = stripe_a.blocks[i];
+      blk->map2stripe = new_stripe_id;
+      blk->block_id = i;
+      new_stripe.blocks.push_back(blk);
+      new_stripe.place2clusters.insert(blk->map2cluster);
+    }
+    for (int i = 0; i < k; i++) {
+      Block *blk = stripe_b.blocks[i];
+      blk->map2stripe = new_stripe_id;
+      blk->block_id = k + i;
+      new_stripe.blocks.push_back(blk);
+      new_stripe.place2clusters.insert(blk->map2cluster);
+    }
+    // New parity blocks: update keys and add to stripe
+    for (int j = 0; j < r; j++) {
+      Block *pa = stripe_a.blocks[k + j];
+      pa->block_key = new_parity_keys[j];
+      pa->map2stripe = new_stripe_id;
+      pa->block_id = new_k + j;
+      pa->block_type = 'G';
+      new_stripe.blocks.push_back(pa);
+      new_stripe.place2clusters.insert(pa->map2cluster);
+    }
+
+    // Rebuild merged stripe grouping metadata for recovery/append paths.
+
+    // RS + AppendMode == "SRS&ERS": deterministic group sizing based on new_k and r.
+    new_stripe.group_to_blocks.clear();
+    const int num_data_groups = (new_k + r - 1) / r; // zu
+    const int b_rs_new = (new_k - 1) % r + 1;
+    int small_data_groups = r - b_rs_new;
+    if (small_data_groups < 0)
+      small_data_groups = 0;
+    if (small_data_groups > num_data_groups)
+      small_data_groups = num_data_groups;
+    const int parity_group_id = num_data_groups; // last group
+
+    // Data blocks: indices [0..new_k-1]
+    int idx = 0;
+    for (int gid = 0; gid < num_data_groups; gid++) {
+      const int group_size = (gid < small_data_groups) ? (r - 1) : r;
+      for (int t = 0; t < group_size && idx < new_k; t++) {
+        const int bid = idx;
+        Block *blk = new_stripe.blocks[bid];
+        blk->map2group = gid;
+        add_to_map(new_stripe.group_to_blocks, gid, bid);
+        idx++;
+      }
+    }
+
+    // Parity blocks: indices [new_k .. new_k+r-1]
+    for (int j = 0; j < r; j++) {
+      const int bid = new_k + j;
+      Block *blk = new_stripe.blocks[bid];
+      blk->map2group = parity_group_id;
+      add_to_map(new_stripe.group_to_blocks, parity_group_id, bid);
+    }
+
+    new_stripe.num_groups = num_data_groups + 1;
+
+    // Commit: remove old stripes and insert merged stripe metadata.
+    m_stripe_table.erase(stripe_id_a);
+    m_stripe_table.erase(stripe_id_b);
+    m_stripe_table[new_stripe_id] = std::move(new_stripe);
+  }
 
   std::cout << "[Coordinator][Merge] merge " << (success ? "succeeded" : "FAILED")
             << " -> new stripe " << new_stripe_id

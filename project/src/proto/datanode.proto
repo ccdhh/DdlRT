@@ -52,6 +52,8 @@ message RequestResult {
     double disk_io_start_time = 3;
     double disk_io_end_time = 4;
     double grpc_start_time = 5;
+    // Handler-local work time (excluding gRPC framing / RTT).
+    double execution_seconds = 6;
 }
 
 message SetInfo {
@@ -61,6 +63,8 @@ message SetInfo {
     string proxy_ip = 4;
     int32 proxy_port = 5;
     bool ispull = 6;
+    // When true (push mode), handleSet will finish local write before reply.
+    bool sync_write = 7;
 }
 
 message AppendInfo {

@@ -363,6 +363,7 @@ class RequestResult final :
     kDiskIoStartTimeFieldNumber = 3,
     kDiskIoEndTimeFieldNumber = 4,
     kGrpcStartTimeFieldNumber = 5,
+    kExecutionSecondsFieldNumber = 6,
   };
   // bool message = 1;
   void clear_message();
@@ -409,6 +410,15 @@ class RequestResult final :
   void _internal_set_grpc_start_time(double value);
   public:
 
+  // double execution_seconds = 6;
+  void clear_execution_seconds();
+  double execution_seconds() const;
+  void set_execution_seconds(double value);
+  private:
+  double _internal_execution_seconds() const;
+  void _internal_set_execution_seconds(double value);
+  public:
+
   // @@protoc_insertion_point(class_scope:datanode_proto.RequestResult)
  private:
   class _Internal;
@@ -422,6 +432,7 @@ class RequestResult final :
     double disk_io_start_time_;
     double disk_io_end_time_;
     double grpc_start_time_;
+    double execution_seconds_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -556,6 +567,7 @@ class SetInfo final :
     kBlockIdFieldNumber = 3,
     kProxyPortFieldNumber = 5,
     kIspullFieldNumber = 6,
+    kSyncWriteFieldNumber = 7,
   };
   // string block_key = 1;
   void clear_block_key();
@@ -621,6 +633,15 @@ class SetInfo final :
   void _internal_set_ispull(bool value);
   public:
 
+  // bool sync_write = 7;
+  void clear_sync_write();
+  bool sync_write() const;
+  void set_sync_write(bool value);
+  private:
+  bool _internal_sync_write() const;
+  void _internal_set_sync_write(bool value);
+  public:
+
   // @@protoc_insertion_point(class_scope:datanode_proto.SetInfo)
  private:
   class _Internal;
@@ -635,6 +656,7 @@ class SetInfo final :
     int32_t block_id_;
     int32_t proxy_port_;
     bool ispull_;
+    bool sync_write_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -1728,6 +1750,26 @@ inline void RequestResult::set_grpc_start_time(double value) {
   // @@protoc_insertion_point(field_set:datanode_proto.RequestResult.grpc_start_time)
 }
 
+// double execution_seconds = 6;
+inline void RequestResult::clear_execution_seconds() {
+  _impl_.execution_seconds_ = 0;
+}
+inline double RequestResult::_internal_execution_seconds() const {
+  return _impl_.execution_seconds_;
+}
+inline double RequestResult::execution_seconds() const {
+  // @@protoc_insertion_point(field_get:datanode_proto.RequestResult.execution_seconds)
+  return _internal_execution_seconds();
+}
+inline void RequestResult::_internal_set_execution_seconds(double value) {
+  
+  _impl_.execution_seconds_ = value;
+}
+inline void RequestResult::set_execution_seconds(double value) {
+  _internal_set_execution_seconds(value);
+  // @@protoc_insertion_point(field_set:datanode_proto.RequestResult.execution_seconds)
+}
+
 // -------------------------------------------------------------------
 
 // SetInfo
@@ -1910,6 +1952,26 @@ inline void SetInfo::_internal_set_ispull(bool value) {
 inline void SetInfo::set_ispull(bool value) {
   _internal_set_ispull(value);
   // @@protoc_insertion_point(field_set:datanode_proto.SetInfo.ispull)
+}
+
+// bool sync_write = 7;
+inline void SetInfo::clear_sync_write() {
+  _impl_.sync_write_ = false;
+}
+inline bool SetInfo::_internal_sync_write() const {
+  return _impl_.sync_write_;
+}
+inline bool SetInfo::sync_write() const {
+  // @@protoc_insertion_point(field_get:datanode_proto.SetInfo.sync_write)
+  return _internal_sync_write();
+}
+inline void SetInfo::_internal_set_sync_write(bool value) {
+  
+  _impl_.sync_write_ = value;
+}
+inline void SetInfo::set_sync_write(bool value) {
+  _internal_set_sync_write(value);
+  // @@protoc_insertion_point(field_set:datanode_proto.SetInfo.sync_write)
 }
 
 // -------------------------------------------------------------------
