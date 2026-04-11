@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     std::cout << "\n[Merge bandwidth] 若需仅在合并阶段限速：先勿在放置阶段执行 limit 脚本。\n"
             << "  在合并前于另一终端执行: sh limit_all_intra10Gb_inter1Gb.sh\n"
             << "  合并完成后再执行: sh unlimit_all_proxy.sh\n\n";
-
+    int merge_num=0;
     while (true)
     {
         std::cout << "start merge now? (Y/N)" << std::endl;
@@ -100,6 +100,7 @@ int main(int argc, char **argv)
             std::chrono::high_resolution_clock::time_point merge_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> merge_time = std::chrono::duration_cast<std::chrono::duration<double>>(merge_end - merge_start);
             std::cout << "[merge time] total spend time: " << merge_time.count() << " seconds" << std::endl;
+            merge_num++;
         }
         else if (choose == 'N' || choose == 'n')
         {
@@ -108,6 +109,11 @@ int main(int argc, char **argv)
         else
         {
             std::cout << "Invalid input, please enter Y or N." << std::endl;
+        }
+        if(merge_num>=2)
+        {
+            std::cout<<"merge complete"<<std::endl;
+            break;
         }
     }
     
