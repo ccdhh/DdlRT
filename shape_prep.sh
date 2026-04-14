@@ -33,10 +33,13 @@ shape_prep_tc_resolve() {
   [ -n "$TC_BIN" ]
 }
 
-# 多队列网卡根队列常为 mq；不先删掉 root，wondershaper 的 htb 加不上（脚本仍可能 exit 0）
+# 多队列网卡根队列常为 mq；需多次删除才能清掉 htb/mq/ingress，避免 wondershaper 报 Exclusivity / File exists
 shape_prep_clear_iface_qdisc() {
   local dev="$1"
+  local i
   ip link show "$dev" &>/dev/null || return 0
-  "$TC_BIN" qdisc del dev "$dev" ingress >/dev/null 2>&1 || true
-  "$TC_BIN" qdisc del dev "$dev" root >/dev/null 2>&1 || true
+  for i in 1 2 3 4 5; do
+    "$TC_BIN" qdisc del dev "$dev" ingress >/dev/null 2>&1 || true
+    "$TC_BIN" qdisc del dev "$dev" root >/dev/null 2>&1 || true
+  done
 }

@@ -17,16 +17,18 @@ fi
 
 HOSTS_FILE="proxy_hosts"
 USER="root"
-# 必须与 limit_all_intra10Gb_inter.sh 一致：在节点上执行 limit_intra10Gb_inter.sh（含 enp4s0f* 与单口逻辑）。
-# 勿用 test_test.sh：其中曾只写死 enp6s0f0/f1，会导致仅 enp4s0f1 UP 的节点全部 exit 2。
-REMOTE_COMMAND="cd /users/qiliang/UniLRC && sh limit_intra10Gb_inter.sh $INTER_GB"
+# 远端必须用 bash 执行 limit_intra10Gb_inter.sh；LIMIT_* 见该脚本（自动 up、10.x f1 回退、tc 多次清理）。
+REMOTE_COMMAND="cd /users/qiliang/UniLRC && LIMIT_AUTO_IFUP=1 LIMIT_FALLBACK_10NET=1 bash limit_intra10Gb_inter.sh $INTER_GB"
 PARALLEL=5
 
 echo "Applying intra 10 Gb/s + inter ${INTER_GB} Gb/s on all proxy nodes..."
-sudo pdsh -R ssh -w ^$HOSTS_FILE -l $USER -f $PARALLEL "$REMOTE_COMMAND"
+# -S：任一节点非 0 退出时 pdsh 整体非 0，便于发现失败节点
+sudo pdsh -S -R ssh -w ^$HOSTS_FILE -l $USER -f $PARALLEL "$REMOTE_COMMAND"
+pdsh_rc=$?
 
-if [ $? -eq 0 ]; then
-	echo "Done."
+if [ "$pdsh_rc" -eq 0 ]; then
+	echo "Done (all nodes ok)."
 else
-	echo "Some nodes may have failed."
+	echo "Done with errors: pdsh exit $pdsh_rc (see messages above)."
+	exit "$pdsh_rc"
 fi
