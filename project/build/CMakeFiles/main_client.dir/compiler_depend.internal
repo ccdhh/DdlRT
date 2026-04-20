@@ -1220,6 +1220,37 @@ CMakeFiles/main_client.dir/run_cpp/main_client.cpp.o
  /usr/include/c++/11/bits/quoted_string.h
  /users/qiliang/UniLRC/project/include/unilrc_encoder.h
 
+CMakeFiles/main_client.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_2vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_3vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_4vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_5vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_6vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/reg_sizes.asm.o
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/xor_gen_avx.asm.o
+ /users/qiliang/UniLRC/project/src/asm/xor_gen_avx.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
 CMakeFiles/main_client.dir/src/client.cpp.o
  /users/qiliang/UniLRC/project/src/client.cpp
  /usr/include/stdc-predef.h

@@ -1206,6 +1206,29 @@ CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o: ../run_cpp/run_datanode.
   /usr/include/c++/11/pstl/glue_numeric_defs.h \
   ../include/config.h
 
+CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: ../src/asm/gf_2vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o: ../src/asm/gf_3vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o: ../src/asm/gf_4vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o: ../src/asm/gf_5vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o: ../src/asm/gf_6vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o: ../src/asm/gf_vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o: ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o: ../src/asm/xor_gen_avx.asm \
+  ../src/asm/reg_sizes.asm
+
 CMakeFiles/run_datanode.dir/src/client.cpp.o: ../src/client.cpp \
   /usr/include/stdc-predef.h \
   ../include/client.h \
@@ -9128,8 +9151,6 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 ../src/proto/datanode.grpc.pb.cc:
 
-../third_party/grpc/include/google/protobuf/wire_format.h:
-
 ../src/proto/coordinator.pb.cc:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/client_unary_call.h:
@@ -9137,6 +9158,12 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 ../src/lrc.cpp:
 
 ../src/datanode.cpp:
+
+../third_party/gf-complete/include/gf_complete.h:
+
+../include/lrc.h:
+
+../src/proto/proxy.grpc.pb.h:
 
 ../third_party/asio/include/asio/buffer_registration.hpp:
 
@@ -9304,6 +9331,10 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h:
 
+../third_party/grpc/include/grpc++/create_channel.h:
+
+../third_party/asio/include/asio/impl/detached.hpp:
+
 /usr/include/x86_64-linux-gnu/bits/math-vector.h:
 
 ../third_party/grpc/include/google/protobuf/generated_message_reflection.h:
@@ -9418,8 +9449,6 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 ../third_party/grpc/include/grpc/impl/codegen/propagation_bits.h:
 
-../include/lrc.h:
-
 ../third_party/grpc/include/grpcpp/impl/codegen/status.h:
 
 ../third_party/grpc/include/grpcpp/support/channel_arguments.h:
@@ -9459,6 +9488,10 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 ../include/unilrc_encoder.h:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/server_callback_handlers.h:
+
+../third_party/grpc/include/google/protobuf/wire_format.h:
+
+../src/asm/reg_sizes.asm:
 
 ../third_party/grpc/include/google/protobuf/extension_set.h:
 
@@ -9703,8 +9736,6 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 /usr/include/c++/11/bits/char_traits.h:
 
 /usr/include/c++/11/bits/concept_check.h:
-
-../src/proto/proxy.grpc.pb.h:
 
 ../third_party/grpc/include/grpc/impl/codegen/sync_abseil.h:
 
@@ -10386,6 +10417,8 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
 
+../src/asm/gf_6vect_dot_prod_avx2.asm:
+
 /usr/include/c++/11/bits/stl_bvector.h:
 
 /usr/include/c++/11/bits/unique_ptr.h:
@@ -10421,6 +10454,10 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 ../src/proto/coordinator.pb.h:
 
 /usr/include/c++/11/bits/streambuf_iterator.h:
+
+../include/coordinator.h:
+
+../third_party/grpc/include/google/protobuf/has_bits.h:
 
 /usr/include/linux/types.h:
 
@@ -10676,13 +10713,11 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 ../third_party/asio/include/asio/read_until.hpp:
 
-../third_party/grpc/include/google/protobuf/has_bits.h:
-
-../include/coordinator.h:
-
 /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h:
 
 /usr/include/x86_64-linux-gnu/bits/fcntl2.h:
+
+../src/asm/gf_vect_dot_prod_avx2.asm:
 
 /usr/include/x86_64-linux-gnu/sys/socket.h:
 
@@ -10727,6 +10762,10 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 ../third_party/asio/include/asio/traits/bulk_execute_member.hpp:
 
 ../third_party/asio/include/asio/traits/bulk_execute_free.hpp:
+
+../third_party/jerasure/include/jerasure/galois.h:
+
+/usr/include/c++/11/any:
 
 ../third_party/asio/include/asio/file_base.hpp:
 
@@ -10773,8 +10812,6 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 ../third_party/grpc/include/google/protobuf/arena_impl.h:
 
 ../third_party/asio/include/asio/deadline_timer.hpp:
-
-../third_party/asio/include/asio/system_context.hpp:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/atomic_word.h:
 
@@ -11110,10 +11147,6 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 ../third_party/asio/include/asio/basic_streambuf.hpp:
 
-../third_party/asio/include/asio/impl/detached.hpp:
-
-../third_party/grpc/include/grpc++/create_channel.h:
-
 ../third_party/asio/include/asio/bind_executor.hpp:
 
 ../third_party/asio/include/asio/buffered_read_stream_fwd.hpp:
@@ -11192,6 +11225,10 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 ../third_party/asio/include/asio/generic/stream_protocol.hpp:
 
+../third_party/jerasure/include/jerasure/reed_sol.h:
+
+../third_party/asio/include/asio/high_resolution_timer.hpp:
+
 ../third_party/asio/include/asio/detail/impl/strand_service.hpp:
 
 /usr/include/c++/11/future:
@@ -11267,6 +11304,8 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 ../third_party/asio/include/asio/basic_socket_acceptor.hpp:
 
 ../third_party/asio/include/asio/is_write_buffered.hpp:
+
+../src/asm/gf_5vect_dot_prod_avx2.asm:
 
 ../third_party/asio/include/asio/local/detail/impl/endpoint.ipp:
 
@@ -11362,6 +11401,16 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 
 /usr/include/c++/11/random:
 
+../src/asm/gf_2vect_dot_prod_avx2.asm:
+
+../src/asm/gf_3vect_dot_prod_avx2.asm:
+
+../third_party/asio/include/asio/system_context.hpp:
+
+../src/asm/gf_4vect_dot_prod_avx2.asm:
+
+../src/asm/xor_gen_avx.asm:
+
 ../src/client.cpp:
 
 ../third_party/asio/include/asio/bind_cancellation_slot.hpp:
@@ -11369,13 +11418,3 @@ CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp 
 ../src/proto/coordinator.grpc.pb.h:
 
 /usr/include/c++/11/thread:
-
-/usr/include/c++/11/any:
-
-../third_party/jerasure/include/jerasure/galois.h:
-
-../third_party/gf-complete/include/gf_complete.h:
-
-../third_party/asio/include/asio/high_resolution_timer.hpp:
-
-../third_party/jerasure/include/jerasure/reed_sol.h:

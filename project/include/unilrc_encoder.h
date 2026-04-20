@@ -91,6 +91,12 @@ namespace ECProject
 
     int xor_avx(int vects, int len, void **array);
 
+    /** Stripe merge parity: out = buf_a XOR (coeff · buf_b) in GF(2^8), byte-wise.
+     *  Uses gf_vect_mul_init + gf_vect_dot_prod_avx2 + xor_gen when ENABLE_AVX2_ASM; else scalar gf_mul. */
+    void merge_stripe_parity_gf_xor(int block_size, unsigned char *buf_a,
+                                    unsigned char *buf_b, unsigned char coeff,
+                                    unsigned char *buf_out);
+
     unsigned char
     gf_inv(unsigned char a);
 
@@ -129,8 +135,6 @@ namespace ECProject
 
     void
     gf_mul_vect_matrix(unsigned char* vect, unsigned char* matrix, unsigned char *dest, int k);
-
-    int xor_avx(int vects, int len, void **array);
 
     bool get_multi_decode_plan(int k, int r, int z, std::string code_type, const std::vector<int> failed_block_indexes, std::vector<int> &decode_block_indexes, std::vector<std::vector<int>> &decode_factors);
 }

@@ -6,7 +6,10 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <asio.hpp>
+#include <memory>
+#include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include "meta_definition.h"
 #include "config.h"
@@ -96,6 +99,10 @@ namespace ECProject
         int m_download_port;
         asio::io_context io_context;
         asio::ip::tcp::acceptor acceptor;
+        std::mutex m_remote_read_stub_mutex;
+        std::unordered_map<std::string,
+                           std::shared_ptr<datanode_proto::datanodeService::Stub>>
+            m_remote_read_stubs;
     };
 
     class DataNode

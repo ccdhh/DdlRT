@@ -8,6 +8,14 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/users/qiliang/UniLRC/project/src/asm/gf_2vect_dot_prod_avx2.asm" "CMakeFiles/main_client.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o.d"
+  "/users/qiliang/UniLRC/project/src/asm/gf_3vect_dot_prod_avx2.asm" "CMakeFiles/main_client.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o.d"
+  "/users/qiliang/UniLRC/project/src/asm/gf_4vect_dot_prod_avx2.asm" "CMakeFiles/main_client.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o.d"
+  "/users/qiliang/UniLRC/project/src/asm/gf_5vect_dot_prod_avx2.asm" "CMakeFiles/main_client.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o.d"
+  "/users/qiliang/UniLRC/project/src/asm/gf_6vect_dot_prod_avx2.asm" "CMakeFiles/main_client.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o.d"
+  "/users/qiliang/UniLRC/project/src/asm/gf_vect_dot_prod_avx2.asm" "CMakeFiles/main_client.dir/src/asm/gf_vect_dot_prod_avx2.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/gf_vect_dot_prod_avx2.asm.o.d"
+  "/users/qiliang/UniLRC/project/src/asm/reg_sizes.asm" "CMakeFiles/main_client.dir/src/asm/reg_sizes.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/reg_sizes.asm.o.d"
+  "/users/qiliang/UniLRC/project/src/asm/xor_gen_avx.asm" "CMakeFiles/main_client.dir/src/asm/xor_gen_avx.asm.o" "gcc" "CMakeFiles/main_client.dir/src/asm/xor_gen_avx.asm.o.d"
   "/users/qiliang/UniLRC/project/run_cpp/main_client.cpp" "CMakeFiles/main_client.dir/run_cpp/main_client.cpp.o" "gcc" "CMakeFiles/main_client.dir/run_cpp/main_client.cpp.o.d"
   "/users/qiliang/UniLRC/project/src/client.cpp" "CMakeFiles/main_client.dir/src/client.cpp.o" "gcc" "CMakeFiles/main_client.dir/src/client.cpp.o.d"
   "/users/qiliang/UniLRC/project/src/config.cpp" "CMakeFiles/main_client.dir/src/config.cpp.o" "gcc" "CMakeFiles/main_client.dir/src/config.cpp.o.d"

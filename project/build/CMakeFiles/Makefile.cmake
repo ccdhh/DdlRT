@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
   "../CMakeLists.txt"
+  "CMakeFiles/3.22.1/CMakeASM_NASMCompiler.cmake"
   "CMakeFiles/3.22.1/CMakeCCompiler.cmake"
   "CMakeFiles/3.22.1/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.22.1/CMakeSystem.cmake"
@@ -25,6 +26,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "../third_party/grpc/lib/cmake/protobuf/protobuf-options.cmake"
   "../third_party/grpc/lib/cmake/protobuf/protobuf-targets-noconfig.cmake"
   "../third_party/grpc/lib/cmake/protobuf/protobuf-targets.cmake"
+  "/usr/share/cmake-3.22/Modules/CMakeASMInformation.cmake"
+  "/usr/share/cmake-3.22/Modules/CMakeASM_NASMInformation.cmake"
   "/usr/share/cmake-3.22/Modules/CMakeCInformation.cmake"
   "/usr/share/cmake-3.22/Modules/CMakeCXXInformation.cmake"
   "/usr/share/cmake-3.22/Modules/CMakeCommonLanguageInclude.cmake"

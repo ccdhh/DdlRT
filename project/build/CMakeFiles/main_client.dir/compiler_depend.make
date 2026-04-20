@@ -1219,6 +1219,29 @@ CMakeFiles/main_client.dir/run_cpp/main_client.cpp.o: ../run_cpp/main_client.cpp
   /usr/include/c++/11/bits/quoted_string.h \
   ../include/unilrc_encoder.h
 
+CMakeFiles/main_client.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: ../src/asm/gf_2vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o: ../src/asm/gf_3vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o: ../src/asm/gf_4vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o: ../src/asm/gf_5vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o: ../src/asm/gf_6vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/gf_vect_dot_prod_avx2.asm.o: ../src/asm/gf_vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/reg_sizes.asm.o: ../src/asm/reg_sizes.asm
+
+CMakeFiles/main_client.dir/src/asm/xor_gen_avx.asm.o: ../src/asm/xor_gen_avx.asm \
+  ../src/asm/reg_sizes.asm
+
 CMakeFiles/main_client.dir/src/client.cpp.o: ../src/client.cpp \
   /usr/include/stdc-predef.h \
   ../include/client.h \
@@ -9141,8 +9164,6 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../src/proto/datanode.grpc.pb.cc:
 
-../third_party/grpc/include/google/protobuf/wire_format.h:
-
 ../src/proto/coordinator.pb.cc:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/client_unary_call.h:
@@ -9162,6 +9183,16 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 ../src/proto/datanode.pb.h:
 
 ../src/proto/datanode.grpc.pb.h:
+
+../third_party/grpc/include/grpcpp/ext/proto_server_reflection_plugin.h:
+
+../src/proto/proxy.grpc.pb.h:
+
+../src/coordinator.cpp:
+
+../include/tinyxml2.h:
+
+../src/config.cpp:
 
 ../third_party/asio/include/asio/detail/type_traits.hpp:
 
@@ -9321,6 +9352,10 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h:
 
+../third_party/grpc/include/grpc++/create_channel.h:
+
+../third_party/asio/include/asio/impl/detached.hpp:
+
 /usr/include/x86_64-linux-gnu/bits/math-vector.h:
 
 ../third_party/grpc/include/google/protobuf/generated_message_reflection.h:
@@ -9465,6 +9500,10 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../third_party/grpc/include/grpcpp/impl/codegen/server_callback_handlers.h:
 
+../third_party/grpc/include/google/protobuf/wire_format.h:
+
+../src/asm/reg_sizes.asm:
+
 ../third_party/grpc/include/google/protobuf/extension_set.h:
 
 ../third_party/grpc/include/google/protobuf/message.h:
@@ -9486,8 +9525,6 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 ../third_party/grpc/include/grpcpp/impl/codegen/rpc_service_method.h:
 
 ../third_party/asio/include/asio/execution/detail/as_receiver.hpp:
-
-../include/tinyxml2.h:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/proto_utils.h:
 
@@ -9663,8 +9700,6 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../third_party/asio/include/asio/detail/eventfd_select_interrupter.hpp:
 
-../src/config.cpp:
-
 ../third_party/grpc/include/google/protobuf/stubs/stl_util.h:
 
 /usr/include/c++/11/bits/vector.tcc:
@@ -9726,8 +9761,6 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 /usr/include/c++/11/bits/char_traits.h:
 
 /usr/include/c++/11/bits/concept_check.h:
-
-../src/proto/proxy.grpc.pb.h:
 
 ../third_party/grpc/include/grpc/impl/codegen/sync_abseil.h:
 
@@ -10163,8 +10196,6 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 /usr/include/asm-generic/sockios.h:
 
-../src/coordinator.cpp:
-
 ../third_party/asio/include/asio/traits/require_concept_member.hpp:
 
 ../third_party/asio/include/asio/ip/v6_only.hpp:
@@ -10407,6 +10438,8 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
 
+../src/asm/gf_6vect_dot_prod_avx2.asm:
+
 /usr/include/c++/11/bits/stl_bvector.h:
 
 /usr/include/c++/11/bits/unique_ptr.h:
@@ -10440,6 +10473,10 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 /usr/include/c++/11/bits/exception.h:
 
 /usr/include/c++/11/bits/streambuf_iterator.h:
+
+../include/coordinator.h:
+
+../third_party/grpc/include/google/protobuf/has_bits.h:
 
 /usr/include/linux/types.h:
 
@@ -10727,13 +10764,11 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../third_party/asio/include/asio/read_until.hpp:
 
-../third_party/grpc/include/google/protobuf/has_bits.h:
-
-../include/coordinator.h:
-
 /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h:
 
 /usr/include/x86_64-linux-gnu/bits/fcntl2.h:
+
+../src/asm/gf_vect_dot_prod_avx2.asm:
 
 /usr/include/x86_64-linux-gnu/sys/socket.h:
 
@@ -10824,8 +10859,6 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 ../third_party/grpc/include/google/protobuf/arena_impl.h:
 
 ../third_party/asio/include/asio/deadline_timer.hpp:
-
-../third_party/asio/include/asio/system_context.hpp:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/atomic_word.h:
 
@@ -11145,10 +11178,6 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../third_party/asio/include/asio/basic_streambuf.hpp:
 
-../third_party/asio/include/asio/impl/detached.hpp:
-
-../third_party/grpc/include/grpc++/create_channel.h:
-
 ../third_party/asio/include/asio/bind_executor.hpp:
 
 ../third_party/asio/include/asio/buffered_read_stream_fwd.hpp:
@@ -11303,6 +11332,8 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../third_party/asio/include/asio/is_write_buffered.hpp:
 
+../src/asm/gf_5vect_dot_prod_avx2.asm:
+
 ../third_party/asio/include/asio/local/detail/impl/endpoint.ipp:
 
 ../third_party/grpc/include/google/protobuf/unknown_field_set.h:
@@ -11405,8 +11436,16 @@ CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 /usr/include/c++/11/bits/quoted_string.h:
 
+../src/asm/gf_2vect_dot_prod_avx2.asm:
+
+../src/asm/gf_3vect_dot_prod_avx2.asm:
+
+../third_party/asio/include/asio/system_context.hpp:
+
+../src/asm/gf_4vect_dot_prod_avx2.asm:
+
+../src/asm/xor_gen_avx.asm:
+
 ../src/client.cpp:
 
 /usr/include/c++/11/thread:
-
-../third_party/grpc/include/grpcpp/ext/proto_server_reflection_plugin.h:

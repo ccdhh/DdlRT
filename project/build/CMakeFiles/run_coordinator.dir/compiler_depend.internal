@@ -546,6 +546,37 @@ CMakeFiles/run_coordinator.dir/run_cpp/run_coordinator.cpp.o
  /users/qiliang/UniLRC/project/src/proto/coordinator.pb.h
  /users/qiliang/UniLRC/project/include/unilrc_encoder.h
 
+CMakeFiles/run_coordinator.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_2vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_3vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_4vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_5vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_6vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_vect_dot_prod_avx2.asm.o
+ /users/qiliang/UniLRC/project/src/asm/gf_vect_dot_prod_avx2.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/reg_sizes.asm.o
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/xor_gen_avx.asm.o
+ /users/qiliang/UniLRC/project/src/asm/xor_gen_avx.asm
+ /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
 CMakeFiles/run_coordinator.dir/src/client.cpp.o
  /users/qiliang/UniLRC/project/src/client.cpp
  /usr/include/stdc-predef.h

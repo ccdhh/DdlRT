@@ -545,6 +545,29 @@ CMakeFiles/run_coordinator.dir/run_cpp/run_coordinator.cpp.o: ../run_cpp/run_coo
   ../src/proto/coordinator.pb.h \
   ../include/unilrc_encoder.h
 
+CMakeFiles/run_coordinator.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: ../src/asm/gf_2vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o: ../src/asm/gf_3vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o: ../src/asm/gf_4vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o: ../src/asm/gf_5vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o: ../src/asm/gf_6vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/gf_vect_dot_prod_avx2.asm.o: ../src/asm/gf_vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/reg_sizes.asm.o: ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_coordinator.dir/src/asm/xor_gen_avx.asm.o: ../src/asm/xor_gen_avx.asm \
+  ../src/asm/reg_sizes.asm
+
 CMakeFiles/run_coordinator.dir/src/client.cpp.o: ../src/client.cpp \
   /usr/include/stdc-predef.h \
   ../include/client.h \
@@ -8467,8 +8490,6 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../src/proto/datanode.grpc.pb.cc:
 
-../third_party/grpc/include/google/protobuf/wire_format.h:
-
 ../src/proto/coordinator.pb.cc:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/client_unary_call.h:
@@ -8478,6 +8499,14 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 ../third_party/grpc/include/grpc++/health_check_service_interface.h:
 
 ../include/datanode.h:
+
+../src/datanode.cpp:
+
+../third_party/gf-complete/include/gf_complete.h:
+
+../include/lrc.h:
+
+../src/proto/datanode.pb.h:
 
 ../include/unilrc_encoder.h:
 
@@ -8743,8 +8772,6 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/grpc/include/grpc/impl/codegen/propagation_bits.h:
 
-../include/lrc.h:
-
 ../third_party/grpc/include/grpcpp/impl/codegen/status.h:
 
 ../third_party/grpc/include/grpcpp/support/channel_arguments.h:
@@ -8780,6 +8807,10 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 /usr/include/x86_64-linux-gnu/sys/ucontext.h:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/server_callback_handlers.h:
+
+../third_party/grpc/include/google/protobuf/wire_format.h:
+
+../src/asm/reg_sizes.asm:
 
 ../third_party/grpc/include/google/protobuf/extension_set.h:
 
@@ -9116,6 +9147,12 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 /usr/include/c++/11/streambuf:
 
 ../third_party/grpc/include/grpc/support/time.h:
+
+../third_party/jerasure/include/jerasure/cauchy.h:
+
+../third_party/grpc/include/absl/base/macros.h:
+
+/usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h:
 
 ../third_party/asio/include/asio/detail/reactive_socket_send_op.hpp:
 
@@ -9715,6 +9752,8 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
 
+../src/asm/gf_6vect_dot_prod_avx2.asm:
+
 /usr/include/c++/11/bits/stl_bvector.h:
 
 /usr/include/c++/11/bits/unique_ptr.h:
@@ -9794,6 +9833,16 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 /usr/include/c++/11/bits/stl_function.h:
 
 ../third_party/asio/include/asio/detail/fenced_block.hpp:
+
+../src/asm/gf_2vect_dot_prod_avx2.asm:
+
+../src/asm/gf_3vect_dot_prod_avx2.asm:
+
+../src/asm/gf_vect_dot_prod_avx2.asm:
+
+/usr/include/x86_64-linux-gnu/bits/fcntl2.h:
+
+../src/asm/xor_gen_avx.asm:
 
 ../src/client.cpp:
 
@@ -10063,8 +10112,6 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h:
 
-/usr/include/x86_64-linux-gnu/bits/fcntl2.h:
-
 /usr/include/x86_64-linux-gnu/sys/socket.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/sig_atomic_t.h:
@@ -10104,6 +10151,10 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 ../third_party/asio/include/asio/traits/bulk_execute_member.hpp:
 
 ../third_party/asio/include/asio/traits/bulk_execute_free.hpp:
+
+../third_party/jerasure/include/jerasure/galois.h:
+
+/usr/include/c++/11/any:
 
 ../third_party/asio/include/asio/file_base.hpp:
 
@@ -10150,6 +10201,8 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 ../third_party/grpc/include/google/protobuf/arena_impl.h:
 
 ../third_party/asio/include/asio/deadline_timer.hpp:
+
+../src/asm/gf_4vect_dot_prod_avx2.asm:
 
 ../third_party/asio/include/asio/system_context.hpp:
 
@@ -10431,8 +10484,6 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/asio/include/asio/detail/signal_handler.hpp:
 
-../src/datanode.cpp:
-
 ../third_party/asio/include/asio/detail/signal_op.hpp:
 
 ../third_party/asio/include/asio/detail/base_from_cancellation_state.hpp:
@@ -10543,6 +10594,10 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/asio/include/asio/generic/stream_protocol.hpp:
 
+../third_party/jerasure/include/jerasure/reed_sol.h:
+
+../third_party/asio/include/asio/high_resolution_timer.hpp:
+
 ../third_party/asio/include/asio/detail/impl/strand_service.hpp:
 
 /usr/include/c++/11/future:
@@ -10615,6 +10670,8 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/asio/include/asio/is_write_buffered.hpp:
 
+../src/asm/gf_5vect_dot_prod_avx2.asm:
+
 ../third_party/asio/include/asio/local/detail/impl/endpoint.ipp:
 
 ../third_party/grpc/include/google/protobuf/unknown_field_set.h:
@@ -10677,12 +10734,6 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/asio/include/asio/detail/impl/strand_executor_service.ipp:
 
-../third_party/grpc/include/absl/base/macros.h:
-
-/usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h:
-
-../third_party/jerasure/include/jerasure/cauchy.h:
-
 ../third_party/asio/include/asio/execution/connect.hpp:
 
 ../third_party/asio/include/asio/streambuf.hpp:
@@ -10706,15 +10757,3 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 ../third_party/asio/include/asio/write_at.hpp:
 
 ../src/proto/datanode.grpc.pb.h:
-
-../src/proto/datanode.pb.h:
-
-/usr/include/c++/11/any:
-
-../third_party/jerasure/include/jerasure/galois.h:
-
-../third_party/gf-complete/include/gf_complete.h:
-
-../third_party/asio/include/asio/high_resolution_timer.hpp:
-
-../third_party/jerasure/include/jerasure/reed_sol.h:

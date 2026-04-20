@@ -1,15 +1,18 @@
 #ifndef COORDINATOR_H
 #define COORDINATOR_H
 #include "coordinator.grpc.pb.h"
+#include "datanode.grpc.pb.h"
 #include "proxy.grpc.pb.h"
 #include <grpc++/create_channel.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <meta_definition.h>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <unordered_map>
 #include <config.h>
 #include <toolbox.h>
 #include "unilrc_encoder.h"
@@ -200,6 +203,12 @@ namespace ECProject
     std::condition_variable cv;
     std::map<std::string, std::unique_ptr<proxy_proto::proxyService::Stub>>
         m_proxy_ptrs;
+    // Reuse coordinator->datanode channels/stubs across merge RPCs to avoid
+    // per-task connection setup overhead during parity merge.
+    std::mutex m_datanode_stub_mutex;
+    std::unordered_map<std::string,
+                       std::shared_ptr<datanode_proto::datanodeService::Stub>>
+        m_datanode_stubs;
     ECSchema m_encode_parameters;
     std::vector<int> m_stripe_deleting_table;
     int m_num_of_Clusters;

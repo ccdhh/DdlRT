@@ -228,7 +228,7 @@ CMAKE_STRIP:FILEPATH=/usr/bin/strip
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Enable AVX2 NASM acceleration (may SIGILL on older CPUs)
-ENABLE_AVX2_ASM:BOOL=OFF
+ENABLE_AVX2_ASM:BOOL=ON
 
 //Enable -march=native (may break portability)
 ENABLE_MARCH_NATIVE:BOOL=OFF

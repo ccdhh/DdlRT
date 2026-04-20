@@ -1228,6 +1228,29 @@ CMakeFiles/run_proxy.dir/run_cpp/run_proxy.cpp.o: ../run_cpp/run_proxy.cpp \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_queue.h
 
+CMakeFiles/run_proxy.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: ../src/asm/gf_2vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_proxy.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o: ../src/asm/gf_3vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_proxy.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o: ../src/asm/gf_4vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_proxy.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o: ../src/asm/gf_5vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_proxy.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o: ../src/asm/gf_6vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_proxy.dir/src/asm/gf_vect_dot_prod_avx2.asm.o: ../src/asm/gf_vect_dot_prod_avx2.asm \
+  ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_proxy.dir/src/asm/reg_sizes.asm.o: ../src/asm/reg_sizes.asm
+
+CMakeFiles/run_proxy.dir/src/asm/xor_gen_avx.asm.o: ../src/asm/xor_gen_avx.asm \
+  ../src/asm/reg_sizes.asm
+
 CMakeFiles/run_proxy.dir/src/client.cpp.o: ../src/client.cpp \
   /usr/include/stdc-predef.h \
   ../include/client.h \
@@ -9138,8 +9161,6 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 ../src/proto/datanode.grpc.pb.cc:
 
-../third_party/grpc/include/google/protobuf/wire_format.h:
-
 ../src/proto/coordinator.pb.cc:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/client_unary_call.h:
@@ -9161,6 +9182,18 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 ../include/client.h:
 
 ../src/client.cpp:
+
+../src/asm/xor_gen_avx.asm:
+
+../src/asm/gf_vect_dot_prod_avx2.asm:
+
+../src/asm/gf_3vect_dot_prod_avx2.asm:
+
+../third_party/grpc/include/google/protobuf/wire_format.h:
+
+../src/asm/reg_sizes.asm:
+
+../src/asm/gf_2vect_dot_prod_avx2.asm:
 
 ../third_party/asio/include/asio/detail/handler_invoke_helpers.hpp:
 
@@ -10394,6 +10427,8 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h:
 
+../src/asm/gf_6vect_dot_prod_avx2.asm:
+
 /usr/include/c++/11/bits/stl_bvector.h:
 
 /usr/include/c++/11/bits/unique_ptr.h:
@@ -10759,6 +10794,8 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 ../third_party/grpc/include/google/protobuf/arena_impl.h:
 
 ../third_party/asio/include/asio/deadline_timer.hpp:
+
+../src/asm/gf_4vect_dot_prod_avx2.asm:
 
 ../third_party/asio/include/asio/system_context.hpp:
 
@@ -11245,6 +11282,8 @@ CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
 ../third_party/asio/include/asio/basic_socket_acceptor.hpp:
 
 ../third_party/asio/include/asio/is_write_buffered.hpp:
+
+../src/asm/gf_5vect_dot_prod_avx2.asm:
 
 ../third_party/asio/include/asio/local/detail/impl/endpoint.ipp:
 

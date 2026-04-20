@@ -13,6 +13,22 @@ file(REMOVE_RECURSE
   "../src/proto/proxy.pb.h"
   "CMakeFiles/main_client.dir/run_cpp/main_client.cpp.o"
   "CMakeFiles/main_client.dir/run_cpp/main_client.cpp.o.d"
+  "CMakeFiles/main_client.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o.d"
+  "CMakeFiles/main_client.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o.d"
+  "CMakeFiles/main_client.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o.d"
+  "CMakeFiles/main_client.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o.d"
+  "CMakeFiles/main_client.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o.d"
+  "CMakeFiles/main_client.dir/src/asm/gf_vect_dot_prod_avx2.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/gf_vect_dot_prod_avx2.asm.o.d"
+  "CMakeFiles/main_client.dir/src/asm/reg_sizes.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/reg_sizes.asm.o.d"
+  "CMakeFiles/main_client.dir/src/asm/xor_gen_avx.asm.o"
+  "CMakeFiles/main_client.dir/src/asm/xor_gen_avx.asm.o.d"
   "CMakeFiles/main_client.dir/src/client.cpp.o"
   "CMakeFiles/main_client.dir/src/client.cpp.o.d"
   "CMakeFiles/main_client.dir/src/config.cpp.o"
@@ -48,6 +64,6 @@ file(REMOVE_RECURSE
 )
 
 # Per-language clean rules from dependency scanning.
-foreach(lang CXX)
+foreach(lang ASM_NASM CXX)
   include(CMakeFiles/main_client.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()

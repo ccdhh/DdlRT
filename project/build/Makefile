@@ -264,6 +264,94 @@ run_cpp/run_proxy.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/run_cpp/run_proxy.cpp.s
 .PHONY : run_cpp/run_proxy.cpp.s
 
+src/asm/gf_2vect_dot_prod_avx2.o: src/asm/gf_2vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_2vect_dot_prod_avx2.o
+
+# target to build an object file
+src/asm/gf_2vect_dot_prod_avx2.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_2vect_dot_prod_avx2.asm.o
+
+src/asm/gf_3vect_dot_prod_avx2.o: src/asm/gf_3vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_3vect_dot_prod_avx2.o
+
+# target to build an object file
+src/asm/gf_3vect_dot_prod_avx2.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_3vect_dot_prod_avx2.asm.o
+
+src/asm/gf_4vect_dot_prod_avx2.o: src/asm/gf_4vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_4vect_dot_prod_avx2.o
+
+# target to build an object file
+src/asm/gf_4vect_dot_prod_avx2.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_4vect_dot_prod_avx2.asm.o
+
+src/asm/gf_5vect_dot_prod_avx2.o: src/asm/gf_5vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_5vect_dot_prod_avx2.o
+
+# target to build an object file
+src/asm/gf_5vect_dot_prod_avx2.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_5vect_dot_prod_avx2.asm.o
+
+src/asm/gf_6vect_dot_prod_avx2.o: src/asm/gf_6vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_6vect_dot_prod_avx2.o
+
+# target to build an object file
+src/asm/gf_6vect_dot_prod_avx2.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_6vect_dot_prod_avx2.asm.o
+
+src/asm/gf_vect_dot_prod_avx2.o: src/asm/gf_vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_vect_dot_prod_avx2.o
+
+# target to build an object file
+src/asm/gf_vect_dot_prod_avx2.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/gf_vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/gf_vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/gf_vect_dot_prod_avx2.asm.o
+.PHONY : src/asm/gf_vect_dot_prod_avx2.asm.o
+
+src/asm/reg_sizes.o: src/asm/reg_sizes.asm.o
+.PHONY : src/asm/reg_sizes.o
+
+# target to build an object file
+src/asm/reg_sizes.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/reg_sizes.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/reg_sizes.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/reg_sizes.asm.o
+.PHONY : src/asm/reg_sizes.asm.o
+
+src/asm/xor_gen_avx.o: src/asm/xor_gen_avx.asm.o
+.PHONY : src/asm/xor_gen_avx.o
+
+# target to build an object file
+src/asm/xor_gen_avx.asm.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/asm/xor_gen_avx.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/asm/xor_gen_avx.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/asm/xor_gen_avx.asm.o
+.PHONY : src/asm/xor_gen_avx.asm.o
+
 src/client.o: src/client.cpp.o
 .PHONY : src/client.o
 
@@ -783,6 +871,14 @@ help:
 	@echo "... run_cpp/run_proxy.o"
 	@echo "... run_cpp/run_proxy.i"
 	@echo "... run_cpp/run_proxy.s"
+	@echo "... src/asm/gf_2vect_dot_prod_avx2.o"
+	@echo "... src/asm/gf_3vect_dot_prod_avx2.o"
+	@echo "... src/asm/gf_4vect_dot_prod_avx2.o"
+	@echo "... src/asm/gf_5vect_dot_prod_avx2.o"
+	@echo "... src/asm/gf_6vect_dot_prod_avx2.o"
+	@echo "... src/asm/gf_vect_dot_prod_avx2.o"
+	@echo "... src/asm/reg_sizes.o"
+	@echo "... src/asm/xor_gen_avx.o"
 	@echo "... src/client.o"
 	@echo "... src/client.i"
 	@echo "... src/client.s"

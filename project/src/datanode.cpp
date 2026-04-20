@@ -838,10 +838,23 @@ namespace ECProject
             ifs_b.close();
             loaded_b = true;
         } else if (!parity_b_ip.empty() && parity_b_port > 0) {
-            auto channel = grpc::CreateChannel(
-                parity_b_ip + ":" + std::to_string(parity_b_port),
-                grpc::InsecureChannelCredentials());
-            auto stub = datanode_proto::datanodeService::NewStub(channel);
+            const std::string peer_addr =
+                parity_b_ip + ":" + std::to_string(parity_b_port);
+            std::shared_ptr<datanode_proto::datanodeService::Stub> stub;
+            {
+                std::lock_guard<std::mutex> lk(m_remote_read_stub_mutex);
+                auto it = m_remote_read_stubs.find(peer_addr);
+                if (it == m_remote_read_stubs.end()) {
+                    auto channel = grpc::CreateChannel(
+                        peer_addr, grpc::InsecureChannelCredentials());
+                    auto new_stub = datanode_proto::datanodeService::NewStub(channel);
+                    stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
+                        std::move(new_stub));
+                    m_remote_read_stubs.emplace(peer_addr, stub);
+                } else {
+                    stub = it->second;
+                }
+            }
             grpc::ClientContext read_ctx;
             datanode_proto::ReadBlockBytesRequest read_req;
             datanode_proto::ReadBlockBytesReply read_rep;
@@ -863,12 +876,13 @@ namespace ECProject
             return grpc::Status::OK;
         }
 
-        // P'_j = P^A_j XOR gf_mul(coeff, P^B_j)
-        for (int i = 0; i < block_size; i++) {
-            unsigned char a_byte = static_cast<unsigned char>(buf_a[i]);
-            unsigned char b_byte = static_cast<unsigned char>(buf_b[i]);
-            buf_new[i] = static_cast<char>(a_byte ^ ECProject::gf_mul(coeff, b_byte));
-        }
+        // P'_j = P^A_j XOR (coeff · P^B_j); vectorized via gf_vect_dot_prod_avx2 + xor when enabled
+        ECProject::merge_stripe_parity_gf_xor(
+            block_size,
+            reinterpret_cast<unsigned char *>(buf_a.get()),
+            reinterpret_cast<unsigned char *>(buf_b.get()),
+            coeff,
+            reinterpret_cast<unsigned char *>(buf_new.get()));
 
         if (access(targetdir.c_str(), 0) == -1) {
             createDirectories(targetdir);

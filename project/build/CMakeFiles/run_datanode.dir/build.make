@@ -192,10 +192,58 @@ CMakeFiles/run_datanode.dir/src/proto/datanode.grpc.pb.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/run_datanode.dir/src/proto/datanode.grpc.pb.cc.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /users/qiliang/UniLRC/project/src/proto/datanode.grpc.pb.cc -o CMakeFiles/run_datanode.dir/src/proto/datanode.grpc.pb.cc.s
 
+CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o: ../src/asm/reg_sizes.asm
+CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o /users/qiliang/UniLRC/project/src/asm/reg_sizes.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o: ../src/asm/gf_vect_dot_prod_avx2.asm
+CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o /users/qiliang/UniLRC/project/src/asm/gf_vect_dot_prod_avx2.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: ../src/asm/gf_2vect_dot_prod_avx2.asm
+CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o /users/qiliang/UniLRC/project/src/asm/gf_2vect_dot_prod_avx2.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o: ../src/asm/gf_3vect_dot_prod_avx2.asm
+CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o /users/qiliang/UniLRC/project/src/asm/gf_3vect_dot_prod_avx2.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o: ../src/asm/gf_4vect_dot_prod_avx2.asm
+CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o /users/qiliang/UniLRC/project/src/asm/gf_4vect_dot_prod_avx2.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o: ../src/asm/gf_5vect_dot_prod_avx2.asm
+CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o /users/qiliang/UniLRC/project/src/asm/gf_5vect_dot_prod_avx2.asm
+
+CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o: ../src/asm/gf_6vect_dot_prod_avx2.asm
+CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o /users/qiliang/UniLRC/project/src/asm/gf_6vect_dot_prod_avx2.asm
+
+CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o: ../src/asm/xor_gen_avx.asm
+CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building ASM_NASM object CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o"
+	/usr/bin/nasm $(ASM_NASM_INCLUDES) $(ASM_NASM_FLAGS) -MD CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o.d -MT CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o -f elf64 -o CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o /users/qiliang/UniLRC/project/src/asm/xor_gen_avx.asm
+
 CMakeFiles/run_datanode.dir/src/client.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/client.cpp.o: ../src/client.cpp
 CMakeFiles/run_datanode.dir/src/client.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/run_datanode.dir/src/client.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/run_datanode.dir/src/client.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/client.cpp.o -MF CMakeFiles/run_datanode.dir/src/client.cpp.o.d -o CMakeFiles/run_datanode.dir/src/client.cpp.o -c /users/qiliang/UniLRC/project/src/client.cpp
 
 CMakeFiles/run_datanode.dir/src/client.cpp.i: cmake_force
@@ -209,7 +257,7 @@ CMakeFiles/run_datanode.dir/src/client.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/coordinator.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/coordinator.cpp.o: ../src/coordinator.cpp
 CMakeFiles/run_datanode.dir/src/coordinator.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/run_datanode.dir/src/coordinator.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/run_datanode.dir/src/coordinator.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/coordinator.cpp.o -MF CMakeFiles/run_datanode.dir/src/coordinator.cpp.o.d -o CMakeFiles/run_datanode.dir/src/coordinator.cpp.o -c /users/qiliang/UniLRC/project/src/coordinator.cpp
 
 CMakeFiles/run_datanode.dir/src/coordinator.cpp.i: cmake_force
@@ -223,7 +271,7 @@ CMakeFiles/run_datanode.dir/src/coordinator.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/proxy.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/proxy.cpp.o: ../src/proxy.cpp
 CMakeFiles/run_datanode.dir/src/proxy.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/run_datanode.dir/src/proxy.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/run_datanode.dir/src/proxy.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/proxy.cpp.o -MF CMakeFiles/run_datanode.dir/src/proxy.cpp.o.d -o CMakeFiles/run_datanode.dir/src/proxy.cpp.o -c /users/qiliang/UniLRC/project/src/proxy.cpp
 
 CMakeFiles/run_datanode.dir/src/proxy.cpp.i: cmake_force
@@ -237,7 +285,7 @@ CMakeFiles/run_datanode.dir/src/proxy.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o: ../run_cpp/run_datanode.cpp
 CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o -MF CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o.d -o CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o -c /users/qiliang/UniLRC/project/run_cpp/run_datanode.cpp
 
 CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.i: cmake_force
@@ -251,7 +299,7 @@ CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/toolbox.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/toolbox.cpp.o: ../src/toolbox.cpp
 CMakeFiles/run_datanode.dir/src/toolbox.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/run_datanode.dir/src/toolbox.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/run_datanode.dir/src/toolbox.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/toolbox.cpp.o -MF CMakeFiles/run_datanode.dir/src/toolbox.cpp.o.d -o CMakeFiles/run_datanode.dir/src/toolbox.cpp.o -c /users/qiliang/UniLRC/project/src/toolbox.cpp
 
 CMakeFiles/run_datanode.dir/src/toolbox.cpp.i: cmake_force
@@ -265,7 +313,7 @@ CMakeFiles/run_datanode.dir/src/toolbox.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o: ../src/tinyxml2.cpp
 CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o -MF CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o.d -o CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o -c /users/qiliang/UniLRC/project/src/tinyxml2.cpp
 
 CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.i: cmake_force
@@ -279,7 +327,7 @@ CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/datanode.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/datanode.cpp.o: ../src/datanode.cpp
 CMakeFiles/run_datanode.dir/src/datanode.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/run_datanode.dir/src/datanode.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/run_datanode.dir/src/datanode.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/datanode.cpp.o -MF CMakeFiles/run_datanode.dir/src/datanode.cpp.o.d -o CMakeFiles/run_datanode.dir/src/datanode.cpp.o -c /users/qiliang/UniLRC/project/src/datanode.cpp
 
 CMakeFiles/run_datanode.dir/src/datanode.cpp.i: cmake_force
@@ -293,7 +341,7 @@ CMakeFiles/run_datanode.dir/src/datanode.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/lrc.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/lrc.cpp.o: ../src/lrc.cpp
 CMakeFiles/run_datanode.dir/src/lrc.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/run_datanode.dir/src/lrc.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/run_datanode.dir/src/lrc.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/lrc.cpp.o -MF CMakeFiles/run_datanode.dir/src/lrc.cpp.o.d -o CMakeFiles/run_datanode.dir/src/lrc.cpp.o -c /users/qiliang/UniLRC/project/src/lrc.cpp
 
 CMakeFiles/run_datanode.dir/src/lrc.cpp.i: cmake_force
@@ -307,7 +355,7 @@ CMakeFiles/run_datanode.dir/src/lrc.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/config.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/config.cpp.o: ../src/config.cpp
 CMakeFiles/run_datanode.dir/src/config.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/run_datanode.dir/src/config.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/run_datanode.dir/src/config.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/config.cpp.o -MF CMakeFiles/run_datanode.dir/src/config.cpp.o.d -o CMakeFiles/run_datanode.dir/src/config.cpp.o -c /users/qiliang/UniLRC/project/src/config.cpp
 
 CMakeFiles/run_datanode.dir/src/config.cpp.i: cmake_force
@@ -321,7 +369,7 @@ CMakeFiles/run_datanode.dir/src/config.cpp.s: cmake_force
 CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp
 CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o -MF CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o.d -o CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o -c /users/qiliang/UniLRC/project/src/unilrc_encoder.cpp
 
 CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.i: cmake_force
@@ -340,6 +388,14 @@ run_datanode_OBJECTS = \
 "CMakeFiles/run_datanode.dir/src/proto/proxy.grpc.pb.cc.o" \
 "CMakeFiles/run_datanode.dir/src/proto/datanode.pb.cc.o" \
 "CMakeFiles/run_datanode.dir/src/proto/datanode.grpc.pb.cc.o" \
+"CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o" \
+"CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o" \
+"CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o" \
+"CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o" \
+"CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o" \
+"CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o" \
+"CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o" \
+"CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o" \
 "CMakeFiles/run_datanode.dir/src/client.cpp.o" \
 "CMakeFiles/run_datanode.dir/src/coordinator.cpp.o" \
 "CMakeFiles/run_datanode.dir/src/proxy.cpp.o" \
@@ -360,6 +416,14 @@ run_datanode: CMakeFiles/run_datanode.dir/src/proto/proxy.pb.cc.o
 run_datanode: CMakeFiles/run_datanode.dir/src/proto/proxy.grpc.pb.cc.o
 run_datanode: CMakeFiles/run_datanode.dir/src/proto/datanode.pb.cc.o
 run_datanode: CMakeFiles/run_datanode.dir/src/proto/datanode.grpc.pb.cc.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/reg_sizes.asm.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/gf_vect_dot_prod_avx2.asm.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/gf_3vect_dot_prod_avx2.asm.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/gf_4vect_dot_prod_avx2.asm.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/gf_5vect_dot_prod_avx2.asm.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/gf_6vect_dot_prod_avx2.asm.o
+run_datanode: CMakeFiles/run_datanode.dir/src/asm/xor_gen_avx.asm.o
 run_datanode: CMakeFiles/run_datanode.dir/src/client.cpp.o
 run_datanode: CMakeFiles/run_datanode.dir/src/coordinator.cpp.o
 run_datanode: CMakeFiles/run_datanode.dir/src/proxy.cpp.o
@@ -429,7 +493,7 @@ run_datanode: ../third_party/grpc/lib/libabsl_time_zone.a
 run_datanode: ../third_party/grpc/lib/libssl.a
 run_datanode: ../third_party/grpc/lib/libcrypto.a
 run_datanode: CMakeFiles/run_datanode.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Linking CXX executable run_datanode"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/users/qiliang/UniLRC/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Linking CXX executable run_datanode"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/run_datanode.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
