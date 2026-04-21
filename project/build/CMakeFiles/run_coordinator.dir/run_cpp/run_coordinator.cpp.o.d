@@ -427,6 +427,8 @@ CMakeFiles/run_coordinator.dir/run_cpp/run_coordinator.cpp.o: \
  /users/qiliang/UniLRC/project/third_party/grpc/include/grpcpp/impl/codegen/proto_buffer_reader.h \
  /users/qiliang/UniLRC/project/third_party/grpc/include/grpcpp/impl/codegen/proto_buffer_writer.h \
  /users/qiliang/UniLRC/project/third_party/grpc/include/grpcpp/impl/codegen/stub_options.h \
+ /users/qiliang/UniLRC/project/src/proto/datanode.grpc.pb.h \
+ /users/qiliang/UniLRC/project/src/proto/datanode.pb.h \
  /users/qiliang/UniLRC/project/src/proto/proxy.grpc.pb.h \
  /users/qiliang/UniLRC/project/src/proto/proxy.pb.h \
  /users/qiliang/UniLRC/project/third_party/grpc/include/grpc++/create_channel.h \

@@ -234,7 +234,7 @@ ENABLE_AVX2_ASM:BOOL=OFF
 ENABLE_MARCH_NATIVE:BOOL=OFF
 
 //The directory containing a CMake configuration file for Protobuf.
-Protobuf_DIR:PATH=Protobuf_DIR-NOTFOUND
+Protobuf_DIR:PATH=/users/qiliang/UniLRC/project/third_party/grpc/lib/cmake/protobuf
 
 //The directory containing a CMake configuration file for absl.
 absl_DIR:PATH=/users/qiliang/UniLRC/project/third_party/grpc/lib/cmake/absl

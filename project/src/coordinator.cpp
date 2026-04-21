@@ -5684,11 +5684,24 @@ grpc::Status CoordinatorImpl::mergeStripes(
   std::thread parity_thread([&]() {
     std::vector<std::thread> sub_threads;
     for (auto &task : parity_tasks) {
-      sub_threads.emplace_back([&task, block_size, &parity_ok]() {
-        auto channel = grpc::CreateChannel(
-            task.datanode_ip + ":" + std::to_string(task.datanode_port),
-            grpc::InsecureChannelCredentials());
-        auto stub = datanode_proto::datanodeService::NewStub(channel);
+      sub_threads.emplace_back([this, task, block_size, &parity_ok]() {
+        const std::string target =
+            task.datanode_ip + ":" + std::to_string(task.datanode_port);
+        std::shared_ptr<datanode_proto::datanodeService::Stub> stub;
+        {
+          std::lock_guard<std::mutex> lk(m_datanode_stub_mutex);
+          auto it = m_datanode_stubs.find(target);
+          if (it == m_datanode_stubs.end()) {
+            auto channel =
+                grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
+            auto new_stub = datanode_proto::datanodeService::NewStub(channel);
+            stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
+                std::move(new_stub));
+            m_datanode_stubs.emplace(target, stub);
+          } else {
+            stub = it->second;
+          }
+        }
 
         grpc::ClientContext ctx;
         ctx.set_deadline(std::chrono::system_clock::now() +

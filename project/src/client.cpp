@@ -1531,6 +1531,10 @@ namespace ECProject
         std::cout << "[Client] invalid merge round" << std::endl;
         return;
       }
+      std::cout << "[Client] Cluster RT: calling coordinator mergeClusterRTRound(Q=" << merge_round
+                << ") ... (this RPC runs until the full round finishes; watch coordinator logs if no output here)"
+                << std::endl
+                << std::flush;
       grpc::ClientContext ctx;
       coordinator_proto::MergeClusterRTRoundRequest req;
       coordinator_proto::MergeClusterRTRoundReply rep;

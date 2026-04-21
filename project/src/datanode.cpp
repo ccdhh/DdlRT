@@ -849,10 +849,24 @@ namespace ECProject
                 return grpc::Status::OK;
             }
 
-            auto channel = grpc::CreateChannel(
-                remote_ip + ":" + std::to_string(remote_port),
-                grpc::InsecureChannelCredentials());
-            auto stub = datanode_proto::datanodeService::NewStub(channel);
+            const std::string remote_addr =
+                remote_ip + ":" + std::to_string(remote_port);
+            std::shared_ptr<datanode_proto::datanodeService::Stub> stub;
+            {
+                std::lock_guard<std::mutex> lk(m_remote_read_stub_mutex);
+                auto it = m_remote_read_stubs.find(remote_addr);
+                if (it == m_remote_read_stubs.end()) {
+                    auto channel = grpc::CreateChannel(
+                        remote_addr,
+                        grpc::InsecureChannelCredentials());
+                    auto new_stub = datanode_proto::datanodeService::NewStub(channel);
+                    stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
+                        std::move(new_stub));
+                    m_remote_read_stubs.emplace(remote_addr, stub);
+                } else {
+                    stub = it->second;
+                }
+            }
 
             datanode_proto::ReadBlockBytesRequest req;
             req.set_block_key(parity_key_b);
@@ -881,12 +895,13 @@ namespace ECProject
             ifs_b.close();
         }
 
-        // P'_j = P^A_j XOR gf_mul(coeff, P^B_j)
-        for (int i = 0; i < block_size; i++) {
-            unsigned char a_byte = static_cast<unsigned char>(buf_a[i]);
-            unsigned char b_byte = static_cast<unsigned char>(buf_b[i]);
-            buf_new[i] = static_cast<char>(a_byte ^ ECProject::gf_mul(coeff, b_byte));
-        }
+        // P'_j = P^A_j XOR (coeff * P^B_j), vectorized in unilrc_encoder when AVX2 is enabled.
+        ECProject::merge_stripe_parity_gf_xor(
+            block_size,
+            reinterpret_cast<unsigned char *>(buf_a.get()),
+            reinterpret_cast<unsigned char *>(buf_b.get()),
+            coeff,
+            reinterpret_cast<unsigned char *>(buf_new.get()));
 
         if (access(targetdir.c_str(), 0) == -1) {
             createDirectories(targetdir);

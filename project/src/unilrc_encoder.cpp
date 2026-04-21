@@ -1,6 +1,8 @@
 #include "unilrc_encoder.h"
+#include <cstring>
 #include <iostream>
 #include <unordered_map>
+#include <vector>
 
 extern "C" {
 #ifdef ENABLE_AVX2_ASM
@@ -32,6 +34,45 @@ int ECProject::xor_avx(int vects, int len, void **array)
     }
     return 0;
 #endif
+}
+
+void ECProject::merge_stripe_parity_gf_xor(int block_size, unsigned char *buf_a,
+                                           unsigned char *buf_b,
+                                           unsigned char coeff,
+                                           unsigned char *buf_out)
+{
+    if (block_size <= 0 || buf_a == nullptr || buf_b == nullptr || buf_out == nullptr)
+        return;
+
+    // Fast path: coeff == 0 => out = a
+    if (coeff == 0) {
+        std::memcpy(buf_out, buf_a, static_cast<size_t>(block_size));
+        return;
+    }
+    // Fast path: coeff == 1 => out = a XOR b
+    if (coeff == 1) {
+        void *xor_ptrs[3] = {buf_a, buf_b, buf_out};
+        xor_avx(3, block_size, xor_ptrs);
+        return;
+    }
+
+#ifdef ENABLE_AVX2_ASM
+    if (block_size >= 32) {
+        unsigned char g_tbls[32];
+        gf_vect_mul_init(coeff, g_tbls);
+        std::vector<unsigned char> scaled_b(static_cast<size_t>(block_size));
+        unsigned char *srcs[1] = {buf_b};
+        gf_vect_dot_prod_avx2(block_size, 1, g_tbls, srcs, scaled_b.data());
+        void *xor_ptrs[3] = {buf_a, scaled_b.data(), buf_out};
+        xor_avx(3, block_size, xor_ptrs);
+        return;
+    }
+#endif
+
+    // Portable fallback.
+    for (int i = 0; i < block_size; i++) {
+        buf_out[i] = static_cast<unsigned char>(buf_a[i] ^ gf_mul(coeff, buf_b[i]));
+    }
 }
 
 unsigned char

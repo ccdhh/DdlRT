@@ -90,6 +90,11 @@ namespace ECProject
                             int failed_block_id);
 
     int xor_avx(int vects, int len, void **array);
+    // Merge parity helper:
+    // buf_out = buf_a XOR (coeff * buf_b) over GF(2^8), length=block_size bytes.
+    void merge_stripe_parity_gf_xor(int block_size, unsigned char *buf_a,
+                                    unsigned char *buf_b, unsigned char coeff,
+                                    unsigned char *buf_out);
 
     unsigned char
     gf_inv(unsigned char a);
@@ -129,8 +134,6 @@ namespace ECProject
 
     void
     gf_mul_vect_matrix(unsigned char* vect, unsigned char* matrix, unsigned char *dest, int k);
-
-    int xor_avx(int vects, int len, void **array);
 
     bool get_multi_decode_plan(int k, int r, int z, std::string code_type, const std::vector<int> failed_block_indexes, std::vector<int> &decode_block_indexes, std::vector<std::vector<int>> &decode_factors);
 }
