@@ -7,9 +7,12 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <limits>
+#include <pthread.h>
 #include <random>
+#include <sched.h>
 #include <set>
 #include <sstream>
 #include <string>
@@ -38,6 +41,29 @@ inline int rand_num(int range) {
   int num = dis(gen);
   return num;
 };
+
+inline int get_core_from_env(const char *env_name, int default_core) {
+  const char *raw = std::getenv(env_name);
+  if (!raw || raw[0] == '\0') return default_core;
+  try {
+    int v = std::stoi(std::string(raw));
+    if (v >= 0 && v < CPU_SETSIZE) return v;
+  } catch (...) {
+  }
+  return default_core;
+}
+
+inline void bind_current_thread_to_core(int core, const char *tag) {
+  if (core < 0 || core >= CPU_SETSIZE) return;
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(core, &cpuset);
+  int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+  if (rc != 0) {
+    std::cerr << "[Coordinator][Merge] failed to bind " << tag
+              << " to core " << core << " rc=" << rc << std::endl;
+  }
+}
 
 namespace ECProject {
 grpc::Status CoordinatorImpl::setParameter(
@@ -4868,9 +4894,14 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
             << stripe_id_b << " -> " << new_stripe_id << " reloc_plans="
             << migration_rpcs.size() << " parity_tasks=" << parity_tasks.size()
             << " (wave-parallel single-hop)" << std::endl;
+  const int migration_core = get_core_from_env("MERGE_MIGRATION_CORE", 0);
+  const int parity_core = get_core_from_env("MERGE_PARITY_CORE", 1);
+  std::cout << "[ClusterRT][Merge] thread core binding: migration="
+            << migration_core << " parity=" << parity_core << std::endl;
 
   std::thread migration_thread([&migration_ok, &migration_ns, this, &migration_rpcs,
-                                &atomic_max_ns, block_size]() {
+                                &atomic_max_ns, block_size, migration_core]() {
+    bind_current_thread_to_core(migration_core, "clusterrt-migration-thread");
     struct RelocHop {
       std::string proxy_addr;
       std::string block_key;
@@ -5014,7 +5045,9 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
     }
   });
 
-  std::thread parity_thread([&parity_ok, &parity_ns, &parity_tasks, block_size, &atomic_max_ns]() {
+  std::thread parity_thread([&parity_ok, &parity_ns, &parity_tasks, block_size,
+                             &atomic_max_ns, parity_core]() {
+    bind_current_thread_to_core(parity_core, "clusterrt-parity-thread");
     std::vector<std::thread> sub_threads;
     sub_threads.reserve(parity_tasks.size());
     for (auto task : parity_tasks) {
@@ -5633,9 +5666,14 @@ grpc::Status CoordinatorImpl::mergeStripes(
   // ====== Execute in two threads ======
   bool migration_ok = true;
   bool parity_ok = true;
+  const int migration_core = get_core_from_env("MERGE_MIGRATION_CORE", 0);
+  const int parity_core = get_core_from_env("MERGE_PARITY_CORE", 1);
+  std::cout << "[Coordinator][Merge] thread core binding: migration="
+            << migration_core << " parity=" << parity_core << std::endl;
 
   // Thread 1: data block migration
-  std::thread migration_thread([&]() {
+  std::thread migration_thread([&, migration_core]() {
+    bind_current_thread_to_core(migration_core, "merge-migration-thread");
     for (auto &[cluster_id, entries] : proxy_reloc_plans) {
       if (entries.empty()) continue;
 
@@ -5681,7 +5719,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
   });
 
   // Thread 2: parity block merge on datanodes
-  std::thread parity_thread([&]() {
+  std::thread parity_thread([&, parity_core]() {
+    bind_current_thread_to_core(parity_core, "merge-parity-thread");
     std::vector<std::thread> sub_threads;
     for (auto &task : parity_tasks) {
       sub_threads.emplace_back([this, task, block_size, &parity_ok]() {
