@@ -486,6 +486,8 @@ CMakeFiles/run_coordinator.dir/run_cpp/run_coordinator.cpp.o: ../run_cpp/run_coo
   ../third_party/grpc/include/grpcpp/impl/codegen/proto_buffer_reader.h \
   ../third_party/grpc/include/grpcpp/impl/codegen/proto_buffer_writer.h \
   ../third_party/grpc/include/grpcpp/impl/codegen/stub_options.h \
+  ../src/proto/datanode.grpc.pb.h \
+  ../src/proto/datanode.pb.h \
   ../src/proto/proxy.grpc.pb.h \
   ../src/proto/proxy.pb.h \
   ../third_party/grpc/include/grpc++/create_channel.h \
@@ -2559,6 +2561,8 @@ CMakeFiles/run_coordinator.dir/src/coordinator.cpp.o: ../src/coordinator.cpp \
   ../third_party/grpc/include/grpcpp/impl/codegen/proto_buffer_reader.h \
   ../third_party/grpc/include/grpcpp/impl/codegen/proto_buffer_writer.h \
   ../third_party/grpc/include/grpcpp/impl/codegen/stub_options.h \
+  ../src/proto/datanode.grpc.pb.h \
+  ../src/proto/datanode.pb.h \
   ../src/proto/proxy.grpc.pb.h \
   ../src/proto/proxy.pb.h \
   ../third_party/grpc/include/grpc++/create_channel.h \
@@ -2617,8 +2621,6 @@ CMakeFiles/run_coordinator.dir/src/coordinator.cpp.o: ../src/coordinator.cpp \
   ../src/proto/proxy.pb.h \
   ../src/proto/coordinator.pb.h \
   ../include/unilrc_encoder.h \
-  ../src/proto/datanode.grpc.pb.h \
-  ../src/proto/datanode.pb.h \
   ../include/lrc.h \
   ../third_party/jerasure/include/jerasure.h \
   ../third_party/jerasure/include/jerasure/galois.h \
@@ -8506,11 +8508,7 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../include/lrc.h:
 
-../src/proto/datanode.pb.h:
-
-../include/unilrc_encoder.h:
-
-../third_party/asio/include/asio/execution/blocking.hpp:
+../src/coordinator.cpp:
 
 /usr/include/c++/11/bits/stl_numeric.h:
 
@@ -8633,6 +8631,8 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 /usr/include/c++/11/tr1/exp_integral.tcc:
 
 ../third_party/asio/include/asio/basic_waitable_timer.hpp:
+
+../src/proto/datanode.grpc.pb.h:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h:
 
@@ -8805,6 +8805,10 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 ../third_party/grpc/include/grpcpp/impl/codegen/core_codegen_interface.h:
 
 /usr/include/x86_64-linux-gnu/sys/ucontext.h:
+
+../include/unilrc_encoder.h:
+
+../third_party/asio/include/asio/execution/blocking.hpp:
 
 ../third_party/grpc/include/grpcpp/impl/codegen/server_callback_handlers.h:
 
@@ -9067,6 +9071,8 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 /usr/include/c++/11/pstl/glue_numeric_defs.h:
 
 ../third_party/asio/include/asio/serial_port_base.hpp:
+
+../src/proto/datanode.pb.h:
 
 ../third_party/grpc/include/absl/synchronization/internal/create_thread_identity.h:
 
@@ -9502,8 +9508,6 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 /usr/include/asm-generic/sockios.h:
 
-../src/coordinator.cpp:
-
 /usr/include/x86_64-linux-gnu/bits/socket_type.h:
 
 ../third_party/grpc/include/google/protobuf/descriptor_database.h:
@@ -9710,9 +9714,9 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/grpc/include/google/protobuf/map_type_handler.h:
 
-../third_party/grpc/include/google/protobuf/stubs/logging.h:
-
 /usr/include/x86_64-linux-gnu/bits/termios-c_lflag.h:
+
+../third_party/grpc/include/google/protobuf/stubs/logging.h:
 
 /usr/include/c++/11/bits/std_abs.h:
 
@@ -10755,5 +10759,3 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 ../third_party/asio/include/asio/writable_pipe.hpp:
 
 ../third_party/asio/include/asio/write_at.hpp:
-
-../src/proto/datanode.grpc.pb.h:
