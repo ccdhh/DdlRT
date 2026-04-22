@@ -155,9 +155,15 @@ namespace ECProject
     bool find_block(char type, int cluster_id, int stripe_id);
 
     void initialize_equiox_stripe_placement(Stripe *stripe);
+    void initialize_cluster_rt_stripe_placement(Stripe *stripe);
     void initialize_unilrc_and_azurelrc_stripe_placement(Stripe *stripe);
     void initialize_optimal_lrc_stripe_placement(Stripe *stripe);
     void initialize_uniform_lrc_stripe_placement(Stripe *stripe);
+    void cluster_rt_rebuild_groups_impl(Stripe &stripe);
+    grpc::Status mergeStripesClusterRT(
+        grpc::ServerContext *context,
+        const coordinator_proto::MergeRequest *request,
+        coordinator_proto::MergeReply *reply);
     void add_to_map(std::map<int, std::vector<int>> &map, int key, int value);
     std::vector<proxy_proto::AppendStripeDataPlacement> generate_add_plans(Stripe *stripe);
     std::vector<proxy_proto::AppendStripeDataPlacement> generate_sub_add_plans(Stripe *stripe, size_t subset_size);

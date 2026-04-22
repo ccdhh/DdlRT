@@ -8,14 +8,18 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
-#include <pthread.h>
-#include <sched.h>
 #include <fstream>
+#include <limits>
+#include <pthread.h>
 #include <random>
+#include <sched.h>
+#include <set>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <sys/time.h>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 template <typename T> inline T ceil(T const &A, T const &B) {
   return T((A + B - 1) / B);
@@ -38,7 +42,33 @@ inline int rand_num(int range) {
   return num;
 };
 
+inline int get_core_from_env(const char *env_name, int default_core) {
+  const char *raw = std::getenv(env_name);
+  if (!raw || raw[0] == '\0') return default_core;
+  try {
+    int v = std::stoi(std::string(raw));
+    if (v >= 0 && v < CPU_SETSIZE) return v;
+  } catch (...) {
+  }
+  return default_core;
+}
+
+inline void bind_current_thread_to_core(int core, const char *tag) {
+  if (core < 0 || core >= CPU_SETSIZE) return;
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(core, &cpuset);
+  int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+  if (rc != 0) {
+    std::cerr << "[Coordinator][Merge] failed to bind " << tag
+              << " to core " << core << " rc=" << rc << std::endl;
+  }
+}
+
 namespace ECProject {
+namespace {
+constexpr int MERGE_GRPC_TCP_TIMEOUT_SEC = 60;
+}
 grpc::Status CoordinatorImpl::setParameter(
     grpc::ServerContext *context, const coordinator_proto::Parameter *parameter,
     coordinator_proto::RepIfSetParaSuccess *setParameterReply) {
@@ -694,6 +724,127 @@ void CoordinatorImpl::initialize_equiox_stripe_placement(Stripe *stripe) {
   stripe->num_groups = stripe->group_to_blocks.size();
 }
 
+void CoordinatorImpl::initialize_cluster_rt_stripe_placement(Stripe *stripe) {
+  // Cluster RT (RS encoding only):
+  // - parity blocks (k..k+r-1) all live in a single parity_cluster and are placed
+  //   on r distinct nodes within that cluster.
+  // - data blocks (0..k-1) are distributed to zu data clusters (excluding the parity cluster),
+  //   and within each data cluster group g, place either (m-1) or m blocks on distinct nodes.
+
+  assert(m_sys_config->CodeType == "RS" &&
+         "initialize_cluster_rt_stripe_placement is only valid for RS");
+  assert(stripe->z == 0 &&
+         "Cluster RT baseline currently requires z=0 (RS with only global parity)");
+  assert(stripe->n == stripe->k + stripe->r);
+  assert(stripe->object_keys.size() == 1);
+
+  const int k = stripe->k;
+  const int r = stripe->r;
+  const int m = r; // per your baseline: parity cluster has m parity blocks
+  const int zu = (k + m - 1) / m;
+  const int b = ((k - 1) % m) + 1; // 1..m
+  const int m_minus_b = m - b;     // number of data clusters with (m-1) blocks
+
+  // Parity cluster allocation: parity_cluster = mod(stripe_id, num_clusters)
+  const int parity_cluster = stripe->stripe_id % m_sys_config->ClusterNum;//校验块位置轮询
+
+  // Pick zu data clusters (excluding parity_cluster), order defines g=1..zu
+  std::vector<int> available_clusters;
+  available_clusters.reserve(m_sys_config->ClusterNum - 1);
+  for (int cid = 0; cid < m_sys_config->ClusterNum; cid++) {
+    if (cid == parity_cluster) continue;
+    available_clusters.push_back(cid);//将可用集群收集起来
+  }
+  assert(static_cast<int>(available_clusters.size()) >= zu &&
+         "Cluster RT requires enough distinct data clusters");
+  std::shuffle(available_clusters.begin(), available_clusters.end(),
+               std::mt19937(std::random_device{}()));//打乱集群顺序
+  available_clusters.resize(zu);//只保留zu个集群
+
+  stripe->group_to_blocks.clear();
+  stripe->blocks.clear();
+  stripe->place2clusters.clear();
+
+  Block *blocks_info = new Block[stripe->n];
+
+  // Track data group boundary while iterating block_id in ascending order.
+  int cur_group_g = 1; // data group id in [1..zu]
+  int cur_group_block_left =
+      (cur_group_g <= m_minus_b) ? (m - 1) : m; // 数据集群内部数据块数量
+  if (cur_group_block_left < 0) cur_group_block_left = 0;
+  int data_id = 0;
+
+  for (int i = 0; i < stripe->n; i++) {
+    blocks_info[i].block_size = m_sys_config->BlockSize;
+    blocks_info[i].map2stripe = stripe->stripe_id;
+    blocks_info[i].map2key = stripe->object_keys[0];
+
+    if (i < k) {
+      // data block
+      // Determine which data cluster group (g=1..zu) this block_id belongs to.
+      if (cur_group_g > zu) {
+        // Should never happen if k/r are valid.
+        std::cerr << "[ClusterRT] cur_group_g overflow for stripe_id=" << stripe->stripe_id
+                  << std::endl;
+        std::terminate();
+      }
+      const int data_cluster_id = available_clusters[cur_group_g - 1];//分配数据集群
+
+      std::string tmp = "_D";
+      if (i < 10) tmp = "_D0";
+      blocks_info[i].block_key = std::to_string(stripe->stripe_id) + tmp + std::to_string(i);
+      blocks_info[i].block_id = i;
+      blocks_info[i].block_type = 'D';
+      blocks_info[i].map2group = cur_group_g; // group id
+      blocks_info[i].map2cluster = data_cluster_id;
+
+      int node_id = randomly_select_a_node(data_cluster_id, stripe->stripe_id);
+      blocks_info[i].map2node = node_id;
+
+      update_stripe_info_in_node(node_id, stripe->stripe_id, i);
+      m_cluster_table[data_cluster_id].blocks.push_back(&blocks_info[i]);
+      m_cluster_table[data_cluster_id].stripes.insert(stripe->stripe_id);
+      stripe->blocks.push_back(&blocks_info[i]);
+      stripe->place2clusters.insert(data_cluster_id);
+      add_to_map(stripe->group_to_blocks, cur_group_g, i);
+
+      // move to next data block within same group
+      data_id++;
+      cur_group_block_left--;
+      if (cur_group_block_left == 0) {
+        cur_group_g++;
+        if (cur_group_g <= zu) {
+          cur_group_block_left =
+              (cur_group_g <= m_minus_b) ? (m - 1) : m;
+        }
+      }
+    } else {
+      // parity block (global parity only, since z=0)
+      const int parity_idx = i - k; // 0..r-1
+      std::string tmp = "_G";
+      if (parity_idx < 10) tmp = "_G0";
+      blocks_info[i].block_key = std::to_string(stripe->stripe_id) + tmp + std::to_string(parity_idx);
+      blocks_info[i].block_id = i;
+      blocks_info[i].block_type = 'G';
+      blocks_info[i].map2group = 0; // parity group id fixed to 0
+      blocks_info[i].map2cluster = parity_cluster;
+
+      int node_id = randomly_select_a_node(parity_cluster, stripe->stripe_id);
+      blocks_info[i].map2node = node_id;
+      update_stripe_info_in_node(node_id, stripe->stripe_id, i);
+      m_cluster_table[parity_cluster].blocks.push_back(&blocks_info[i]);
+      m_cluster_table[parity_cluster].stripes.insert(stripe->stripe_id);
+      stripe->blocks.push_back(&blocks_info[i]);
+      stripe->place2clusters.insert(parity_cluster);
+      add_to_map(stripe->group_to_blocks, 0, i);
+    }
+  }
+
+  // sanity: all k data blocks should be assigned
+  assert(static_cast<int>(data_id) == k);
+  stripe->num_groups = stripe->group_to_blocks.size();
+}
+
 void CoordinatorImpl::initialize_unilrc_and_azurelrc_stripe_placement(
     Stripe *stripe) {
   std::string code_type = m_sys_config->CodeType;
@@ -1193,7 +1344,11 @@ grpc::Status CoordinatorImpl::uploadSetValue(
     } else if (code_type == "UniformLRC") {
       initialize_uniform_lrc_stripe_placement(&t_stripe);
     } else if (code_type == "RS") {
-      initialize_equiox_stripe_placement(&t_stripe);
+      if (m_sys_config->AppendMode == "CLUSTER_RT_MODE") {
+        initialize_cluster_rt_stripe_placement(&t_stripe);
+      } else {
+        initialize_equiox_stripe_placement(&t_stripe);
+      }
     }
 
     print_stripe_data_placement(t_stripe);
@@ -4229,10 +4384,790 @@ CoordinatorImpl::Get_OA_Information(const std::string &filename) {
   return matrix;
 }
 
+namespace {
+
+// --- Cluster RT merge helpers (aim-based data placement) ---
+
+void cluster_rt_build_aim_sorted(int total_k, int m, std::vector<int> &aim_sorted) {
+  int R = (total_k + m - 1) / m;
+  int b = ((total_k - 1) % m) + 1;
+  int m_minus_b = m - b;
+  aim_sorted.clear();
+  aim_sorted.reserve(R);
+  for (int i = 0; i < m_minus_b; ++i)
+    aim_sorted.push_back(m - 1);
+  for (int i = 0; i < R - m_minus_b; ++i)
+    aim_sorted.push_back(m);
+  std::sort(aim_sorted.begin(), aim_sorted.end());
+}
+
+} // namespace
+
+#if 0
+void CoordinatorImpl::cluster_rt_rebuild_groups_impl(Stripe &stripe) {// 合并后目标分组方式
+  int k = stripe.k;
+  int m = stripe.r;
+  int zu = (k + m - 1) / m;
+  int b = ((k - 1) % m) + 1;
+  int m_minus_b = m - b;
+  stripe.group_to_blocks.clear();
+  for (int j = 0; j < stripe.r; ++j) {
+    stripe.blocks[k + j]->map2group = 0;
+    add_to_map(stripe.group_to_blocks, 0, k + j);
+  }
+  int bid = 0;
+  for (int g = 1; g <= zu; ++g) {
+    int gs = (g <= m_minus_b) ? (m - 1) : m;
+    for (int t = 0; t < gs && bid < k; ++t) {
+      stripe.blocks[bid]->map2group = g;
+      add_to_map(stripe.group_to_blocks, g, bid);
+      bid++;
+    }
+  }
+  stripe.num_groups = static_cast<int>(stripe.group_to_blocks.size());
+}
+
+grpc::Status CoordinatorImpl::mergeStripesClusterRT(
+    grpc::ServerContext *context,
+    const coordinator_proto::MergeRequest *request,
+    coordinator_proto::MergeReply *reply) {
+  (void)context;
+  reply->set_execution_seconds(0.0);
+  int stripe_id_a = request->stripe_id_a();
+  int stripe_id_b = request->stripe_id_b();
+  int merge_round = request->merge_round();
+
+  if (m_stripe_table.find(stripe_id_a) == m_stripe_table.end() ||
+      m_stripe_table.find(stripe_id_b) == m_stripe_table.end()) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "stripe not found");
+  }
+
+  Stripe &stripe_a = m_stripe_table[stripe_id_a];
+  Stripe &stripe_b = m_stripe_table[stripe_id_b];
+  int k = stripe_a.k;
+  int r = stripe_a.r;
+  if (stripe_b.k != k || stripe_b.r != r) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "merge requires two stripes with same k and r");
+  }
+
+  int m = r;
+  int k0 = stripe_a.base_k > 0 ? stripe_a.base_k : k;
+  if (stripe_b.base_k > 0 && stripe_b.base_k != k0) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "merge requires same base_k on both stripes");
+  }
+
+  if (merge_round < 1) {
+    reply->set_success(false);
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "merge_round must be >= 1");
+  }
+
+  int total_k = (1 << merge_round) * k0;
+  int new_k = 2 * k;
+  if (new_k != total_k) {
+    std::cerr << "[ClusterRT][Merge] warning: expected merged k="
+              << total_k << " from round=" << merge_round
+              << " base_k=" << k0 << " but input stripes have k=" << k
+              << " (continuing with new_k=" << new_k << ")" << std::endl;
+  }
+
+  std::vector<int> aim_sorted;
+  cluster_rt_build_aim_sorted(total_k, m, aim_sorted);
+  int R = static_cast<int>(aim_sorted.size());
+
+  int parity_cluster_dest = stripe_a.blocks[k]->map2cluster;
+
+  int block_size = m_sys_config->BlockSize;
+  int new_stripe_id = request->new_stripe_id();
+  if (new_stripe_id <= 0) {
+    new_stripe_id = m_cur_stripe_id++;
+  }
+
+  // Collect all data relocation RPCs first, then run them concurrently with
+  // parity merges.
+  struct MigrationRPC {
+    std::string proxy_addr;
+    proxy_proto::blockRelocPlan plan;
+  };
+  std::vector<MigrationRPC> migration_rpcs;
+
+  // --- Data rows: merged stripe data blocks (both source stripes) ---
+  struct Row {
+    ECProject::Block *blk;
+  };
+  std::vector<Row> rows;
+  rows.reserve(static_cast<size_t>(new_k));
+  for (int i = 0; i < k; ++i) {
+    rows.push_back({stripe_a.blocks[i]});
+  }
+  for (int i = 0; i < k; ++i) {
+    rows.push_back({stripe_b.blocks[i]});
+  }
+
+  auto cluster_counts = [&rows]() {
+    std::map<int, int> cnt;
+    for (const auto &row : rows) {
+      cnt[row.blk->map2cluster]++;
+    }
+    return cnt;
+  };
+
+  auto build_racks_sorted = [](const std::map<int, int> &cnt) {
+    std::vector<std::pair<int, int>> racks;
+    racks.reserve(cnt.size());
+    for (const auto &p : cnt)
+      racks.push_back({p.first, p.second});
+    std::sort(racks.begin(), racks.end(),
+              [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
+                if (a.second != b.second)
+                  return a.second < b.second;
+                return a.first < b.first;
+              });
+    return racks;
+  };
+
+  // For merge, avoid two data blocks from stripe_a / stripe_b sharing the same
+  // node within a rack; randomly_select_a_node only checks one stripe_id against
+  // m_node_table and misses cross-stripe conflicts. Use live placement in rows.
+  auto pick_merge_data_node = [&](int target_cluster,
+                                  ECProject::Block *ignore_block) -> int {
+    std::set<int> occupied;
+    for (const auto &row : rows) {
+      if (row.blk->map2cluster != target_cluster) {
+        continue;
+      }
+      if (ignore_block != nullptr && row.blk == ignore_block) {
+        continue;
+      }
+      occupied.insert(row.blk->map2node);
+    }
+    const auto &nodes_vec = m_cluster_table[target_cluster].nodes;
+    std::vector<int> candidates;
+    for (int nid : nodes_vec) {
+      if (!occupied.count(nid)) {
+        candidates.push_back(nid);
+      }
+    }
+    if (!candidates.empty()) {
+      std::mt19937 gen(std::random_device{}());
+      std::uniform_int_distribution<int> dis(
+          0, static_cast<int>(candidates.size()) - 1);
+      return candidates[dis(gen)];
+    }
+    return randomly_select_a_node(target_cluster, stripe_id_a);
+  };
+
+  // Greedy balancing loop (multiple passes until counts multiset matches aim)
+  const int max_pass = 64;
+  for (int pass = 0; pass < max_pass; ++pass) {
+    std::map<int, int> cnt = cluster_counts();
+    std::vector<std::pair<int, int>> racks_sorted = build_racks_sorted(cnt);
+    int num_racks = static_cast<int>(racks_sorted.size());
+    int t = num_racks - R;
+
+    std::vector<int> transfer;
+    std::vector<int> cluster_at_index;
+    std::vector<int> new_cluster_slots;
+
+    if (t > 0) {
+      transfer.resize(num_racks);
+      std::vector<int> padded(static_cast<size_t>(t), 0);
+      for (int v : aim_sorted)
+        padded.push_back(v);
+      for (int i = 0; i < num_racks; ++i)
+        transfer[i] = racks_sorted[i].second - padded[i];
+      for (int i = 0; i < num_racks; ++i)
+        cluster_at_index.push_back(racks_sorted[i].first);
+    } else {
+      int abs_t = R - num_racks;
+      transfer.resize(R);
+      std::vector<int> padded(static_cast<size_t>(abs_t), 0);
+      for (const auto &pr : racks_sorted)
+        padded.push_back(pr.second);
+      for (int i = 0; i < R; ++i)
+        transfer[i] = padded[i] - aim_sorted[i];
+      cluster_at_index.resize(R, -1);
+      for (int i = abs_t; i < R; ++i)
+        cluster_at_index[i] = racks_sorted[i - abs_t].first;
+      for (int i = 0; i < abs_t; ++i)
+        new_cluster_slots.push_back(i);
+    }
+
+    long sum_pos = 0, sum_neg = 0;
+    for (int v : transfer) {
+      if (v > 0)
+        sum_pos += v;
+      if (v < 0)
+        sum_neg -= v;
+    }
+    if (sum_pos == 0 && sum_neg == 0)
+      break;
+
+    // Collect outgoing blocks from clusters with positive transfer
+    std::vector<Row> outgoing;
+    auto gather_blocks_in_cluster = [&](int cid) {
+      std::vector<Row> blks;
+      for (const auto &row : rows) {
+        if (row.blk->map2cluster == cid)
+          blks.push_back(row);
+      }
+      return blks;
+    };
+
+    auto pick_eviction_order = [&](int cid, int need) {
+      std::map<int, std::vector<ECProject::Block *>> node_to;
+      for (const auto &row : rows) {
+        if (row.blk->map2cluster != cid)
+          continue;
+        node_to[row.blk->map2node].push_back(row.blk);
+      }
+      std::vector<ECProject::Block *> picked;
+      // Dynamic re-ranking: after each picked block, recompute current
+      // node occupancy and pick from the most loaded node again.
+      while (need > 0) {
+        int best_nid = -1;
+        int best_cnt = -1;
+        for (const auto &p : node_to) {
+          int cnt = static_cast<int>(p.second.size());
+          if (cnt <= 0) continue;
+          if (cnt > best_cnt || (cnt == best_cnt && p.first < best_nid)) {
+            best_cnt = cnt;
+            best_nid = p.first;
+          }
+        }
+        if (best_nid < 0)
+          break;
+        picked.push_back(node_to[best_nid].back());
+        node_to[best_nid].pop_back();
+        need--;
+      }
+      return picked;
+    };
+
+    if (t > 0) {
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[i] <= 0)
+          continue;
+        int cid = cluster_at_index[static_cast<int>(i)];
+        auto blks = pick_eviction_order(cid, transfer[i]);
+        for (auto *b : blks) {
+          for (const auto &row : rows) {
+            if (row.blk == b) {
+              outgoing.push_back(row);
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      int abs_t = R - num_racks;
+      (void)abs_t;
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[static_cast<int>(i)] <= 0)
+          continue;
+        int cid = cluster_at_index[static_cast<int>(i)];
+        if (cid < 0)
+          continue;
+        auto blks = pick_eviction_order(cid, transfer[static_cast<int>(i)]);
+        for (auto *b : blks) {
+          for (const auto &row : rows) {
+            if (row.blk == b) {
+              outgoing.push_back(row);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Destinations for negative transfer
+    std::vector<std::pair<int, int>> dests;
+    std::set<int> used_clusters;
+    for (const auto &row : rows)
+      used_clusters.insert(row.blk->map2cluster);
+    used_clusters.insert(parity_cluster_dest);
+
+    // Randomly choose new clusters from remaining racks, without replacement.
+    std::vector<int> remaining_clusters;
+    remaining_clusters.reserve(m_sys_config->ClusterNum);
+    for (int c = 0; c < m_sys_config->ClusterNum; ++c) {
+      if (used_clusters.count(c)) continue;
+      if (c == parity_cluster_dest) continue;
+      remaining_clusters.push_back(c);
+    }
+    std::mt19937 new_cluster_rng(std::random_device{}());
+    auto pick_new_cluster = [&]() -> int {//选择新机架
+      if (remaining_clusters.empty()) return -1;
+      std::uniform_int_distribution<int> dis(
+          0, static_cast<int>(remaining_clusters.size()) - 1);
+      int idx = dis(new_cluster_rng);
+      int c = remaining_clusters[idx];
+      remaining_clusters[idx] = remaining_clusters.back();
+      remaining_clusters.pop_back();
+      used_clusters.insert(c);
+      return c;
+    };
+
+    if (t > 0) {
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[static_cast<int>(i)] >= 0)
+          continue;
+        int need = -transfer[static_cast<int>(i)];//需要迁进机架几个数据块
+        int cid = cluster_at_index[static_cast<int>(i)];
+        for (int u = 0; u < need; ++u)
+          dests.push_back({cid, 1});
+      }
+    } else {
+      for (size_t i = 0; i < transfer.size(); ++i) {
+        if (transfer[static_cast<int>(i)] >= 0)
+          continue;
+        int need = -transfer[static_cast<int>(i)];
+        int cid_slot = static_cast<int>(i);
+        for (int u = 0; u < need; ++u) {
+          int target_c = cluster_at_index[cid_slot];
+          if (target_c < 0) {
+            target_c = pick_new_cluster();//选择空闲机架进行放置
+            cluster_at_index[cid_slot] = target_c;
+          }
+          if (target_c < 0) {
+            std::cerr << "[ClusterRT][Merge] no free cluster for placement" << std::endl;
+            reply->set_success(false);
+            return grpc::Status(grpc::StatusCode::RESOURCE_EXHAUSTED,
+                                "no free cluster for merge placement");
+          }
+          dests.push_back({target_c, 1});
+        }
+      }
+    }
+
+    size_t mv = std::min(outgoing.size(), dests.size());
+    struct RelocEntry {
+      std::string block_key;
+      std::string from_ip;
+      int from_port;
+      std::string to_ip;
+      int to_port;
+    };
+    std::map<int, std::vector<RelocEntry>> proxy_reloc_plans;
+
+    for (size_t e = 0; e < mv; ++e) {
+      ECProject::Block *blk = outgoing[e].blk;
+      int to_c = dests[e].first;
+      int new_node_id = pick_merge_data_node(to_c, nullptr);
+      ECProject::Node &old_node = m_node_table[blk->map2node];
+      ECProject::Node &to_node = m_node_table[new_node_id];
+      RelocEntry re;
+      re.block_key = blk->block_key;
+      re.from_ip = old_node.node_ip;
+      re.from_port = old_node.node_port;
+      re.to_ip = to_node.node_ip;
+      re.to_port = to_node.node_port;
+      proxy_reloc_plans[to_c].push_back(re);
+      blk->map2cluster = to_c;
+      blk->map2node = new_node_id;
+    }
+
+    for (auto &kv : proxy_reloc_plans) {
+      int cluster_id = kv.first;
+      auto &entries = kv.second;
+      if (entries.empty())
+        continue;
+      std::string proxy_addr = m_cluster_table[cluster_id].proxy_ip + ":" +
+                               std::to_string(m_cluster_table[cluster_id].proxy_port);
+      if (m_proxy_ptrs.find(proxy_addr) == m_proxy_ptrs.end() ||
+          !m_proxy_ptrs[proxy_addr]) {
+        std::cerr << "[ClusterRT][Merge] proxy not found: " << proxy_addr << std::endl;
+        reply->set_success(false);
+        return grpc::Status(grpc::StatusCode::UNAVAILABLE, "proxy not found");
+      }
+      proxy_proto::blockRelocPlan plan;
+      plan.set_block_size(block_size);
+      for (auto &ent : entries) {
+        plan.add_blocktomove(ent.block_key);
+        plan.add_fromdatanodeip(ent.from_ip);
+        plan.add_fromdatanodeport(ent.from_port);
+        plan.add_todatanodeip(ent.to_ip);
+        plan.add_todatanodeport(ent.to_port);
+      }
+      MigrationRPC rpc;
+      rpc.proxy_addr = proxy_addr;
+      rpc.plan = std::move(plan);
+      migration_rpcs.push_back(std::move(rpc));
+    }
+
+    if (mv == 0) {
+      std::cerr << "[ClusterRT][Merge] placement stuck (pass " << pass << ")" << std::endl;
+      break;
+    }
+  }
+
+  // Intra-cluster duplicate node fix
+  {
+    std::map<int, std::vector<ECProject::Block *>> by_c;
+    for (int i = 0; i < new_k; ++i) {
+      ECProject::Block *b = (i < k) ? stripe_a.blocks[i] : stripe_b.blocks[i - k];
+      by_c[b->map2cluster].push_back(b);
+    }
+    for (auto &kv : by_c) {
+      int cid = kv.first;
+      std::map<int, std::vector<ECProject::Block *>> by_n;
+      for (auto *b : kv.second)
+        by_n[b->map2node].push_back(b);
+      for (auto &p : by_n) {
+        auto &vec = p.second;
+        if (vec.size() <= 1)
+          continue;
+        for (size_t u = 1; u < vec.size(); ++u) {
+          ECProject::Block *blk = vec[u];
+          int nn = pick_merge_data_node(cid, blk);
+          ECProject::Node &old_node = m_node_table[blk->map2node];
+          ECProject::Node &new_node = m_node_table[nn];
+          std::string proxy_addr = m_cluster_table[cid].proxy_ip + ":" +
+                                   std::to_string(m_cluster_table[cid].proxy_port);
+          if (m_proxy_ptrs.find(proxy_addr) != m_proxy_ptrs.end() &&
+              m_proxy_ptrs[proxy_addr]) {
+            proxy_proto::blockRelocPlan plan;
+            plan.set_block_size(block_size);
+            plan.add_blocktomove(blk->block_key);
+            plan.add_fromdatanodeip(old_node.node_ip);
+            plan.add_fromdatanodeport(old_node.node_port);
+            plan.add_todatanodeip(new_node.node_ip);
+            plan.add_todatanodeport(new_node.node_port);
+            MigrationRPC rpc;
+            rpc.proxy_addr = proxy_addr;
+            rpc.plan = std::move(plan);
+            migration_rpcs.push_back(std::move(rpc));
+          }
+          blk->map2node = nn;
+        }
+      }
+    }
+  }
+
+  // --- Parity merge (same GF as legacy RS merge) ---
+  struct ParityMergeTask {
+    std::string parity_key_a;
+    std::string parity_key_b;
+    std::string new_parity_key;
+    std::string datanode_ip;
+    int datanode_port;
+    std::string parity_b_ip;
+    int parity_b_port;
+    unsigned char gf_coeff;
+  };
+  std::vector<ParityMergeTask> parity_tasks;
+
+  for (int j = 0; j < r; ++j) {
+    ECProject::Block *pa = stripe_a.blocks[k + j];
+    ECProject::Block *pb = stripe_b.blocks[k + j];
+    int j_1based = j + 1;
+    unsigned char base = ECProject::gf_pow(2, static_cast<unsigned int>(j_1based));
+    unsigned char coeff = ECProject::gf_pow(base, static_cast<unsigned int>(k));
+    ECProject::Node &parity_node = m_node_table[pa->map2node];
+    ECProject::Node &parity_b_node = m_node_table[pb->map2node];
+    std::string new_key = std::to_string(new_stripe_id) +
+                          (j < 10 ? "_G0" : "_G") + std::to_string(j);
+    parity_tasks.push_back({pa->block_key, pb->block_key, new_key,
+                            parity_node.node_ip, parity_node.node_port,
+                            parity_b_node.node_ip, parity_b_node.node_port, coeff});
+  }
+
+  std::atomic<bool> migration_ok{true};
+  std::atomic<bool> parity_ok{true};
+  // "Pure execution" times returned by the server handlers:
+  // - proxy::relocateBlock -> proxy_proto::blockRelocReply.execution_seconds
+  // - datanode::handleStripeMergeParity -> datanode_proto::RequestResult.execution_seconds
+  //
+  // Since migration and parity are executed concurrently, the pure merge time is max().
+  std::atomic<long long> migration_ns{0};
+  std::atomic<long long> parity_ns{0};
+
+  auto atomic_max_ns = [](std::atomic<long long> &target, long long value) {
+    long long cur = target.load();
+    while (value > cur && !target.compare_exchange_weak(cur, value)) {
+      // cur will be updated with the latest value by compare_exchange_weak.
+    }
+  };
+
+  std::cout << "[ClusterRT][Merge] merge phase start " << stripe_id_a << "+"
+            << stripe_id_b << " -> " << new_stripe_id << " reloc_plans="
+            << migration_rpcs.size() << " parity_tasks=" << parity_tasks.size()
+            << " (wave-parallel single-hop)" << std::endl;
+  const int migration_core = get_core_from_env("MERGE_MIGRATION_CORE", 0);
+  const int parity_core = get_core_from_env("MERGE_PARITY_CORE", 1);
+  std::cout << "[ClusterRT][Merge] thread core binding: migration="
+            << migration_core << " parity=" << parity_core << std::endl;
+
+  std::thread migration_thread([&migration_ok, &migration_ns, this, &migration_rpcs,
+                                &atomic_max_ns, block_size, migration_core]() {
+    bind_current_thread_to_core(migration_core, "clusterrt-migration-thread");
+    struct RelocHop {
+      std::string proxy_addr;
+      std::string block_key;
+      std::string from_ip;
+      int from_port;
+      std::string to_ip;
+      int to_port;
+    };
+    std::vector<RelocHop> hops;
+    for (const auto &rpc : migration_rpcs) {
+      const auto &p = rpc.plan;
+      const int nb = p.blocktomove_size();
+      for (int i = 0; i < nb; ++i) {
+        RelocHop h;
+        h.proxy_addr = rpc.proxy_addr;
+        h.block_key = p.blocktomove(i);
+        h.from_ip = p.fromdatanodeip(i);
+        h.from_port = p.fromdatanodeport(i);
+        h.to_ip = p.todatanodeip(i);
+        h.to_port = p.todatanodeport(i);
+        hops.push_back(std::move(h));
+      }
+    }
+
+    if (hops.empty())
+      return;
+
+    std::vector<int> pred(hops.size(), -1);
+    std::unordered_map<std::string, int> last_for_key;
+    last_for_key.reserve(hops.size() * 2);
+    for (size_t i = 0; i < hops.size(); ++i) {
+      const std::string &k = hops[i].block_key;
+      auto it = last_for_key.find(k);
+      if (it != last_for_key.end())
+        pred[i] = it->second;
+      last_for_key[k] = static_cast<int>(i);
+    }
+
+    enum HopState : char { StPending = 0, StSuccess = 1, StFailed = 2 };
+    std::vector<char> state(hops.size(), StPending);
+    size_t n_success = 0;
+    const int wave_max = ECProject::RELOC_WAVE_PARALLEL_MAX;
+
+    while (migration_ok.load() && n_success < hops.size()) {
+      std::vector<int> ready;
+      ready.reserve(hops.size());
+      for (size_t i = 0; i < hops.size(); ++i) {
+        if (state[i] != StPending)
+          continue;
+        int p = pred[i];
+        if (p >= 0) {
+          if (state[static_cast<size_t>(p)] == StPending)
+            continue;
+          if (state[static_cast<size_t>(p)] == StFailed)
+            continue;
+        }
+        ready.push_back(static_cast<int>(i));
+      }
+
+      if (ready.empty()) {
+        for (size_t i = 0; i < hops.size(); ++i) {
+          if (state[i] == StPending) {
+            migration_ok = false;
+            std::cerr << "[ClusterRT][Merge] relocation scheduler cannot progress hop_index="
+                      << i << " block_key=" << hops[i].block_key << std::endl;
+          }
+        }
+        break;
+      }
+
+      for (size_t base = 0; base < ready.size() && migration_ok.load();
+           base += static_cast<size_t>(wave_max)) {
+        const size_t end =
+            std::min(base + static_cast<size_t>(wave_max), ready.size());
+        std::vector<std::thread> threads;
+        threads.reserve(end - base);
+        std::vector<char> slot_ok(end - base, 0);
+
+        for (size_t j = base; j < end; ++j) {
+          const size_t slot = j - base;
+          const int hop_idx = ready[j];
+          threads.emplace_back(
+              [this, block_size, hop_idx, slot, &hops, &slot_ok, &migration_ok, &migration_ns,
+               &atomic_max_ns]() {
+                const RelocHop &h = hops[static_cast<size_t>(hop_idx)];
+                grpc::ClientContext ctx;
+                long long reloc_deadline_sec =
+                    static_cast<long long>(MERGE_GRPC_TCP_TIMEOUT_SEC) *
+                    std::max(1, 3);
+                reloc_deadline_sec = std::min(reloc_deadline_sec, 3600LL);
+                ctx.set_deadline(std::chrono::system_clock::now() +
+                                 std::chrono::seconds(reloc_deadline_sec));
+                proxy_proto::blockRelocPlan plan;
+                plan.set_block_size(block_size);
+                plan.add_blocktomove(h.block_key);
+                plan.add_fromdatanodeip(h.from_ip);
+                plan.add_fromdatanodeport(h.from_port);
+                plan.add_todatanodeip(h.to_ip);
+                plan.add_todatanodeport(h.to_port);
+                proxy_proto::blockRelocReply reloc_reply;
+                grpc::Status st =
+                    m_proxy_ptrs[h.proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+                if (!st.ok()) {
+                  migration_ok = false;
+                  std::cerr << "[ClusterRT][Merge] relocateBlock failed via "
+                            << h.proxy_addr << ": " << st.error_message()
+                            << std::endl;
+                  return;
+                }
+                if (reloc_reply.result() != "ok") {
+                  migration_ok = false;
+                  std::cerr << "[ClusterRT][Merge] relocateBlock partial/failure via "
+                            << h.proxy_addr << " result=" << reloc_reply.result()
+                            << std::endl;
+                  return;
+                }
+                const double exec_seconds = reloc_reply.execution_seconds();
+                const long long exec_ns =
+                    static_cast<long long>(exec_seconds * 1e9);
+                atomic_max_ns(migration_ns, exec_ns);
+                slot_ok[slot] = 1;
+              });
+        }
+        for (auto &t : threads)
+          t.join();
+
+        for (size_t j = base; j < end; ++j) {
+          const size_t slot = j - base;
+          const int hop_idx = ready[j];
+          if (slot_ok[slot]) {
+            state[static_cast<size_t>(hop_idx)] = StSuccess;
+            ++n_success;
+          } else {
+            state[static_cast<size_t>(hop_idx)] = StFailed;
+          }
+        }
+
+        if (!migration_ok.load())
+          break;
+      }
+    }
+  });
+
+  std::thread parity_thread([&parity_ok, &parity_ns, &parity_tasks, block_size,
+                             &atomic_max_ns, parity_core]() {
+    bind_current_thread_to_core(parity_core, "clusterrt-parity-thread");
+    std::vector<std::thread> sub_threads;
+    sub_threads.reserve(parity_tasks.size());
+    for (auto task : parity_tasks) {
+      sub_threads.emplace_back([task, block_size, &parity_ok, &parity_ns, &atomic_max_ns]() {
+        auto channel = grpc::CreateChannel(
+            task.datanode_ip + ":" + std::to_string(task.datanode_port),
+            grpc::InsecureChannelCredentials());
+        auto stub = datanode_proto::datanodeService::NewStub(channel);
+
+        grpc::ClientContext ctx;
+        ctx.set_deadline(std::chrono::system_clock::now() +
+                         std::chrono::seconds(MERGE_GRPC_TCP_TIMEOUT_SEC * 2));
+        datanode_proto::StripeMergeParityInfo info;
+        datanode_proto::RequestResult result;
+        info.set_parity_key_a(task.parity_key_a);
+        info.set_parity_key_b(task.parity_key_b);
+        info.set_new_parity_key(task.new_parity_key);
+        info.set_block_size(block_size);
+        info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+        info.set_parity_b_datanode_ip(task.parity_b_ip);
+        info.set_parity_b_datanode_port(task.parity_b_port);
+
+        grpc::Status st = stub->handleStripeMergeParity(&ctx, info, &result);
+        if (!st.ok() || !result.message()) {
+          parity_ok = false;
+          std::cerr << "[ClusterRT][Merge] parity merge failed on "
+                    << task.datanode_ip << ":" << task.datanode_port << std::endl;
+          // Even on failure, keep any non-zero execution_seconds for diagnostics.
+        }
+        const double exec_seconds = result.execution_seconds();
+        const long long exec_ns = static_cast<long long>(exec_seconds * 1e9);
+        atomic_max_ns(parity_ns, exec_ns);
+      });
+    }
+    for (auto &t : sub_threads)
+      t.join();
+  });
+
+  migration_thread.join();
+  std::cout << "[ClusterRT][Merge] relocation finished " << stripe_id_a << "+"
+            << stripe_id_b << " -> " << new_stripe_id << std::endl;
+  parity_thread.join();
+  std::cout << "[ClusterRT][Merge] parity RPCs finished " << stripe_id_a << "+"
+            << stripe_id_b << " -> " << new_stripe_id << std::endl;
+
+  const double migration_seconds = static_cast<double>(migration_ns.load()) / 1e9;
+  const double parity_seconds = static_cast<double>(parity_ns.load()) / 1e9;
+  const double merge_seconds = std::max(migration_seconds, parity_seconds);
+
+  reply->set_execution_seconds(merge_seconds);
+  reply->set_migration_seconds(migration_seconds);
+  reply->set_parity_seconds(parity_seconds);
+
+  if (!migration_ok.load() || !parity_ok.load()) {
+    reply->set_success(false);
+    return grpc::Status::OK;
+  }
+
+  // --- Build merged stripe metadata ---
+  Stripe new_stripe;
+  new_stripe.stripe_id = new_stripe_id;
+  new_stripe.k = new_k;
+  new_stripe.r = r;
+  new_stripe.z = stripe_a.z;
+  new_stripe.n = new_k + r;
+  new_stripe.l = stripe_a.l;
+  new_stripe.g_m = stripe_a.g_m;
+  new_stripe.N = stripe_a.N;
+  new_stripe.num_arry = stripe_a.num_arry;
+  new_stripe.base_k = k0;
+  new_stripe.object_keys = stripe_a.object_keys;
+
+  for (int i = 0; i < k; ++i) {
+    ECProject::Block *blk = stripe_a.blocks[i];
+    blk->map2stripe = new_stripe_id;
+    blk->block_id = i;
+    new_stripe.blocks.push_back(blk);
+    new_stripe.place2clusters.insert(blk->map2cluster);
+  }
+  for (int i = 0; i < k; ++i) {
+    ECProject::Block *blk = stripe_b.blocks[i];
+    blk->map2stripe = new_stripe_id;
+    blk->block_id = k + i;
+    new_stripe.blocks.push_back(blk);
+    new_stripe.place2clusters.insert(blk->map2cluster);
+  }
+  for (int j = 0; j < r; ++j) {
+    ECProject::Block *pa = stripe_a.blocks[k + j];
+    pa->block_key = parity_tasks[j].new_parity_key;
+    pa->map2stripe = new_stripe_id;
+    pa->block_id = new_k + j;
+    pa->block_type = 'G';
+    new_stripe.blocks.push_back(pa);
+    new_stripe.place2clusters.insert(pa->map2cluster);
+  }
+
+  cluster_rt_rebuild_groups_impl(new_stripe);
+
+  m_stripe_table.erase(stripe_id_a);
+  m_stripe_table.erase(stripe_id_b);
+  m_stripe_table[new_stripe_id] = std::move(new_stripe);
+
+  reply->set_success(true);
+  reply->set_new_stripe_id(new_stripe_id);
+  std::cout << "[ClusterRT][Merge] merged " << stripe_id_a << " + " << stripe_id_b
+            << " -> " << new_stripe_id << " (k=" << new_k << ", round=" << merge_round
+            << ")" << std::endl;
+  return grpc::Status::OK;
+}
+#endif
+
 grpc::Status CoordinatorImpl::mergeStripes(
     grpc::ServerContext *context,
     const coordinator_proto::MergeRequest *request,
     coordinator_proto::MergeReply *reply) {
+  (void)context;
+
   int stripe_id_a = request->stripe_id_a();
   int stripe_id_b = request->stripe_id_b();
   int merge_round = request->merge_round();
@@ -4431,7 +5366,6 @@ grpc::Status CoordinatorImpl::mergeStripes(
         int parity_on_rack = rack_parity_count.count(cid) ? rack_parity_count[cid] : 0;
         if (static_cast<int>(data_blks.size()) + parity_on_rack < r) {
           data_blks.push_back(mig.block);
-          mig.block->map2cluster = cid;
           placed = true;
           break;
         }
@@ -4439,7 +5373,6 @@ grpc::Status CoordinatorImpl::mergeStripes(
     } else if (new_rack_cluster >= 0) {
       // 需要新机架，放到 OA1 公式算出的新机架
       rack_to_data_blocks[new_rack_cluster].push_back(mig.block);
-      mig.block->map2cluster = new_rack_cluster;
       occupied_racks.insert(new_rack_cluster);
       occupied_rack_count = static_cast<int>(occupied_racks.size());
       placed = true;
@@ -4452,7 +5385,6 @@ grpc::Status CoordinatorImpl::mergeStripes(
         if (static_cast<int>(data_blks.size()) + parity_on_rack < r) {
           std::cerr<<"[Coordinator][Merge] replace any empty rack " << cid << std::endl;
           data_blks.push_back(mig.block);
-          mig.block->map2cluster = cid;
           placed = true;
           break;
         }
@@ -4565,219 +5497,146 @@ grpc::Status CoordinatorImpl::mergeStripes(
               << " -> " << new_key << ")" << std::endl;
   }
 
-  struct RelocRpcTask {
-    std::string proxy_addr;
-    std::vector<RelocEntry> entries;
-  };
-  std::vector<RelocRpcTask> reloc_tasks;
-  int reloc_batch_size = 8;
-  if (const char *env_batch = std::getenv("MERGE_RELOC_BATCH_SIZE");
-      env_batch && env_batch[0] != '\0') {
-    char *end = nullptr;
-    long parsed = std::strtol(env_batch, &end, 10);
-    if (end != env_batch && parsed > 0) {
-      reloc_batch_size = static_cast<int>(parsed);
-    }
-  }
-  for (auto &[cluster_id, entries] : proxy_reloc_plans) {
-    if (entries.empty()) continue;
-    std::string proxy_addr =
-        m_cluster_table[cluster_id].proxy_ip + ":" +
-        std::to_string(m_cluster_table[cluster_id].proxy_port);
-    for (size_t begin = 0; begin < entries.size(); begin += reloc_batch_size) {
-      size_t end = std::min(entries.size(), begin + static_cast<size_t>(reloc_batch_size));
-      RelocRpcTask task;
-      task.proxy_addr = proxy_addr;
-      task.entries.reserve(end - begin);
-      for (size_t idx = begin; idx < end; ++idx) {
-        task.entries.push_back(entries[idx]);
-      }
-      reloc_tasks.push_back(std::move(task));
-    }
-  }
-
   // ====== Execute in two threads ======
-  auto parse_worker_count = [](const char *env_name,
-                               int default_value,
-                               int max_value) -> int {
-    if (max_value <= 0) {
-      return 0;
-    }
-    int value = std::max(1, default_value);
-    if (const char *env = std::getenv(env_name); env && env[0] != '\0') {
-      char *end = nullptr;
-      long parsed = std::strtol(env, &end, 10);
-      if (end != env) {
-        value = static_cast<int>(parsed);
-      }
-    }
-    value = std::max(1, value);
-    value = std::min(value, max_value);
-    return value;
-  };
-  const int hw = static_cast<int>(std::max(1u, std::thread::hardware_concurrency()));
-  const int migration_core = 0;
-  const int parity_core = (hw > 1) ? 1 : 0;
-  auto bind_current_thread_to_core = [](int core_id, const char *thread_name) {
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(core_id, &cpuset);
-    int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-    if (rc != 0) {
-      std::cerr << "[Coordinator][Merge] failed to bind " << thread_name
-                << " thread to core " << core_id << ", rc=" << rc << std::endl;
-    }
-  };
-  const int migration_workers = parse_worker_count(
-      "MERGE_MIGRATION_CONCURRENCY",
-      std::min(hw, static_cast<int>(reloc_tasks.size())),
-      static_cast<int>(reloc_tasks.size()));
-  const int parity_default_workers =
-      std::min(std::max(1, hw / 2), static_cast<int>(parity_tasks.size()));
-  const int parity_workers = parse_worker_count(
-      "MERGE_PARITY_CONCURRENCY",
-      parity_default_workers,
-      static_cast<int>(parity_tasks.size()));
-  std::cout << "[Coordinator][Merge] workers migration=" << migration_workers
-            << ", parity=" << parity_workers
-            << ", reloc_batch_size=" << reloc_batch_size << std::endl;
-
-  std::atomic<bool> migration_ok{true};
-  std::atomic<bool> parity_ok{true};
-  std::atomic<double> data_migration_seconds{0.0};
-  std::atomic<double> parity_update_seconds{0.0};
+  bool migration_ok = true;
+  bool parity_ok = true;
+  double data_migration_seconds = 0.0;
+  double parity_update_seconds = 0.0;
+  const int migration_core = get_core_from_env("MERGE_MIGRATION_CORE", 0);
+  const int parity_core = get_core_from_env("MERGE_PARITY_CORE", 1);
+  std::cout << "[Coordinator][Merge] thread core binding: migration="
+            << migration_core << " parity=" << parity_core << std::endl;
 
   // Thread 1: data block migration
-  std::thread migration_thread([&]() {
-    bind_current_thread_to_core(migration_core, "migration");
+  std::thread migration_thread([&, migration_core]() {
+    bind_current_thread_to_core(migration_core, "merge-migration-thread");
     auto migration_wall_start = std::chrono::high_resolution_clock::now();
-    std::vector<std::thread> sub_threads;
-    std::atomic<size_t> next_task{0};
-    sub_threads.reserve(std::max(0, migration_workers));
-    for (int i = 0; i < migration_workers; ++i) {
-      sub_threads.emplace_back([this, &reloc_tasks, &next_task, block_size, &migration_ok]() {
-        while (true) {
-          size_t idx = next_task.fetch_add(1);
-          if (idx >= reloc_tasks.size()) {
-            break;
-          }
-          const auto &task = reloc_tasks[idx];
-          auto proxy_it = m_proxy_ptrs.find(task.proxy_addr);
-          if (proxy_it == m_proxy_ptrs.end()) {
-            std::cerr << "[Coordinator][Merge] proxy not found: "
-                      << task.proxy_addr << std::endl;
-            migration_ok.store(false);
-            continue;
-          }
+    std::vector<std::thread> proxy_threads;
+    std::vector<char> proxy_ok;
+    proxy_threads.reserve(proxy_reloc_plans.size());
+    proxy_ok.reserve(proxy_reloc_plans.size());
+    std::cout << "[Coordinator][Merge] migration proxy-parallel tasks: "
+              << proxy_reloc_plans.size() << std::endl;
 
-          grpc::ClientContext ctx;
-          proxy_proto::blockRelocPlan plan;
-          proxy_proto::blockRelocReply reloc_reply;
-          plan.set_block_size(block_size);
-          for (const auto &entry : task.entries) {
-            plan.add_blocktomove(entry.block_key);
-            plan.add_fromdatanodeip(entry.from_ip);
-            plan.add_fromdatanodeport(entry.from_port);
-            plan.add_todatanodeip(entry.to_ip);
-            plan.add_todatanodeport(entry.to_port);
-          }
+    for (auto &[cluster_id, entries] : proxy_reloc_plans) {
+      if (entries.empty()) continue;
+      const size_t slot = proxy_ok.size();
+      proxy_ok.push_back(0);
 
-          grpc::Status st =
-              proxy_it->second->relocateBlock(&ctx, plan, &reloc_reply);
-          if (!st.ok()) {
-            std::cerr << "[Coordinator][Merge] relocate failed for "
-                      << task.entries.size() << " blocks via " << task.proxy_addr
-                      << ": " << st.error_message() << std::endl;
-            migration_ok.store(false);
-            continue;
-          }
+      proxy_threads.emplace_back([&, cluster_id, entries, slot]() {
+        std::string proxy_addr =
+            m_cluster_table[cluster_id].proxy_ip + ":" +
+            std::to_string(m_cluster_table[cluster_id].proxy_port);
 
-          if (reloc_reply.result() != "ok") {
-            std::cerr << "[Coordinator][Merge] relocate returned "
-                      << reloc_reply.result() << " for " << task.entries.size() << " blocks"
-                      << " via " << task.proxy_addr << std::endl;
-            migration_ok.store(false);
-            continue;
-          }
-
-          std::cout << "[Coordinator][Merge] relocated " << task.entries.size()
-                    << " blocks via " << task.proxy_addr
+        if (m_proxy_ptrs.find(proxy_addr) == m_proxy_ptrs.end()) {
+          std::cerr << "[Coordinator][Merge] proxy not found: " << proxy_addr
                     << std::endl;
+          return;
         }
+
+        grpc::ClientContext ctx;
+        long long reloc_deadline_sec =
+            static_cast<long long>(MERGE_GRPC_TCP_TIMEOUT_SEC) *
+            std::max(1, static_cast<int>(entries.size()) * 3);
+        reloc_deadline_sec = std::min(reloc_deadline_sec, 3600LL);
+        ctx.set_deadline(std::chrono::system_clock::now() +
+                         std::chrono::seconds(reloc_deadline_sec));
+        proxy_proto::blockRelocPlan plan;
+        proxy_proto::blockRelocReply reloc_reply;
+
+        plan.set_block_size(block_size);
+        for (auto &e : entries) {
+          plan.add_blocktomove(e.block_key);
+          plan.add_fromdatanodeip(e.from_ip);
+          plan.add_fromdatanodeport(e.from_port);
+          plan.add_todatanodeip(e.to_ip);
+          plan.add_todatanodeport(e.to_port);
+        }
+
+        grpc::Status st =
+            m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+        if (!st.ok()) {
+          std::cerr << "[Coordinator][Merge] relocate failed via " << proxy_addr
+                    << ": " << st.error_message() << std::endl;
+          return;
+        }
+        std::cout << "[Coordinator][Merge] relocated " << entries.size()
+                  << " blocks via " << proxy_addr << std::endl;
+        proxy_ok[slot] = 1;
       });
     }
-    for (auto &t : sub_threads) t.join();
-    data_migration_seconds.store(
+
+    for (auto &t : proxy_threads) t.join();
+    for (char ok : proxy_ok) {
+      if (!ok) {
+        migration_ok = false;
+        break;
+      }
+    }
+    data_migration_seconds =
         std::chrono::duration<double>(
             std::chrono::high_resolution_clock::now() - migration_wall_start)
-            .count());
+            .count();
   });
 
   // Thread 2: parity block merge on datanodes
-  std::thread parity_thread([&]() {
-    bind_current_thread_to_core(parity_core, "parity");
+  std::thread parity_thread([&, parity_core]() {
+    bind_current_thread_to_core(parity_core, "merge-parity-thread");
     auto parity_wall_start = std::chrono::high_resolution_clock::now();
     std::vector<std::thread> sub_threads;
-    std::atomic<size_t> next_task{0};
-    sub_threads.reserve(std::max(0, parity_workers));
-    for (int i = 0; i < parity_workers; ++i) {
-      sub_threads.emplace_back([this, &parity_tasks, &next_task, block_size, &parity_ok]() {
-        while (true) {
-          size_t idx = next_task.fetch_add(1);
-          if (idx >= parity_tasks.size()) {
-            break;
+    for (auto &task : parity_tasks) {
+      sub_threads.emplace_back([this, task, block_size, &parity_ok]() {
+        const std::string target =
+            task.datanode_ip + ":" + std::to_string(task.datanode_port);
+        std::shared_ptr<datanode_proto::datanodeService::Stub> stub;
+        {
+          std::lock_guard<std::mutex> lk(m_datanode_stub_mutex);
+          auto it = m_datanode_stubs.find(target);
+          if (it == m_datanode_stubs.end()) {
+            auto channel =
+                grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
+            auto new_stub = datanode_proto::datanodeService::NewStub(channel);
+            stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
+                std::move(new_stub));
+            m_datanode_stubs.emplace(target, stub);
+          } else {
+            stub = it->second;
           }
-          const auto &task = parity_tasks[idx];
-          const std::string target_addr =
-              task.datanode_ip + ":" + std::to_string(task.datanode_port);
-          std::shared_ptr<datanode_proto::datanodeService::Stub> stub;
-          {
-            std::lock_guard<std::mutex> lk(m_datanode_stub_mutex);
-            auto it = m_datanode_stubs.find(target_addr);
-            if (it == m_datanode_stubs.end()) {
-              auto channel =
-                  grpc::CreateChannel(target_addr, grpc::InsecureChannelCredentials());
-              auto new_stub = datanode_proto::datanodeService::NewStub(channel);
-              stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
-                  std::move(new_stub));
-              m_datanode_stubs.emplace(target_addr, stub);
-            } else {
-              stub = it->second;
-            }
-          }
+        }
 
-          grpc::ClientContext ctx;
-          datanode_proto::StripeMergeParityInfo info;
-          datanode_proto::RequestResult result;
-          info.set_parity_key_a(task.parity_key_a);
-          info.set_parity_key_b(task.parity_key_b);
-          info.set_new_parity_key(task.new_parity_key);
-          info.set_block_size(block_size);
-          info.set_gf_coeff(static_cast<int>(task.gf_coeff));
-          info.set_parity_b_datanode_ip(task.parity_b_ip);
-          info.set_parity_b_datanode_port(task.parity_b_port);
+        grpc::ClientContext ctx;
+        ctx.set_deadline(std::chrono::system_clock::now() +
+                         std::chrono::seconds(MERGE_GRPC_TCP_TIMEOUT_SEC * 2));
+        datanode_proto::StripeMergeParityInfo info;
+        datanode_proto::RequestResult result;
+        info.set_parity_key_a(task.parity_key_a);
+        info.set_parity_key_b(task.parity_key_b);
+        info.set_new_parity_key(task.new_parity_key);
+        info.set_block_size(block_size);
+        info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+        info.set_parity_b_datanode_ip(task.parity_b_ip);
+        info.set_parity_b_datanode_port(task.parity_b_port);
 
-          grpc::Status st = stub->handleStripeMergeParity(&ctx, info, &result);
-          if (!st.ok() || !result.message()) {
-            std::cerr << "[Coordinator][Merge] parity merge failed on "
-                      << task.datanode_ip << ":" << task.datanode_port
-                      << " for " << task.new_parity_key << std::endl;
-            parity_ok.store(false);
-          }
+        grpc::Status st = stub->handleStripeMergeParity(&ctx, info, &result);
+        if (!st.ok() || !result.message()) {
+          std::cerr << "[Coordinator][Merge] parity merge failed on "
+                    << task.datanode_ip << ":" << task.datanode_port
+                    << " for " << task.new_parity_key << std::endl;
+          parity_ok = false;
         }
       });
     }
     for (auto &t : sub_threads) t.join();
-    parity_update_seconds.store(
+    parity_update_seconds =
         std::chrono::duration<double>(
             std::chrono::high_resolution_clock::now() - parity_wall_start)
-            .count());
+            .count();
   });
 
   migration_thread.join();
   parity_thread.join();
-  reply->set_data_migration_seconds(data_migration_seconds.load());
-  reply->set_parity_update_seconds(parity_update_seconds.load());
+  reply->set_data_migration_seconds(data_migration_seconds);
+  reply->set_parity_update_seconds(parity_update_seconds);
 
   // ====== Update metadata ======
   // Build new stripe's block list
@@ -4834,7 +5693,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
   // Insert merged stripe metadata after deleting old entries.
   m_stripe_table[new_stripe_id] = std::move(new_stripe);
 
-  bool success = migration_ok.load() && parity_ok.load();
+  bool success = migration_ok && parity_ok;
   reply->set_success(success);
   reply->set_new_stripe_id(new_stripe_id);
 

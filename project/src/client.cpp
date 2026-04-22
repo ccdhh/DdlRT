@@ -1528,7 +1528,11 @@ namespace ECProject
     merge_concurrency = std::min(merge_concurrency, pairs);
     std::cout << "[Client] will merge " << pairs << " pairs (round " << merge_round
               << ", concurrency " << merge_concurrency << ")" << std::endl;
-    std::chrono::high_resolution_clock::time_point merge_start=std::chrono::high_resolution_clock::now();
+    // Total merge time (reported below) is overlap-aware: each pair contributes
+    // max(migration, parity) from MergeReply (coordinator runs those in parallel);
+    // within a batch, concurrent pairs count as max(...) not sum(...); plus we do
+    // not include client RPC/metadata tail beyond those coordinator phase timers.
+    double merge_total_overlap_aware_seconds = 0.0;
     double sum_data_migration_seconds = 0.0;
     double sum_parity_update_seconds = 0.0;
     std::mutex merge_stats_mutex;
@@ -1538,6 +1542,7 @@ namespace ECProject
         break;
       }
       int batch_end = std::min(batch_start + merge_concurrency, pairs);
+      double batch_max_pair_critical_seconds = 0.0;
       std::vector<std::thread> merge_threads;
       merge_threads.reserve(batch_end - batch_start);
 
@@ -1549,6 +1554,7 @@ namespace ECProject
 
         merge_threads.emplace_back([this, sid_a, sid_b, merge_round, p,
                                     &sum_data_migration_seconds, &sum_parity_update_seconds,
+                                    &batch_max_pair_critical_seconds,
                                     &merge_stats_mutex, &merge_failed]() {
           grpc::ClientContext ctx;
           coordinator_proto::MergeRequest req;
@@ -1571,6 +1577,10 @@ namespace ECProject
 
           sum_data_migration_seconds += rep.data_migration_seconds();
           sum_parity_update_seconds += rep.parity_update_seconds();
+          const double pair_crit = std::fmax(rep.data_migration_seconds(),
+                                             rep.parity_update_seconds());
+          batch_max_pair_critical_seconds =
+              std::fmax(batch_max_pair_critical_seconds, pair_crit);
 
           if (rep.success()) {
             std::cout << "[Client] merge succeeded -> new stripe "
@@ -1587,15 +1597,18 @@ namespace ECProject
       for (auto &merge_thread : merge_threads) {
         merge_thread.join();
       }
+      merge_total_overlap_aware_seconds += batch_max_pair_critical_seconds;
     }
     if (merge_failed) {
       std::cout << "[Client] merge stopped early because at least one pair failed."
                 << " You can retry from the current stripe set after checking logs."
                 << std::endl;
     }
-    std::chrono::high_resolution_clock::time_point merge_end=std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> merge_time = std::chrono::duration_cast<std::chrono::duration<double>>(merge_end - merge_start);
-    std::cout << "[merge"<<merge_round<<"time] total spend time: " << merge_time.count() << " seconds"<<'\n'
+    std::cout << "[merge" << merge_round
+              << "time] total spend time: " << merge_total_overlap_aware_seconds
+              << " seconds (overlap-aware: per-batch max of per-pair "
+                 "max(migration,parity) from MergeReply; excludes extra RPC tail)"
+              << '\n'
               << " | coordinator data migration (sum per pair): " << sum_data_migration_seconds << " s"<<'\n'
               << " | coordinator parity update (sum per pair): " << sum_parity_update_seconds << " s"
               << std::endl;
