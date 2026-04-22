@@ -91,6 +91,15 @@ namespace ECProject
 
     int xor_avx(int vects, int len, void **array);
 
+    // Merge parity blocks in GF(2^8):
+    // out = parity_a XOR (coeff * parity_b)
+    // Uses AVX2 path when available, scalar fallback otherwise.
+    void merge_stripe_parity_gf_xor(int block_size,
+                                    const unsigned char *parity_a,
+                                    const unsigned char *parity_b,
+                                    unsigned char coeff,
+                                    unsigned char *out);
+
     unsigned char
     gf_inv(unsigned char a);
 

@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <unordered_map>
+#include <memory>
 #include "meta_definition.h"
 #include "config.h"
 // #define IF_DEBUG true
@@ -68,6 +70,10 @@ namespace ECProject
             grpc::ServerContext *context,
             const datanode_proto::GetInfo *get_info,
             datanode_proto::RequestResult *response) override;
+        grpc::Status readBlockBytes(
+            grpc::ServerContext *context,
+            const datanode_proto::ReadBlockBytesRequest *request,
+            datanode_proto::ReadBlockBytesReply *response) override;
         // stripe-level parity merge (local)
         grpc::Status handleStripeMergeParity(
             grpc::ServerContext *context,
@@ -94,6 +100,11 @@ namespace ECProject
         asio::io_context io_context;
         asio::ip::tcp::acceptor acceptor;
         std::mutex acceptor_mtx;
+        // Reuse datanode->datanode stubs when pulling remote parity blocks.
+        std::mutex m_remote_read_stub_mutex;
+        std::unordered_map<std::string,
+                           std::shared_ptr<datanode_proto::datanodeService::Stub>>
+            m_remote_read_stubs;
     };
 
     class DataNode

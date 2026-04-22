@@ -799,6 +799,41 @@ namespace ECProject
         return grpc::Status::OK;
     }
 
+    grpc::Status DatanodeImpl::readBlockBytes(
+        grpc::ServerContext *context,
+        const datanode_proto::ReadBlockBytesRequest *request,
+        datanode_proto::ReadBlockBytesReply *response)
+    {
+        (void)context;
+        std::string block_key = request->block_key();
+        int block_size = request->block_size();
+        std::string targetdir = "./storage/" + std::to_string(m_port) + "/";
+        std::string readpath = targetdir + block_key;
+
+        if (block_size <= 0 || access(readpath.c_str(), 0) == -1) {
+            response->set_ok(false);
+            return grpc::Status::OK;
+        }
+
+        std::ifstream ifs(readpath, std::ios::binary);
+        if (!ifs.is_open()) {
+            response->set_ok(false);
+            return grpc::Status::OK;
+        }
+
+        std::string data;
+        data.resize(static_cast<size_t>(block_size), '\0');
+        ifs.read(data.data(), block_size);
+        if (ifs.gcount() != static_cast<std::streamsize>(block_size)) {
+            response->set_ok(false);
+            return grpc::Status::OK;
+        }
+
+        response->set_ok(true);
+        response->set_data(data);
+        return grpc::Status::OK;
+    }
+
     grpc::Status DatanodeImpl::handleStripeMergeParity(
         grpc::ServerContext *context,
         const datanode_proto::StripeMergeParityInfo *info,
@@ -810,6 +845,8 @@ namespace ECProject
         std::string new_parity_key = info->new_parity_key();
         int block_size = info->block_size();
         unsigned char coeff = static_cast<unsigned char>(info->gf_coeff());
+        std::string parity_b_ip = info->parity_b_datanode_ip();
+        int parity_b_port = info->parity_b_datanode_port();
 
         std::string targetdir = "./storage/" + std::to_string(m_port) + "/";
         std::string path_a = targetdir + parity_key_a;
@@ -822,13 +859,6 @@ namespace ECProject
             response->set_execution_seconds(0.0);
             return grpc::Status::OK;
         }
-        if (access(path_b.c_str(), 0) == -1) {
-            std::cerr << "[Datanode" << m_port << "][StripeMergeParity] parity B not found: " << path_b << std::endl;
-            response->set_message(false);
-            response->set_execution_seconds(0.0);
-            return grpc::Status::OK;
-        }
-
         std::unique_ptr<char[]> buf_a(new char[block_size]);
         std::unique_ptr<char[]> buf_b(new char[block_size]);
         std::unique_ptr<char[]> buf_new(new char[block_size]);
@@ -837,16 +867,60 @@ namespace ECProject
         ifs_a.read(buf_a.get(), block_size);
         ifs_a.close();
 
-        std::ifstream ifs_b(path_b, std::ios::binary);
-        ifs_b.read(buf_b.get(), block_size);
-        ifs_b.close();
+        bool loaded_b = false;
+        if (access(path_b.c_str(), 0) != -1) {
+            std::ifstream ifs_b(path_b, std::ios::binary);
+            ifs_b.read(buf_b.get(), block_size);
+            ifs_b.close();
+            loaded_b = true;
+        } else if (!parity_b_ip.empty() && parity_b_port > 0) {
+            const std::string peer_addr =
+                parity_b_ip + ":" + std::to_string(parity_b_port);
+            std::shared_ptr<datanode_proto::datanodeService::Stub> stub;
+            {
+                std::lock_guard<std::mutex> lk(m_remote_read_stub_mutex);
+                auto it = m_remote_read_stubs.find(peer_addr);
+                if (it == m_remote_read_stubs.end()) {
+                    auto channel = grpc::CreateChannel(
+                        peer_addr, grpc::InsecureChannelCredentials());
+                    auto new_stub = datanode_proto::datanodeService::NewStub(channel);
+                    stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
+                        std::move(new_stub));
+                    m_remote_read_stubs.emplace(peer_addr, stub);
+                } else {
+                    stub = it->second;
+                }
+            }
 
-        // P'_j = P^A_j XOR gf_mul(coeff, P^B_j)
-        for (int i = 0; i < block_size; i++) {
-            unsigned char a_byte = static_cast<unsigned char>(buf_a[i]);
-            unsigned char b_byte = static_cast<unsigned char>(buf_b[i]);
-            buf_new[i] = static_cast<char>(a_byte ^ ECProject::gf_mul(coeff, b_byte));
+            grpc::ClientContext read_ctx;
+            datanode_proto::ReadBlockBytesRequest read_req;
+            datanode_proto::ReadBlockBytesReply read_rep;
+            read_req.set_block_key(parity_key_b);
+            read_req.set_block_size(block_size);
+            grpc::Status read_st = stub->readBlockBytes(&read_ctx, read_req, &read_rep);
+            if (read_st.ok() && read_rep.ok() &&
+                read_rep.data().size() == static_cast<size_t>(block_size)) {
+                memcpy(buf_b.get(), read_rep.data().data(), static_cast<size_t>(block_size));
+                loaded_b = true;
+            }
         }
+
+        if (!loaded_b) {
+            std::cerr << "[Datanode" << m_port
+                      << "][StripeMergeParity] parity B not found locally or remotely: "
+                      << parity_key_b << std::endl;
+            response->set_message(false);
+            response->set_execution_seconds(0.0);
+            return grpc::Status::OK;
+        }
+
+        // P'_j = P^A_j XOR (coeff * P^B_j) in GF(2^8), using optimized encoder path.
+        ECProject::merge_stripe_parity_gf_xor(
+            block_size,
+            reinterpret_cast<unsigned char *>(buf_a.get()),
+            reinterpret_cast<unsigned char *>(buf_b.get()),
+            coeff,
+            reinterpret_cast<unsigned char *>(buf_new.get()));
 
         if (access(targetdir.c_str(), 0) == -1) {
             createDirectories(targetdir);

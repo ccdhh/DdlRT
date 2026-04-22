@@ -34,6 +34,52 @@ int ECProject::xor_avx(int vects, int len, void **array)
 #endif
 }
 
+void ECProject::merge_stripe_parity_gf_xor(int block_size,
+                                           const unsigned char *parity_a,
+                                           const unsigned char *parity_b,
+                                           unsigned char coeff,
+                                           unsigned char *out)
+{
+    if (block_size <= 0 || parity_a == nullptr || parity_b == nullptr || out == nullptr) {
+        return;
+    }
+
+    if (coeff == 0) {
+        memcpy(out, parity_a, static_cast<size_t>(block_size));
+        return;
+    }
+
+    if (coeff == 1) {
+        void *xor_ptrs[3];
+        xor_ptrs[0] = const_cast<unsigned char *>(parity_a);
+        xor_ptrs[1] = const_cast<unsigned char *>(parity_b);
+        xor_ptrs[2] = out;
+        xor_avx(3, block_size, xor_ptrs);
+        return;
+    }
+
+#ifdef ENABLE_AVX2_ASM
+    std::vector<unsigned char> mul_buf(static_cast<size_t>(block_size), 0);
+    unsigned char gf_tbl[32];
+    gf_vect_mul_init(coeff, gf_tbl);
+
+    unsigned char *srcs[1];
+    srcs[0] = const_cast<unsigned char *>(parity_b);
+    gf_vect_dot_prod_avx2(block_size, 1, gf_tbl, srcs, mul_buf.data());
+
+    void *xor_ptrs[3];
+    xor_ptrs[0] = const_cast<unsigned char *>(parity_a);
+    xor_ptrs[1] = mul_buf.data();
+    xor_ptrs[2] = out;
+    xor_avx(3, block_size, xor_ptrs);
+#else
+    for (int i = 0; i < block_size; i++) {
+        out[i] = static_cast<unsigned char>(
+            parity_a[i] ^ ECProject::gf_mul(coeff, parity_b[i]));
+    }
+#endif
+}
+
 unsigned char
 ECProject::gf_inv(unsigned char a)
 {

@@ -15,6 +15,10 @@
 #include <asio.hpp>
 #include <atomic>
 #include <vector>
+#ifdef __linux__
+#include <pthread.h>
+#include <sched.h>
+#endif
 template <typename T> inline T ceil(T const &A, T const &B) {
   return T((A + B - 1) / B);
 };
@@ -4712,13 +4716,48 @@ grpc::Status CoordinatorImpl::mergeStripes(
   std::mutex start_mtx;
   std::condition_variable start_cv;
   bool start_signal = false;
+  const int migration_core = 0;
+  const int parity_core = 1;
+  auto bind_current_thread_to_core = [](int core_id, const char *tag) {
+#ifdef __linux__
+    const unsigned int hw = std::max(1u, std::thread::hardware_concurrency());
+    const int normalized = core_id % static_cast<int>(hw);
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(normalized, &cpuset);
+    const int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+    if (rc != 0) {
+      std::cerr << "[Coordinator][Merge] bind core failed for " << tag
+                << " core=" << normalized << " rc=" << rc << std::endl;
+    }
+#else
+    (void)core_id;
+    (void)tag;
+#endif
+  };
 
   // Thread 1: parity block update.
   std::thread parity_thread([&]() {
+    bind_current_thread_to_core(parity_core, "parity-thread");
     {
       std::unique_lock<std::mutex> lk(start_mtx);
       start_cv.wait(lk, [&]() { return start_signal; });
     }
+    auto get_cached_datanode_stub =
+        [this](const std::string &addr)
+            -> std::shared_ptr<datanode_proto::datanodeService::Stub> {
+      std::lock_guard<std::mutex> lk(m_datanode_stub_mutex);
+      auto it = m_datanode_stubs.find(addr);
+      if (it != m_datanode_stubs.end()) {
+        return it->second;
+      }
+      auto channel = grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+      auto new_stub = datanode_proto::datanodeService::NewStub(channel);
+      auto shared_stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
+          std::move(new_stub));
+      m_datanode_stubs.emplace(addr, shared_stub);
+      return shared_stub;
+    };
     try {
       if (merge_method == "ERS") {
         // ERS: parity = linear-combination of the two parity blocks.
@@ -4730,6 +4769,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
           // parity B before merging).
           std::string datanode_ip;
           int datanode_port;
+          std::string target_proxy_addr;
           // Source datanode where parity B currently lives.
           std::string parity_b_src_ip;
           int parity_b_src_port;
@@ -4904,9 +4944,14 @@ grpc::Status CoordinatorImpl::mergeStripes(
 
           Node &parity_a_node = m_node_table[pa->map2node];
           Node &parity_b_node = m_node_table[pb->map2node];
+          const int target_cluster = pa->map2cluster;
+          std::string target_proxy_addr =
+              m_cluster_table[target_cluster].proxy_ip + ":" +
+              std::to_string(m_cluster_table[target_cluster].proxy_port);
           parity_tasks.push_back({pa->block_key, pb->block_key,
                                    new_parity_keys[j],
                                    parity_a_node.node_ip, parity_a_node.node_port,
+                                   target_proxy_addr,
                                    parity_b_node.node_ip, parity_b_node.node_port,
                                    coeff});
         }
@@ -4915,70 +4960,59 @@ grpc::Status CoordinatorImpl::mergeStripes(
         // its own buffers on round>=2).
         auto parity_ers_t0 = std::chrono::high_resolution_clock::now();
 
-        if (merge_round == 1) {
-          // Round 1 ERS: parity A and parity B are already guaranteed to be on
-          // the same datanode, so we can directly do local parity merge.
-          std::vector<std::thread> ers_workers;
-          ers_workers.reserve(parity_tasks.size());
+        // ERS parity columns are independent. For round>=2, relocate parity-B
+        // first in a serialized pass to avoid datanode acceptor mutex contention
+        // on mixed GET/SET TCP streams (observed as round-2 hangs).
+        if (merge_round >= 2) {
           for (size_t ti = 0; ti < parity_tasks.size(); ++ti) {
-            ers_workers.emplace_back([&, ti]() {
-              const ParityMergeTask &task = parity_tasks[ti];
-              auto channel = grpc::CreateChannel(
-                  task.datanode_ip + ":" + std::to_string(task.datanode_port),
-                  grpc::InsecureChannelCredentials());
-              auto stub = datanode_proto::datanodeService::NewStub(channel);
+            const ParityMergeTask &task = parity_tasks[ti];
+            auto proxy_it = m_proxy_ptrs.find(task.target_proxy_addr);
+            if (proxy_it == m_proxy_ptrs.end()) {
+              std::cerr << "[Coordinator][Merge][ERS][round" << merge_round
+                        << "] target proxy not found: " << task.target_proxy_addr
+                        << std::endl;
+              parity_ok.store(false);
+              break;
+            }
 
-              grpc::ClientContext ctx;
-              datanode_proto::StripeMergeParityInfo info;
-              datanode_proto::RequestResult result;
-              info.set_parity_key_a(task.parity_key_a);
-              info.set_parity_key_b(task.parity_key_b);
-              info.set_new_parity_key(task.new_parity_key);
-              info.set_block_size(block_size);
-              info.set_gf_coeff(static_cast<int>(task.gf_coeff));
-
-              grpc::Status merge_st =
-                  stub->handleStripeMergeParity(&ctx, info, &result);
-              if (!merge_st.ok() || !result.message()) {
-                std::cerr
-                    << "[Coordinator][Merge][ERS][round1] parity merge failed on "
-                    << task.datanode_ip << ":" << task.datanode_port
-                    << " for " << task.new_parity_key << std::endl;
-                parity_ok.store(false);
-              }
-            });
+            grpc::ClientContext reloc_ctx;
+            reloc_ctx.set_deadline(std::chrono::system_clock::now() +
+                                   std::chrono::seconds(120));
+            proxy_proto::blockRelocPlan reloc_plan;
+            proxy_proto::blockRelocReply reloc_reply;
+            reloc_plan.set_block_size(block_size);
+            reloc_plan.add_blocktomove(task.parity_key_b);
+            reloc_plan.add_fromdatanodeip(task.parity_b_src_ip);
+            reloc_plan.add_fromdatanodeport(task.parity_b_src_port);
+            reloc_plan.add_todatanodeip(task.datanode_ip);
+            reloc_plan.add_todatanodeport(task.datanode_port);
+            reloc_plan.set_keep_source(true);
+            grpc::Status reloc_st =
+                proxy_it->second->relocateBlock(&reloc_ctx, reloc_plan, &reloc_reply);
+            if (!reloc_st.ok() || reloc_reply.result() != "ok") {
+              std::cerr << "[Coordinator][Merge][ERS][round" << merge_round
+                        << "] relocate parity_b failed via " << task.target_proxy_addr
+                        << " key=" << task.parity_key_b
+                        << " err=" << reloc_st.error_message()
+                        << " result=" << reloc_reply.result() << std::endl;
+              parity_ok.store(false);
+              break;
+            }
           }
-          for (auto &w : ers_workers)
-            w.join();
-        } else {
-          // Round >=2 ERS: read parity B to the parity-A node, then local merge.
+        }
+
+        if (parity_ok.load()) {
           std::vector<std::thread> ers_workers;
           ers_workers.reserve(parity_tasks.size());
-          for (size_t ti = 0; ti < parity_tasks.size(); ++ti) {
-            ers_workers.emplace_back([&, ti]() {
-              const ParityMergeTask &task = parity_tasks[ti];
-              std::vector<unsigned char> parity_b_buf_local;
-              parity_b_buf_local.reserve(bs);
-              if (!fetch_from_datanode(task.parity_key_b,
-                                        task.parity_b_src_ip,
-                                        task.parity_b_src_port,
-                                        parity_b_buf_local)) {
-                parity_ok.store(false);
-                return;
-              }
-              if (!write_to_datanode(task.parity_key_b,
-                                     task.datanode_ip, task.datanode_port,
-                                     parity_b_buf_local, true)) {
-                parity_ok.store(false);
-                return;
-              }
-
-              auto channel = grpc::CreateChannel(
-                  task.datanode_ip + ":" + std::to_string(task.datanode_port),
-                  grpc::InsecureChannelCredentials());
-              auto stub = datanode_proto::datanodeService::NewStub(channel);
+          for (const auto &task : parity_tasks) {
+            ers_workers.emplace_back([&, task]() {
+              const std::string target_addr =
+                  task.datanode_ip + ":" + std::to_string(task.datanode_port);
+              auto stub = get_cached_datanode_stub(target_addr);
 
               grpc::ClientContext ctx;
+              ctx.set_deadline(std::chrono::system_clock::now() +
+                               std::chrono::seconds(120));
               datanode_proto::StripeMergeParityInfo info;
               datanode_proto::RequestResult result;
               info.set_parity_key_a(task.parity_key_a);
@@ -4986,14 +5020,15 @@ grpc::Status CoordinatorImpl::mergeStripes(
               info.set_new_parity_key(task.new_parity_key);
               info.set_block_size(block_size);
               info.set_gf_coeff(static_cast<int>(task.gf_coeff));
+              info.set_parity_b_datanode_ip(task.parity_b_src_ip);
+              info.set_parity_b_datanode_port(task.parity_b_src_port);
 
-              grpc::Status merge_st =
-                  stub->handleStripeMergeParity(&ctx, info, &result);
+              grpc::Status merge_st = stub->handleStripeMergeParity(&ctx, info, &result);
               if (!merge_st.ok() || !result.message()) {
-                std::cerr
-                    << "[Coordinator][Merge][ERS][round>=2] parity merge failed on "
-                    << task.datanode_ip << ":" << task.datanode_port
-                    << " for " << task.new_parity_key << std::endl;
+                std::cerr << "[Coordinator][Merge][ERS][round" << merge_round
+                          << "] parity merge failed on " << task.datanode_ip << ":"
+                          << task.datanode_port << " for " << task.new_parity_key
+                          << " err=" << merge_st.error_message() << std::endl;
                 parity_ok.store(false);
               }
             });
@@ -5248,6 +5283,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
 
   // Thread 2: data block migration (one relocateBlock RPC per block, in parallel)
   std::thread migration_thread([&]() {
+    bind_current_thread_to_core(migration_core, "migration-thread");
     {
       std::unique_lock<std::mutex> lk(start_mtx);
       start_cv.wait(lk, [&]() { return start_signal; });

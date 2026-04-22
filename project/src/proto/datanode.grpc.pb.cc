@@ -31,6 +31,7 @@ static const char* datanodeService_method_names[] = {
   "/datanode_proto.datanodeService/handleRecoveryBreakdown",
   "/datanode_proto.datanodeService/handleGet",
   "/datanode_proto.datanodeService/handleGetBreakdown",
+  "/datanode_proto.datanodeService/readBlockBytes",
   "/datanode_proto.datanodeService/handleStripeMergeParity",
   "/datanode_proto.datanodeService/handleDelete",
 };
@@ -51,8 +52,9 @@ datanodeService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& ch
   , rpcmethod_handleRecoveryBreakdown_(datanodeService_method_names[6], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_handleGet_(datanodeService_method_names[7], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_handleGetBreakdown_(datanodeService_method_names[8], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_handleStripeMergeParity_(datanodeService_method_names[9], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_handleDelete_(datanodeService_method_names[10], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_readBlockBytes_(datanodeService_method_names[9], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_handleStripeMergeParity_(datanodeService_method_names[10], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_handleDelete_(datanodeService_method_names[11], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status datanodeService::Stub::checkalive(::grpc::ClientContext* context, const ::datanode_proto::CheckaliveCMD& request, ::datanode_proto::RequestResult* response) {
@@ -262,6 +264,29 @@ void datanodeService::Stub::async::handleGetBreakdown(::grpc::ClientContext* con
   return result;
 }
 
+::grpc::Status datanodeService::Stub::readBlockBytes(::grpc::ClientContext* context, const ::datanode_proto::ReadBlockBytesRequest& request, ::datanode_proto::ReadBlockBytesReply* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::datanode_proto::ReadBlockBytesRequest, ::datanode_proto::ReadBlockBytesReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_readBlockBytes_, context, request, response);
+}
+
+void datanodeService::Stub::async::readBlockBytes(::grpc::ClientContext* context, const ::datanode_proto::ReadBlockBytesRequest* request, ::datanode_proto::ReadBlockBytesReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::datanode_proto::ReadBlockBytesRequest, ::datanode_proto::ReadBlockBytesReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_readBlockBytes_, context, request, response, std::move(f));
+}
+
+void datanodeService::Stub::async::readBlockBytes(::grpc::ClientContext* context, const ::datanode_proto::ReadBlockBytesRequest* request, ::datanode_proto::ReadBlockBytesReply* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_readBlockBytes_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::datanode_proto::ReadBlockBytesReply>* datanodeService::Stub::PrepareAsyncreadBlockBytesRaw(::grpc::ClientContext* context, const ::datanode_proto::ReadBlockBytesRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::datanode_proto::ReadBlockBytesReply, ::datanode_proto::ReadBlockBytesRequest, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_readBlockBytes_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::datanode_proto::ReadBlockBytesReply>* datanodeService::Stub::AsyncreadBlockBytesRaw(::grpc::ClientContext* context, const ::datanode_proto::ReadBlockBytesRequest& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncreadBlockBytesRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
 ::grpc::Status datanodeService::Stub::handleStripeMergeParity(::grpc::ClientContext* context, const ::datanode_proto::StripeMergeParityInfo& request, ::datanode_proto::RequestResult* response) {
   return ::grpc::internal::BlockingUnaryCall< ::datanode_proto::StripeMergeParityInfo, ::datanode_proto::RequestResult, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_handleStripeMergeParity_, context, request, response);
 }
@@ -402,6 +427,16 @@ datanodeService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       datanodeService_method_names[9],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< datanodeService::Service, ::datanode_proto::ReadBlockBytesRequest, ::datanode_proto::ReadBlockBytesReply, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](datanodeService::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::datanode_proto::ReadBlockBytesRequest* req,
+             ::datanode_proto::ReadBlockBytesReply* resp) {
+               return service->readBlockBytes(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      datanodeService_method_names[10],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< datanodeService::Service, ::datanode_proto::StripeMergeParityInfo, ::datanode_proto::RequestResult, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
           [](datanodeService::Service* service,
              ::grpc::ServerContext* ctx,
@@ -410,7 +445,7 @@ datanodeService::Service::Service() {
                return service->handleStripeMergeParity(ctx, req, resp);
              }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      datanodeService_method_names[10],
+      datanodeService_method_names[11],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< datanodeService::Service, ::datanode_proto::DelInfo, ::datanode_proto::RequestResult, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
           [](datanodeService::Service* service,
@@ -481,6 +516,13 @@ datanodeService::Service::~Service() {
 }
 
 ::grpc::Status datanodeService::Service::handleGetBreakdown(::grpc::ServerContext* context, const ::datanode_proto::GetInfo* request, ::datanode_proto::RequestResult* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status datanodeService::Service::readBlockBytes(::grpc::ServerContext* context, const ::datanode_proto::ReadBlockBytesRequest* request, ::datanode_proto::ReadBlockBytesReply* response) {
   (void) context;
   (void) request;
   (void) response;

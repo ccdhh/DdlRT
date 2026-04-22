@@ -5,6 +5,9 @@
 #include "toolbox.h"
 #include "lrc.h"
 #include <thread>
+#include <atomic>
+#include <algorithm>
+#include <cstdlib>
 #include <cassert>
 #include <string>
 #include <fstream>
@@ -2538,45 +2541,87 @@ namespace ECProject
   {
     int block_size = plan->block_size();
     int num_blocks = plan->blocktomove_size();
-    bool all_ok = true;
-
+    struct RelocTask {
+      std::string block_key;
+      std::string from_ip;
+      int from_port;
+      std::string to_ip;
+      int to_port;
+    };
+    std::vector<RelocTask> tasks;
+    tasks.reserve(static_cast<size_t>(std::max(0, num_blocks)));
     for (int i = 0; i < num_blocks; i++) {
-      std::string block_key = plan->blocktomove(i);
-      std::string from_ip = plan->fromdatanodeip(i);
-      int from_port = plan->fromdatanodeport(i);
-      std::string to_ip = plan->todatanodeip(i);
-      int to_port = plan->todatanodeport(i);
-
-      std::unique_ptr<char[]> buf(new char[block_size]);
-
-      bool get_ok = GetFromDatanode(block_key, buf.get(), block_size, from_ip.c_str(), from_port);
-      if (!get_ok) {
-        std::cerr << "[Proxy" << m_self_cluster_id << "][Relocate] failed to read " << block_key
-                  << " from " << from_ip << ":" << from_port << std::endl;
-        all_ok = false;
-        continue;
-      }
-
-      bool set_ok = SetToDatanode(block_key.c_str(), block_key.size(),
-                                  buf.get(), block_size,
-                                  to_ip.c_str(), to_port, 0);
-      if (!set_ok) {
-        std::cerr << "[Proxy" << m_self_cluster_id << "][Relocate] failed to write " << block_key
-                  << " to " << to_ip << ":" << to_port << std::endl;
-        all_ok = false;
-        continue;
-      }
-
-      if (!plan->keep_source()) {
-        DelInDatanode(block_key, from_ip + ":" + std::to_string(from_port));
-      }
-
-      std::cout << "[Proxy" << m_self_cluster_id << "][Relocate] moved " << block_key
-                << " from " << from_ip << ":" << from_port
-                << " to " << to_ip << ":" << to_port << std::endl;
+      tasks.push_back(RelocTask{
+          plan->blocktomove(i),
+          plan->fromdatanodeip(i),
+          plan->fromdatanodeport(i),
+          plan->todatanodeip(i),
+          plan->todatanodeport(i)});
     }
 
-    response->set_result(all_ok ? "ok" : "partial_failure");
+    int workers = std::min(
+        static_cast<int>(tasks.size()),
+        static_cast<int>(std::max(1u, std::thread::hardware_concurrency())));
+    if (const char *env_workers = std::getenv("PROXY_RELOCATE_CONCURRENCY");
+        env_workers && env_workers[0] != '\0') {
+      workers = std::max(1, std::atoi(env_workers));
+      workers = std::min(workers, std::max(1, static_cast<int>(tasks.size())));
+    }
+
+    std::atomic<bool> all_ok{true};
+    std::atomic<size_t> next_task{0};
+    std::vector<std::thread> pool;
+    pool.reserve(static_cast<size_t>(std::max(0, workers)));
+    for (int w = 0; w < workers; ++w) {
+      pool.emplace_back([this, &tasks, &next_task, &all_ok, block_size, plan]() {
+        while (true) {
+          size_t idx = next_task.fetch_add(1);
+          if (idx >= tasks.size()) {
+            break;
+          }
+          const RelocTask &task = tasks[idx];
+
+          std::unique_ptr<char[]> buf(new char[block_size]);
+          bool get_ok = GetFromDatanode(task.block_key, buf.get(), block_size,
+                                        task.from_ip.c_str(), task.from_port);
+          if (!get_ok) {
+            std::cerr << "[Proxy" << m_self_cluster_id
+                      << "][Relocate] failed to read " << task.block_key
+                      << " from " << task.from_ip << ":" << task.from_port
+                      << std::endl;
+            all_ok.store(false);
+            continue;
+          }
+
+          bool set_ok = SetToDatanode(task.block_key.c_str(), task.block_key.size(),
+                                      buf.get(), block_size,
+                                      task.to_ip.c_str(), task.to_port, 0);
+          if (!set_ok) {
+            std::cerr << "[Proxy" << m_self_cluster_id
+                      << "][Relocate] failed to write " << task.block_key
+                      << " to " << task.to_ip << ":" << task.to_port
+                      << std::endl;
+            all_ok.store(false);
+            continue;
+          }
+
+          if (!plan->keep_source()) {
+            DelInDatanode(task.block_key,
+                          task.from_ip + ":" + std::to_string(task.from_port));
+          }
+
+          std::cout << "[Proxy" << m_self_cluster_id << "][Relocate] moved "
+                    << task.block_key << " from " << task.from_ip << ":"
+                    << task.from_port << " to " << task.to_ip << ":"
+                    << task.to_port << std::endl;
+        }
+      });
+    }
+    for (auto &t : pool) {
+      t.join();
+    }
+
+    response->set_result(all_ok.load() ? "ok" : "partial_failure");
     return grpc::Status::OK;
   }
 
