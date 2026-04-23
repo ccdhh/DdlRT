@@ -856,9 +856,13 @@ namespace ECProject
                 std::lock_guard<std::mutex> lk(m_remote_read_stub_mutex);
                 auto it = m_remote_read_stubs.find(remote_addr);
                 if (it == m_remote_read_stubs.end()) {
-                    auto channel = grpc::CreateChannel(
+                    grpc::ChannelArguments args;
+                    args.SetMaxReceiveMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+                    args.SetMaxSendMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+                    auto channel = grpc::CreateCustomChannel(
                         remote_addr,
-                        grpc::InsecureChannelCredentials());
+                        grpc::InsecureChannelCredentials(),
+                        args);
                     auto new_stub = datanode_proto::datanodeService::NewStub(channel);
                     stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
                         std::move(new_stub));

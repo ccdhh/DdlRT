@@ -277,6 +277,8 @@ namespace ECProject
       grpc::EnableDefaultHealthCheckService(true);
       grpc::reflection::InitProtoReflectionServerBuilderPlugin();
       grpc::ServerBuilder builder;
+      builder.AddChannelArgument("grpc.max_receive_message_length", ECProject::GRPC_MAX_MESSAGE_BYTES);
+      builder.AddChannelArgument("grpc.max_send_message_length", ECProject::GRPC_MAX_MESSAGE_BYTES);
       // Listen on all interfaces (0.0.0.0) so clients from any host can connect
       std::string listen_address("0.0.0.0:");
       std::string::size_type colon = m_coordinator_ip_port.find_last_of(':');

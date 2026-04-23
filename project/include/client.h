@@ -23,7 +23,11 @@ namespace ECProject
                                                                                   m_clientPortForGet(ClientPort),
                                                                                   acceptor(io_context, asio::ip::tcp::endpoint(asio::ip::address::from_string(ClientIP.c_str()), m_clientPortForGet))
     {
-      auto channel = grpc::CreateChannel(m_coordinatorIpPort, grpc::InsecureChannelCredentials());
+      grpc::ChannelArguments args;
+      args.SetMaxReceiveMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+      args.SetMaxSendMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+      auto channel = grpc::CreateCustomChannel(
+          m_coordinatorIpPort, grpc::InsecureChannelCredentials(), args);
       m_coordinator_ptr = coordinator_proto::coordinatorService::NewStub(channel);
       m_clientID = ClientIP + ":" + std::to_string(ClientPort);
     }
@@ -33,7 +37,11 @@ namespace ECProject
                                                                                                            m_clientPortForGet(ClientPort),
                                                                                                            acceptor(io_context, asio::ip::tcp::endpoint(asio::ip::address::from_string(ClientIP.c_str()), m_clientPortForGet))
     {
-      auto channel = grpc::CreateChannel(m_coordinatorIpPort, grpc::InsecureChannelCredentials());
+      grpc::ChannelArguments args;
+      args.SetMaxReceiveMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+      args.SetMaxSendMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+      auto channel = grpc::CreateCustomChannel(
+          m_coordinatorIpPort, grpc::InsecureChannelCredentials(), args);
       m_coordinator_ptr = coordinator_proto::coordinatorService::NewStub(channel);
       m_clientID = ClientIP + ":" + std::to_string(ClientPort);
       m_sys_config = ECProject::Config::getInstance(config_path);

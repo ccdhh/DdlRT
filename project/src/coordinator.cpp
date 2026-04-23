@@ -3686,8 +3686,11 @@ bool CoordinatorImpl::init_proxyinfo() {
        cur++) {
     std::string proxy_ip_and_port =
         cur->second.proxy_ip + ":" + std::to_string(cur->second.proxy_port);
-    auto _stub = proxy_proto::proxyService::NewStub(grpc::CreateChannel(
-        proxy_ip_and_port, grpc::InsecureChannelCredentials()));
+    grpc::ChannelArguments args;
+    args.SetMaxReceiveMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+    args.SetMaxSendMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+    auto _stub = proxy_proto::proxyService::NewStub(grpc::CreateCustomChannel(
+        proxy_ip_and_port, grpc::InsecureChannelCredentials(), args));
     proxy_proto::CheckaliveCMD Cmd;
     proxy_proto::RequestResult result;
     grpc::ClientContext clientContext;
@@ -5052,9 +5055,12 @@ grpc::Status CoordinatorImpl::mergeStripesClusterRT(
     sub_threads.reserve(parity_tasks.size());
     for (auto task : parity_tasks) {
       sub_threads.emplace_back([task, block_size, &parity_ok, &parity_ns, &atomic_max_ns]() {
-        auto channel = grpc::CreateChannel(
+        grpc::ChannelArguments args;
+        args.SetMaxReceiveMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+        args.SetMaxSendMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+        auto channel = grpc::CreateCustomChannel(
             task.datanode_ip + ":" + std::to_string(task.datanode_port),
-            grpc::InsecureChannelCredentials());
+            grpc::InsecureChannelCredentials(), args);
         auto stub = datanode_proto::datanodeService::NewStub(channel);
 
         grpc::ClientContext ctx;
@@ -5731,8 +5737,11 @@ grpc::Status CoordinatorImpl::mergeStripes(
           std::lock_guard<std::mutex> lk(m_datanode_stub_mutex);
           auto it = m_datanode_stubs.find(target);
           if (it == m_datanode_stubs.end()) {
+            grpc::ChannelArguments args;
+            args.SetMaxReceiveMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
+            args.SetMaxSendMessageSize(ECProject::GRPC_MAX_MESSAGE_BYTES);
             auto channel =
-                grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
+                grpc::CreateCustomChannel(target, grpc::InsecureChannelCredentials(), args);
             auto new_stub = datanode_proto::datanodeService::NewStub(channel);
             stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
                 std::move(new_stub));

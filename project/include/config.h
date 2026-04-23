@@ -7,6 +7,9 @@ namespace ECProject
 {
   const int DATANODE_PORT_SHIFT = 50;
   const int PROXY_PORT_SHIFT = 1;
+  // gRPC payload upper bound for merge-related RPC messages (bytes).
+  // Raise from default 4MB to 8MB.
+  const int GRPC_MAX_MESSAGE_BYTES = 8 * 1024 * 1024;
   // Merge / relocate / parity pull: gRPC deadline and Linux TCP SO_RCVTIMEO/SO_SNDTIMEO (seconds).
   const int MERGE_GRPC_TCP_TIMEOUT_SEC = 30;
   // ClusterRT merge: max concurrent single-hop relocateBlock calls per wave (coordinator).

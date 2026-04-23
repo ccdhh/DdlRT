@@ -163,6 +163,8 @@ namespace ECProject
       grpc::reflection::InitProtoReflectionServerBuilderPlugin();
       grpc::ServerBuilder builder;
       std::cout << "proxy_ip_port:" << proxy_ip_port << std::endl;
+      builder.AddChannelArgument("grpc.max_receive_message_length", ECProject::GRPC_MAX_MESSAGE_BYTES);
+      builder.AddChannelArgument("grpc.max_send_message_length", ECProject::GRPC_MAX_MESSAGE_BYTES);
       builder.AddListeningPort(proxy_ip_port, grpc::InsecureServerCredentials());
       builder.RegisterService(&m_proxyImpl_ptr);
       std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
