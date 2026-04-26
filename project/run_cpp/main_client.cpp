@@ -104,10 +104,6 @@ int main(int argc, char **argv)
             client.start_merge(merge_round);
             ++merge_round;
         }
-        else if (choose == 'N' || choose == 'n')
-        {
-            break;
-        }
         else
         {
             std::cout << "Invalid input, please enter Y or N." << std::endl;

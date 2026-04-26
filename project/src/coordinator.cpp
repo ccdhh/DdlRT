@@ -4960,6 +4960,10 @@ grpc::Status CoordinatorImpl::mergeStripes(
         // its own buffers on round>=2).
         auto parity_ers_t0 = std::chrono::high_resolution_clock::now();
 
+        // Keep ERS control-plane RPCs bounded to reduce tail blocking time.
+        constexpr int kErsRelocateDeadlineSec = 45;
+        constexpr int kErsParityMergeDeadlineSec = 45;
+
         // ERS parity columns are independent. For round>=2, relocate parity-B
         // first in a serialized pass to avoid datanode acceptor mutex contention
         // on mixed GET/SET TCP streams (observed as round-2 hangs).
@@ -4977,7 +4981,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
 
             grpc::ClientContext reloc_ctx;
             reloc_ctx.set_deadline(std::chrono::system_clock::now() +
-                                   std::chrono::seconds(120));
+                                   std::chrono::seconds(kErsRelocateDeadlineSec));
             proxy_proto::blockRelocPlan reloc_plan;
             proxy_proto::blockRelocReply reloc_reply;
             reloc_plan.set_block_size(block_size);
@@ -5012,7 +5016,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
 
               grpc::ClientContext ctx;
               ctx.set_deadline(std::chrono::system_clock::now() +
-                               std::chrono::seconds(120));
+                               std::chrono::seconds(kErsParityMergeDeadlineSec));
               datanode_proto::StripeMergeParityInfo info;
               datanode_proto::RequestResult result;
               info.set_parity_key_a(task.parity_key_a);

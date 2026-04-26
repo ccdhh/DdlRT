@@ -893,6 +893,9 @@ namespace ECProject
             }
 
             grpc::ClientContext read_ctx;
+            // Bound remote parity fetch to avoid long tail stalls in ERS merge.
+            read_ctx.set_deadline(std::chrono::system_clock::now() +
+                                  std::chrono::seconds(20));
             datanode_proto::ReadBlockBytesRequest read_req;
             datanode_proto::ReadBlockBytesReply read_rep;
             read_req.set_block_key(parity_key_b);
