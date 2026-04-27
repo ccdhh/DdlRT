@@ -1,9 +1,4 @@
 #!/bin/bash
-# 供 limit_*.sh source：为 tc/wondershaper 预加载队列规则所需内核模块。
-# 若仍报 "qdisc kind is unknown"，在节点上安装额外模块包，例如:
-#   apt-get install -y iproute2 linux-modules-extra-$(uname -r)
-# 然后 modprobe 或重启。
-
 shape_prep_env() {
   export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/bin:/bin:${PATH:-}"
 }
@@ -21,7 +16,7 @@ shape_prep_load_modules() {
   modprobe act_skbedit 2>/dev/null || true
 }
 
-# 解析 tc 路径；失败返回 1（调用方应退出）
+# resolve tc path; return 1 if failed (caller should exit)
 shape_prep_tc_resolve() {
   shape_prep_env
   TC_BIN="$(command -v tc || true)"
@@ -33,7 +28,7 @@ shape_prep_tc_resolve() {
   [ -n "$TC_BIN" ]
 }
 
-# 多队列网卡根队列常为 mq；需多次删除才能清掉 htb/mq/ingress，避免 wondershaper 报 Exclusivity / File exists
+# multi-queue card root queue is usually mq; need to delete multiple times to clear htb/mq/ingress, avoid wondershaper reporting Exclusivity / File exists
 shape_prep_clear_iface_qdisc() {
   local dev="$1"
   local i

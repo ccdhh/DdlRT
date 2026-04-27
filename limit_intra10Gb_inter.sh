@@ -1,14 +1,14 @@
 #!/bin/bash
-# 机架内固定 10Gb/s，机架间带宽可配（wondershaper，单位 Kbps；与现有 limit_1Gb.sh 一致：1Gb/s = 1048576 Kbps）
+# intra 10Gb/s + specified inter-rack bandwidth (Gb/s) (wondershaper, unit Kbps; same as limit_1Gb.sh: 1Gb/s = 1048576 Kbps)
 #
-# 用法: bash limit_intra10Gb_inter.sh <机架间_Gb/s>   或  ./limit_intra10Gb_inter.sh …
-# （勿依赖 `sh`：若 sh 为 bash 的 POSIX 模式，不支持 < <(...) 类写法；本脚本已改为兼容 sh。）
-#   支持: 0.5 | 1 | 2 | 5 | 10
+# usage: bash limit_intra10Gb_inter.sh <inter-rack_Gb/s>    or  ./limit_intra10Gb_inter.sh …
+# (do not depend on `sh`: if sh is in POSIX mode, it does not support < <(...) style; this script has been modified to be compatible with sh.)
+# support: 0.5 | 1 | 2 | 5 | 10
 #
-# 合并前再执行；放置阶段勿执行。合并后: sh unlimit_all_proxy.sh
+# execute before merge; do not execute during placement. after merge: sh unlimit_all_proxy.sh
 #
-# 若机架内/间与 f0/f1 对应相反，请改 try_pair 中的 apply_intra/apply_inter 分配。
-# 若仍 exit 2：无可用 enp*s0f*、或 f1 上无 10.x、或链路无载波；请检查接线/ip addr；bond 等非 enp* 命名需另配。
+# if intra/inter with f0/f1 is opposite, please change apply_intra/apply_inter in try_pair.
+# if still exit 2: no usable enp*s0f* or f1 without 10.x or no carrier; please check the cable/ip addr; bond etc. non-enp* naming needs to be configured separately.
 
 INTER_GB="${1:-}"
 
@@ -37,22 +37,18 @@ fi
 
 case "$INTER_GB" in
   0.5) INTER_RACK_Kbps=524288 ;;      # 0.5 Gb/s
-  1)   INTER_RACK_Kbps=1048576 ;;     # 1 Gb/s (与机架内 10:1)
+  1)   INTER_RACK_Kbps=1048576 ;;     # 1 Gb/s (intra-rack 10:1)
   2)   INTER_RACK_Kbps=2097152 ;;     # 2 Gb/s
   5)   INTER_RACK_Kbps=5242880 ;;     # 5 Gb/s
-  10)  INTER_RACK_Kbps=10485760 ;;    # 10 Gb/s（与机架内同速）
+  10)  INTER_RACK_Kbps=10485760 ;;    # 10 Gb/s（intra-rack same speed）
   *)
     echo "Usage: $0 <0.5|1|2|5|10>   (inter-rack Gb/s; intra-rack fixed at 10 Gb/s)" >&2
     exit 1
     ;;
 esac
 
-INTRA_RACK_Kbps=10485760   # 10 Gb/s 机架内（固定）
+INTRA_RACK_Kbps=10485760   # 10 Gb/s intra-rack (fixed)
 
-# magnific0 / Debian 包装均使用 -a -d -u；勿再用位置参数
-# 约定: *s0f0 = 机架内, *s0f1 = 机架间（与 enp6 文档一致）。若相反请改本脚本或交换端口接线/路由。
-# LIMIT_AUTO_IFUP=1（默认）：先对存在的口执行 ip link set up。
-# LIMIT_FALLBACK_10NET=1（默认）：无双口可用时，对带 10.x 地址的 enp*f1 仅做机架间限速。
 
 iface_can_shape() {
   local dev="$1"
@@ -94,7 +90,7 @@ apply_inter() {
   echo "$dev: $INTER_RACK_Kbps Kbps (inter-rack ${INTER_GB} Gb/s)"
 }
 
-# 对一对 (intra_dev, inter_dev) 在可用口上应用；任一口成功则返回 0
+# apply a pair (intra_dev, inter_dev) on available interfaces; return 0 if either succeeds
 try_pair() {
   local intra_dev="$1" inter_dev="$2"
   local ok=0
@@ -110,7 +106,7 @@ try_pair() {
   [ "$ok" -eq 1 ]
 }
 
-# 1) 常见固定名  2) 自动探测 enp*s0f0 / 同组 f1（覆盖混用 enp4/enp6 或 PCI 槽位不同）
+# 1) common fixed names  2) automatically detect enp*s0f0 / same group f1 (cover mixed use of enp4/enp6 or different PCI slots)
 try_all_pairs() {
   local intra_dev inter_dev
   for intra_dev in enp6s0f0 enp4s0f0; do
@@ -142,7 +138,7 @@ EOF
   return 1
 }
 
-# 无双口 f0/f1 同时可用时：选已配置 10.x 的 enp*f1 只做机架间限速（与多数节点仅 enp4s0f1 UP 一致）
+# when both f0/f1 are available: select enp*f1 with configured 10.x for inter-rack only (consistent with most nodes with only enp4s0f1 UP)
 try_fallback_10net_inter() {
   local d f0
   [ "${LIMIT_FALLBACK_10NET:-1}" = "1" ] || return 1

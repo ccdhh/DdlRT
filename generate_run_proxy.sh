@@ -1,21 +1,21 @@
 #!/bin/bash
 
-# 定义源文件路径
+# define the source file path
 SOURCE_FILE="/users/qiliang/UniLRC/small_tools/generator_sh.py"
 
-# 定义 hosts 文件路径
+# define the hosts file path
 HOSTS_FILE="hosts"
 
-# 检查 hosts 文件是否存在
+# check if the hosts file exists
 if [ ! -f "$HOSTS_FILE" ]; then
   echo "Error: hosts file not found!"
   exit 1
 fi
 
-# 读取 hosts 文件中的主机列表
+# read the host list from the hosts file
 HOSTS=$(cat "$HOSTS_FILE")
 
-# 使用 scp 复制文件到所有主机
+# use scp to copy the file to all hosts
 echo "Copying $SOURCE_FILE to all hosts..."
 for HOST in $HOSTS; do
   echo "Copying to $HOST..."
@@ -28,7 +28,7 @@ for HOST in $HOSTS; do
   fi
 done
 
-# 使用 pdsh 在所有主机上运行 Python 脚本
+# use pdsh to run the Python script on all hosts
 REMOTE_COMMAND="cd /users/qiliang/UniLRC/small_tools/ && python generator_sh.py"
 PARALLEL=50
 USER="root"
@@ -36,7 +36,7 @@ USER="root"
 echo "Running generator_sh.py on all hosts..."
 pdsh -R ssh -w ^$HOSTS_FILE -l $USER -f $PARALLEL "$REMOTE_COMMAND"
 
-# 检查脚本是否成功运行
+# check if the script is successfully run
 if [ $? -eq 0 ]; then
   echo "Successfully ran generator_sh.py on all hosts!"
 else

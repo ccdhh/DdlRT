@@ -5,31 +5,31 @@ sudo chmod 777 -R UniLRC
 cd UniLRC
 
 
-# 定义源文件夹路径
+# define the source directory path
 SOURCE_DIR="/users/qiliang/UniLRC"
 
-# 定义 hosts 文件路径
+# define the hosts file path
 HOSTS_FILE="hosts"
 
-# 定义远程目标文件夹路径
+# define the remote target directory path
 REMOTE_DIR="/users/qiliang/UniLRC"
 
-# 检查 hosts 文件是否存在
+# check if the hosts file exists
 if [[ ! -f "$HOSTS_FILE" ]]; then
     echo "Error: hosts file not found!"
     exit 1
 fi
 
-# 遍历 hosts 文件中的每个 IP 地址
+# iterate over each IP address in the hosts file
 while read -r ip; do
 
     echo "Copying to host: $ip..."
 
-    # 使用 rsync 复制文件夹
+    # use rsync to copy the directory
     sudo rsync -avz  --exclude='project/cmake/build/CMakeFiles' --exclude='project/cmake/build/run_client' --exclude='project/cmake/build/main_test' --exclude='project/cmake/build/main_client' --exclude='storage/*' -e ssh "$SOURCE_DIR/" "$ip:$REMOTE_DIR/"
     #rsync -avz -e ssh "$SOURCE_DIR/" "$ip:$REMOTE_DIR/"
 
-    # 检查 rsync 是否成功
+    # check if rsync is successful
     if [ $? -eq 0 ]; then
         echo "Successfully copied to $ip!"
     else

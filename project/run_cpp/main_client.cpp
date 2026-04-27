@@ -71,8 +71,8 @@ int main(int argc, char **argv)
 
 
     
-    int stripe_num = 1000; // 条带数量
-    size_t total_write_size = static_cast<size_t>(stripe_num * block_size * n); // MB，用于计算 throughput
+    int stripe_num = 1000; // stripe number
+    size_t total_write_size = static_cast<size_t>(stripe_num * block_size * n); // MB
     std::cout << "Starting set stripe operation" << std::endl;
     std::chrono::high_resolution_clock::time_point set_start = std::chrono::high_resolution_clock::now();
     for(int i = 0; i < stripe_num; i++){
@@ -84,9 +84,9 @@ int main(int argc, char **argv)
     std::chrono::duration<double> set_time = std::chrono::duration_cast<std::chrono::duration<double>>(set_end - set_start);
     std::cout << "write throughput: " << (static_cast<double> (total_write_size) / set_time.count() / 1024) << "MB/s" << std::endl;
 
-    std::cout << "\n[Merge bandwidth] 若需仅在合并阶段限速：先勿在放置阶段执行 limit 脚本。\n"
-            << "  在合并前于另一终端执行: sh limit_all_intra10Gb_inter1Gb.sh\n"
-            << "  合并完成后再执行: sh unlimit_all_proxy.sh\n\n";
+    std::cout << "\n[Merge bandwidth] If you need to limit bandwidth only during merge phase: do not execute limit script during placement phase.\n"
+            << "  Execute in another terminal before merge: sh limit_bandwidth.sh\n"
+            << "  Execute after merge: sh unlimit_all.sh\n\n";
     int merge_num=0;
     while (true)
     {
@@ -99,7 +99,6 @@ int main(int argc, char **argv)
             client.start_merge();
             std::chrono::high_resolution_clock::time_point merge_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> merge_time = std::chrono::duration_cast<std::chrono::duration<double>>(merge_end - merge_start);
-            std::cout << "[merge time] total spend time: " << merge_time.count() << " seconds" << std::endl;
             merge_num++;
         }
         else if (choose == 'N' || choose == 'n')
