@@ -1,6 +1,6 @@
 #!/bin/bash
-# 在所有 proxy 节点上设置：机架内 10Gb/s，机架间 1Gb/s
-# 建议在「合并前」再执行；放置阶段勿执行，避免拖慢写入。
+# set the bandwidth on all proxy nodes: intra 10Gb/s, inter 1Gb/s
+# recommended to execute before merge; do not execute during placement, to avoid slowing down the write.
 
 HOSTS_FILE="proxy_hosts"
 USER="root"

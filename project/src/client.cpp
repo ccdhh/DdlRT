@@ -1645,15 +1645,15 @@ namespace ECProject
         std::cout << "  data migration: " << rep.migration_exec_sec() << " s" << std::endl;
         if (merge_method == "SRS") {
           std::cout << "  SRS parity update: " << rep.srs_parity_exec_sec() << " s" << std::endl;
-          std::cout << "  SRS total exec (parallel phase): " << rep.srs_merge_exec_sec() << " s"
+          std::cout << "  SRS total exec : " << rep.srs_merge_exec_sec() << " s"
                     << std::endl;
         } else if (merge_method == "ERS") {
           std::cout << "  ERS parity update: " << rep.ers_parity_exec_sec() << " s" << std::endl;
-          std::cout << "  ERS total exec (parallel phase): " << rep.ers_merge_exec_sec() << " s"
+          std::cout << "  ERS total exec: " << rep.ers_merge_exec_sec() << " s"
                     << std::endl;
         } else {
           std::cout << "  parity update: " << rep.parity_exec_sec() << " s" << std::endl;
-          std::cout << "  total exec (parallel phase): " << rep.merge_exec_sec() << " s"
+          std::cout << "  total exec: " << rep.merge_exec_sec() << " s"
                     << std::endl;
         }
         std::cout << std::defaultfloat;
@@ -1671,16 +1671,14 @@ namespace ECProject
               << ", success pairs=" << succ_pairs << "):" << std::endl;
     std::cout << "  data migration (sum over pairs): " << sum_migration_sec << " s" << std::endl;
     if (merge_method == "SRS") {
-      std::cout << "  SRS parity update (sum): " << sum_srs_parity_sec << " s" << std::endl;
-      std::cout << "  SRS total exec — parallel phase (sum): " << sum_srs_merge_sec << " s"
+      std::cout << "  SRS parity update: " << sum_srs_parity_sec << " s" << std::endl;
+      std::cout << "  SRS total exec" << sum_srs_merge_sec << " s"
                 << std::endl;
     } else if (merge_method == "ERS") {
-      std::cout << "  ERS parity update (sum): " << sum_ers_parity_sec << " s" << std::endl;
-      std::cout << "  ERS total exec — parallel phase (sum): " << sum_ers_merge_sec << " s"
+      std::cout << "  ERS parity update: " << sum_ers_parity_sec << " s" << std::endl;
+      std::cout << "  ERS total exec " << sum_ers_merge_sec << " s"
                 << std::endl;
     }
-    std::cout << "  client round-trip wall time (incl. RPC): " << merge_time.count() << " s"
-              << std::endl;
     std::cout << std::defaultfloat;
   }
   void Client::get_block_each_stripe_position(int stripe_cnt,const std::vector<int>& pos_list)

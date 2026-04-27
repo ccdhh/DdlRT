@@ -1,12 +1,12 @@
 #!/bin/bash
-# 机架内固定 10Gb/s，机架间带宽可配（wondershaper，单位 Kbps；与现有 limit_1Gb.sh 一致：1Gb/s = 1048576 Kbps）
+# intra 10Gb/s, inter <Gb/s> (wondershaper, Kbps; same as limit_1Gb.sh: 1Gb/s = 1048576 Kbps)
 #
-# 用法: sh limit_intra10Gb_inter.sh <机架间_Gb/s>
-#   支持: 0.5 | 1 | 2 | 5 | 10
+# usage: sh limit_intra10Gb_inter.sh <inter_Gb/s>
+#   support: 0.5 | 1 | 2 | 5 | 10
 #
-# 合并前再执行；放置阶段勿执行。合并后: sh unlimit_all_proxy.sh
+# execute before merge; do not execute during placement. after merge: sh unlimit_all_proxy.sh
 #
-# 若网卡与机架对应相反，请交换脚本里 enp6s0f0 / enp6s0f1 的用途。
+# if the network card is opposite to the rack, please swap the usage of enp6s0f0 / enp6s0f1 in the script.
 
 INTER_GB="${1:-}"
 
@@ -37,21 +37,21 @@ applied=0
 
 case "$INTER_GB" in
   0.5) INTER_RACK_Kbps=524288 ;;      # 0.5 Gb/s
-  1)   INTER_RACK_Kbps=1048576 ;;     # 1 Gb/s (与机架内 10:1)
+  1)   INTER_RACK_Kbps=1048576 ;;     # 1 Gb/s (intra 10:1)
   2)   INTER_RACK_Kbps=2097152 ;;     # 2 Gb/s
   5)   INTER_RACK_Kbps=5242880 ;;     # 5 Gb/s
-  10)  INTER_RACK_Kbps=10485760 ;;    # 10 Gb/s（与机架内同速）
+  10)  INTER_RACK_Kbps=10485760 ;;    # 10 Gb/s (intra same speed)
   *)
     echo "Usage: $0 <0.5|1|2|5|10>   (inter-rack Gb/s; intra-rack fixed at 10 Gb/s)" >&2
     exit 1
     ;;
 esac
 
-INTRA_RACK_Kbps=10485760   # 10 Gb/s 机架内（固定）
+INTRA_RACK_Kbps=10485760   # 10 Gb/s intra (fixed)
 
 force_clear_iface() {
   local iface="$1"
-  # 清理 wondershaper 残留，保证脚本可重复执行。
+  # clear wondershaper residual, to ensure the script can be executed repeatedly.
   "$WS_BIN" -c -a "$iface" >/dev/null 2>&1 || true
   tc qdisc del dev "$iface" root >/dev/null 2>&1 || true
   tc qdisc del dev "$iface" ingress >/dev/null 2>&1 || true
@@ -71,7 +71,7 @@ apply_limit_iface() {
 
   force_clear_iface "$iface"
   if ! "$WS_BIN" -a "$iface" -d "$rate_kbps" -u "$rate_kbps" >/tmp/ws_apply_"$iface".log 2>&1; then
-    # 部分机器第一次会因残留 qdisc 报 “Exclusivity flag on, cannot modify”，重试一次。
+    # some machines will report “Exclusivity flag on, cannot modify” due to residual qdisc, retry once.
     force_clear_iface "$iface"
     if ! "$WS_BIN" -a "$iface" -d "$rate_kbps" -u "$rate_kbps" >>/tmp/ws_apply_"$iface".log 2>&1; then
       echo "Error: failed to apply limit on $iface ($desc)" >&2
@@ -80,7 +80,7 @@ apply_limit_iface() {
     fi
   fi
 
-  # 验证是否已挂上 htb。
+  # verify if htb is attached.
   if ! tc qdisc show dev "$iface" 2>/dev/null | grep -q 'qdisc htb'; then
     echo "Error: $iface has no htb qdisc after shaping ($desc)." >&2
     return 1
@@ -91,11 +91,11 @@ apply_limit_iface() {
   return 0
 }
 
-# magnific0 / Debian 包装均使用 -a -d -u；勿再用位置参数
-# enp6s0f0: 机架内
+# magnific0 / Debian packaging uses -a -d -u; do not use position parameters anymore.
+# enp6s0f0: intra
 apply_limit_iface enp6s0f0 "$INTRA_RACK_Kbps" "intra-rack 10 Gb/s" || exit 1
 
-# enp6s0f1: 机架间
+# enp6s0f1: inter
 apply_limit_iface enp6s0f1 "$INTER_RACK_Kbps" "inter-rack ${INTER_GB} Gb/s" || exit 1
 
 if [ "$applied" -eq 0 ]; then

@@ -23,7 +23,8 @@ namespace ECProject
 {
   bool ProxyImpl::init_coordinator()
   {
-    m_coordinator_ptr = coordinator_proto::coordinatorService::NewStub(grpc::CreateChannel(m_coordinator_address, grpc::InsecureChannelCredentials()));
+    m_coordinator_ptr = coordinator_proto::coordinatorService::NewStub(
+        ECProject::CreateChannelWithMaxMessageSize(m_coordinator_address));
     // coordinator_proto::RequestToCoordinator req;
     // coordinator_proto::ReplyFromCoordinator rep;
     // grpc::ClientContext context;
@@ -58,7 +59,8 @@ namespace ECProject
       for (tinyxml2::XMLElement *node = cluster->FirstChildElement()->FirstChildElement(); node != nullptr; node = node->NextSiblingElement())
       {
         std::string node_uri(node->Attribute("uri"));
-        auto _stub = datanode_proto::datanodeService::NewStub(grpc::CreateChannel(node_uri, grpc::InsecureChannelCredentials()));
+        auto _stub = datanode_proto::datanodeService::NewStub(
+            ECProject::CreateChannelWithMaxMessageSize(node_uri));
         // datanode_proto::CheckaliveCMD cmd;
         // datanode_proto::RequestResult result;
         // grpc::ClientContext context;

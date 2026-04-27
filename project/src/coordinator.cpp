@@ -3395,8 +3395,8 @@ bool CoordinatorImpl::init_proxyinfo() {
        cur++) {
     std::string proxy_ip_and_port =
         cur->second.proxy_ip + ":" + std::to_string(cur->second.proxy_port);
-    auto _stub = proxy_proto::proxyService::NewStub(grpc::CreateChannel(
-        proxy_ip_and_port, grpc::InsecureChannelCredentials()));
+    auto _stub = proxy_proto::proxyService::NewStub(
+        ECProject::CreateChannelWithMaxMessageSize(proxy_ip_and_port));
     proxy_proto::CheckaliveCMD Cmd;
     proxy_proto::RequestResult result;
     grpc::ClientContext clientContext;
@@ -4751,7 +4751,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
       if (it != m_datanode_stubs.end()) {
         return it->second;
       }
-      auto channel = grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+      auto channel = ECProject::CreateChannelWithMaxMessageSize(addr);
       auto new_stub = datanode_proto::datanodeService::NewStub(channel);
       auto shared_stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
           std::move(new_stub));
@@ -4784,8 +4784,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
                                         const std::string &ip, int port,
                                         std::vector<unsigned char> &out) -> bool {
           out.resize(bs);
-          auto channel = grpc::CreateChannel(
-              ip + ":" + std::to_string(port), grpc::InsecureChannelCredentials());
+          auto channel = ECProject::CreateChannelWithMaxMessageSize(
+              ip + ":" + std::to_string(port));
           auto stub = datanode_proto::datanodeService::NewStub(channel);
 
           grpc::ClientContext ctx;
@@ -4841,8 +4841,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
           if (in.size() != bs)
             return false;
 
-          auto channel = grpc::CreateChannel(
-              ip + ":" + std::to_string(port), grpc::InsecureChannelCredentials());
+          auto channel = ECProject::CreateChannelWithMaxMessageSize(
+              ip + ":" + std::to_string(port));
           auto stub = datanode_proto::datanodeService::NewStub(channel);
 
           grpc::ClientContext ctx;
@@ -4959,9 +4959,13 @@ grpc::Status CoordinatorImpl::mergeStripes(
         // Parity columns are independent: run one task per thread (each uses
         // its own buffers on round>=2).
         auto parity_ers_t0 = std::chrono::high_resolution_clock::now();
+        std::cout << "[Coordinator][Merge][ERS] parity tasks=" << parity_tasks.size()
+                  << " (round=" << merge_round << ")" << std::endl;
 
-        // Keep ERS control-plane RPCs bounded to reduce tail blocking time.
-        constexpr int kErsRelocateDeadlineSec = 45;
+        // Keep ERS control-plane RPCs bounded but tolerant for round>=2
+        // 4MB merges where relocation can be slower on busy datanodes.
+        constexpr int kErsRelocateDeadlineSec = 15;
+        constexpr int kErsRelocateRetryTimes = 1;
         constexpr int kErsParityMergeDeadlineSec = 45;
 
         // ERS parity columns are independent. For round>=2, relocate parity-B
@@ -4979,9 +4983,6 @@ grpc::Status CoordinatorImpl::mergeStripes(
               break;
             }
 
-            grpc::ClientContext reloc_ctx;
-            reloc_ctx.set_deadline(std::chrono::system_clock::now() +
-                                   std::chrono::seconds(kErsRelocateDeadlineSec));
             proxy_proto::blockRelocPlan reloc_plan;
             proxy_proto::blockRelocReply reloc_reply;
             reloc_plan.set_block_size(block_size);
@@ -4991,16 +4992,34 @@ grpc::Status CoordinatorImpl::mergeStripes(
             reloc_plan.add_todatanodeip(task.datanode_ip);
             reloc_plan.add_todatanodeport(task.datanode_port);
             reloc_plan.set_keep_source(true);
-            grpc::Status reloc_st =
-                proxy_it->second->relocateBlock(&reloc_ctx, reloc_plan, &reloc_reply);
-            if (!reloc_st.ok() || reloc_reply.result() != "ok") {
+            bool relocate_ok = false;
+            std::string last_err;
+            std::string last_result;
+            for (int attempt = 1; attempt <= kErsRelocateRetryTimes; ++attempt) {
+              grpc::ClientContext reloc_ctx;
+              reloc_ctx.set_deadline(std::chrono::system_clock::now() +
+                                     std::chrono::seconds(kErsRelocateDeadlineSec * attempt));
+              reloc_reply.Clear();
+              grpc::Status reloc_st =
+                  proxy_it->second->relocateBlock(&reloc_ctx, reloc_plan, &reloc_reply);
+              if (reloc_st.ok() && reloc_reply.result() == "ok") {
+                relocate_ok = true;
+                break;
+              }
+              last_err = reloc_st.error_message();
+              last_result = reloc_reply.result();
+            }
+
+            if (!relocate_ok) {
+              // Do not fail the whole ERS merge if relocation times out.
+              // Datanode-side merge can still fetch parity_b from source node.
               std::cerr << "[Coordinator][Merge][ERS][round" << merge_round
-                        << "] relocate parity_b failed via " << task.target_proxy_addr
+                        << "] relocate parity_b timed out via " << task.target_proxy_addr
                         << " key=" << task.parity_key_b
-                        << " err=" << reloc_st.error_message()
-                        << " result=" << reloc_reply.result() << std::endl;
-              parity_ok.store(false);
-              break;
+                        << " err=" << last_err
+                        << " result=" << last_result
+                        << ", continue with remote parity_b fetch fallback"
+                        << std::endl;
             }
           }
         }
@@ -5041,6 +5060,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
             w.join();
         }
         auto parity_ers_t1 = std::chrono::high_resolution_clock::now();
+        std::cout << "[Coordinator][Merge][ERS] parity tasks completed (round="
+                  << merge_round << ")" << std::endl;
         parity_exec_sec =
             std::chrono::duration_cast<std::chrono::duration<double>>(parity_ers_t1 -
                                                                       parity_ers_t0)
@@ -5056,8 +5077,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
                                         const std::string &ip, int port,
                                         std::vector<unsigned char> &out) -> bool {
           out.resize(bs);
-          auto channel = grpc::CreateChannel(
-              ip + ":" + std::to_string(port), grpc::InsecureChannelCredentials());
+          auto channel = ECProject::CreateChannelWithMaxMessageSize(
+              ip + ":" + std::to_string(port));
           auto stub = datanode_proto::datanodeService::NewStub(channel);
 
           grpc::ClientContext ctx;
@@ -5108,8 +5129,8 @@ grpc::Status CoordinatorImpl::mergeStripes(
           if (in.size() != bs)
             return false;
 
-          auto channel = grpc::CreateChannel(
-              ip + ":" + std::to_string(port), grpc::InsecureChannelCredentials());
+          auto channel = ECProject::CreateChannelWithMaxMessageSize(
+              ip + ":" + std::to_string(port));
           auto stub = datanode_proto::datanodeService::NewStub(channel);
 
           grpc::ClientContext ctx;
@@ -5297,7 +5318,10 @@ grpc::Status CoordinatorImpl::mergeStripes(
     size_t total_moves = 0;
     for (const auto &kv : proxy_reloc_plans) total_moves += kv.second.size();
     mig_workers.reserve(total_moves);
+    std::cout << "[Coordinator][Merge] migration tasks=" << total_moves << std::endl;
 
+    constexpr int kMergeRelocateDeadlineSec = 20;
+    constexpr int kMergeRelocateRetryTimes = 2;
     for (const auto &kv : proxy_reloc_plans) {
       const int cluster_id = kv.first;
       const auto &entries = kv.second;
@@ -5316,7 +5340,6 @@ grpc::Status CoordinatorImpl::mergeStripes(
 
       for (const auto &e : entries) {
         mig_workers.emplace_back([&, proxy_addr, e]() {
-          grpc::ClientContext ctx;
           proxy_proto::blockRelocPlan plan;
           proxy_proto::blockRelocReply reloc_reply;
           plan.set_block_size(block_size);
@@ -5327,11 +5350,26 @@ grpc::Status CoordinatorImpl::mergeStripes(
           plan.add_todatanodeip(e.to_ip);
           plan.add_todatanodeport(e.to_port);
 
-          grpc::Status st =
-              m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
-          if (!st.ok()) {
+          bool relocated = false;
+          std::string last_err;
+          std::string last_result;
+          for (int attempt = 1; attempt <= kMergeRelocateRetryTimes; ++attempt) {
+            grpc::ClientContext ctx;
+            ctx.set_deadline(std::chrono::system_clock::now() +
+                             std::chrono::seconds(kMergeRelocateDeadlineSec * attempt));
+            reloc_reply.Clear();
+            grpc::Status st =
+                m_proxy_ptrs[proxy_addr]->relocateBlock(&ctx, plan, &reloc_reply);
+            if (st.ok() && reloc_reply.result() == "ok") {
+              relocated = true;
+              break;
+            }
+            last_err = st.error_message();
+            last_result = reloc_reply.result();
+          }
+          if (!relocated) {
             std::cerr << "[Coordinator][Merge] relocate failed via " << proxy_addr
-                      << ": " << st.error_message()
+                      << ": " << last_err << " result=" << last_result
                       << " block=" << e.block_key << std::endl;
             migration_ok.store(false);
           }
@@ -5340,6 +5378,7 @@ grpc::Status CoordinatorImpl::mergeStripes(
     }
     for (auto &w : mig_workers)
       w.join();
+    std::cout << "[Coordinator][Merge] migration tasks completed" << std::endl;
     auto migr_wall_t1 = std::chrono::high_resolution_clock::now();
     migration_exec_sec =
         std::chrono::duration_cast<std::chrono::duration<double>>(migr_wall_t1 -

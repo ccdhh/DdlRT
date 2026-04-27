@@ -1,40 +1,40 @@
 #!/bin/bash
 
-# 定义配置文件目录
+# define the configuration file directory
 CONFIG_DIR="/users/qiliang/UniLRC/project/config"
 
-# 定义 hosts 文件路径
+# define the hosts file path
 HOSTS_FILE="hosts"
 
-# 检查 hosts 文件是否存在
+# check if the hosts file exists
 if [[ ! -f "$HOSTS_FILE" ]]; then
   echo "Error: hosts file not found!"
   exit 1
 fi
 
-# 读取 hosts 文件中的主机列表
+# read the host list from the hosts file
 HOSTS=$(cat "$HOSTS_FILE")
 
-# 提示用户输入字符串 XXX
+# prompt the user to input the string XXX
 read -p "Enter the string XXX: " XXX
 
-# 检查输入的字符串是否为空
+# check if the input string is empty
 if [[ -z "$XXX" ]]; then
   echo "Error: Input string cannot be empty!"
   exit 1
 fi
 
-# 定义源文件和目标文件路径
+# define the source and target file paths
 SOURCE_FILE="$CONFIG_DIR/$XXX.xml"
 TARGET_FILE="$CONFIG_DIR/parameterConfiguration.xml"
 
-# 检查源文件是否存在
+# check if the source file exists
 if [[ ! -f "$SOURCE_FILE" ]]; then
   echo "Error: Source file $SOURCE_FILE does not exist!"
   exit 1
 fi
 
-# 在本地主机上复制并覆盖目标文件
+# copy and overwrite the target file on the local host
 echo "Copying $SOURCE_FILE to $TARGET_FILE on the local host..."
 cp "$SOURCE_FILE" "$TARGET_FILE"
 if [[ $? -ne 0 ]]; then
@@ -42,7 +42,7 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-# 使用 rsync 将修改后的文件同步到所有远程主机
+# use rsync to sync the modified file to all remote hosts
 echo "Syncing $TARGET_FILE to all remote hosts..."
 for host in $HOSTS; do
   echo "Syncing to $host..."

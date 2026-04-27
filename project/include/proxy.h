@@ -3,6 +3,7 @@
 #include "coordinator.grpc.pb.h"
 #include "proxy.grpc.pb.h"
 #include "datanode.grpc.pb.h"
+#include "grpc_config.h"
 #include "devcommon.h"
 #include "meta_definition.h"
 #include "lrc.h"
@@ -162,6 +163,7 @@ namespace ECProject
       grpc::EnableDefaultHealthCheckService(true);
       grpc::reflection::InitProtoReflectionServerBuilderPlugin();
       grpc::ServerBuilder builder;
+      ECProject::ConfigureServerBuilderMessageSize(builder);
       std::cout << "proxy_ip_port:" << proxy_ip_port << std::endl;
       builder.AddListeningPort(proxy_ip_port, grpc::InsecureServerCredentials());
       builder.RegisterService(&m_proxyImpl_ptr);

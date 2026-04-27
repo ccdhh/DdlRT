@@ -8,6 +8,7 @@
 #endif
 
 #include "meta_definition.h"
+#include "grpc_config.h"
 #include <grpcpp/grpcpp.h>
 #include <asio.hpp>
 #include "config.h"
@@ -23,7 +24,7 @@ namespace ECProject
                                                                                   m_clientPortForGet(ClientPort),
                                                                                   acceptor(io_context, asio::ip::tcp::endpoint(asio::ip::address::from_string(ClientIP.c_str()), m_clientPortForGet))
     {
-      auto channel = grpc::CreateChannel(m_coordinatorIpPort, grpc::InsecureChannelCredentials());
+      auto channel = ECProject::CreateChannelWithMaxMessageSize(m_coordinatorIpPort);
       m_coordinator_ptr = coordinator_proto::coordinatorService::NewStub(channel);
       m_clientID = ClientIP + ":" + std::to_string(ClientPort);
     }
@@ -33,7 +34,7 @@ namespace ECProject
                                                                                                            m_clientPortForGet(ClientPort),
                                                                                                            acceptor(io_context, asio::ip::tcp::endpoint(asio::ip::address::from_string(ClientIP.c_str()), m_clientPortForGet))
     {
-      auto channel = grpc::CreateChannel(m_coordinatorIpPort, grpc::InsecureChannelCredentials());
+      auto channel = ECProject::CreateChannelWithMaxMessageSize(m_coordinatorIpPort);
       m_coordinator_ptr = coordinator_proto::coordinatorService::NewStub(channel);
       m_clientID = ClientIP + ":" + std::to_string(ClientPort);
       m_sys_config = ECProject::Config::getInstance(config_path);

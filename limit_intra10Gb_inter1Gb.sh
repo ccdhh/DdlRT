@@ -1,26 +1,26 @@
 #!/bin/bash
-# 机架内 10Gb/s、机架间 1Gb/s（wondershaper，单位 Kbps）
+# intra 10Gb/s, inter 1Gb/s (wondershaper, Kbps)
 #
-# 建议用法（只测合并阶段带宽影响）：
-#   - 数据放置阶段：不要执行本脚本，避免放置变慢。
-#   - 出现 "start merge now? (Y/N)" 前：在另一终端执行
-#       sh limit_all_intra10Gb_inter1Gb.sh
-#   - 再在本机输入 Y 开始 merge。
-#   - 合并结束后：sh unlimit_all_proxy.sh  解除限速。
+# recommended usage (only test the bandwidth impact during merge):
+#   - during placement: do not execute this script, to avoid slower placement.
+#   - before "start merge now? (Y/N)": execute in another terminal
+#       sh limit_intra10Gb_inter1Gb.sh
+#   - then input Y in this machine to start merge.
+#   - after merge: sh unlimit_all_proxy.sh to unlimit the bandwidth.
 #
-# 若网卡与机架对应相反，请交换 enp6s0f0 / enp6s0f1 的带宽值。
+# if the network card is opposite to the rack, please swap the usage of enp6s0f0 / enp6s0f1 in the script.
 
-INTRA_RACK_Kbps=10485760   # 10 Gb/s 机架内
-INTER_RACK_Kbps=1048576    # 1 Gb/s 机架间
+INTRA_RACK_Kbps=10485760   # 10 Gb/s intra
+INTER_RACK_Kbps=1048576    # 1 Gb/s inter
 
-# enp6s0f0: 机架内 (intra-rack)
+# enp6s0f0: intra
 if ip link show enp6s0f0 &> /dev/null && ip link show enp6s0f0 | grep -q 'state UP'; then
     wondershaper -a enp6s0f0 -d $INTRA_RACK_Kbps -u $INTRA_RACK_Kbps
-    echo "enp6s0f0: $INTRA_RACK_Kbps Kbps (10Gb/s 机架内)"
+    echo "enp6s0f0: $INTRA_RACK_Kbps Kbps (10Gb/s intra)"
 fi
 
-# enp6s0f1: 机架间 (inter-rack)
+# enp6s0f1: inter
 if ip link show enp6s0f1 &> /dev/null && ip link show enp6s0f1 | grep -q 'state UP'; then
     wondershaper -a enp6s0f1 -d $INTER_RACK_Kbps -u $INTER_RACK_Kbps
-    echo "enp6s0f1: $INTER_RACK_Kbps Kbps (1Gb/s 机架间)"
+    echo "enp6s0f1: $INTER_RACK_Kbps Kbps (1Gb/s inter)"
 fi

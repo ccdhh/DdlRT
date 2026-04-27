@@ -881,8 +881,8 @@ namespace ECProject
                 std::lock_guard<std::mutex> lk(m_remote_read_stub_mutex);
                 auto it = m_remote_read_stubs.find(peer_addr);
                 if (it == m_remote_read_stubs.end()) {
-                    auto channel = grpc::CreateChannel(
-                        peer_addr, grpc::InsecureChannelCredentials());
+                    auto channel =
+                        ECProject::CreateChannelWithMaxMessageSize(peer_addr);
                     auto new_stub = datanode_proto::datanodeService::NewStub(channel);
                     stub = std::shared_ptr<datanode_proto::datanodeService::Stub>(
                         std::move(new_stub));
@@ -892,19 +892,24 @@ namespace ECProject
                 }
             }
 
-            grpc::ClientContext read_ctx;
-            // Bound remote parity fetch to avoid long tail stalls in ERS merge.
-            read_ctx.set_deadline(std::chrono::system_clock::now() +
-                                  std::chrono::seconds(20));
             datanode_proto::ReadBlockBytesRequest read_req;
             datanode_proto::ReadBlockBytesReply read_rep;
             read_req.set_block_key(parity_key_b);
             read_req.set_block_size(block_size);
-            grpc::Status read_st = stub->readBlockBytes(&read_ctx, read_req, &read_rep);
-            if (read_st.ok() && read_rep.ok() &&
-                read_rep.data().size() == static_cast<size_t>(block_size)) {
-                memcpy(buf_b.get(), read_rep.data().data(), static_cast<size_t>(block_size));
-                loaded_b = true;
+            constexpr int kRemoteReadDeadlineSec = 120;
+            constexpr int kRemoteReadRetryTimes = 2;
+            for (int attempt = 1; attempt <= kRemoteReadRetryTimes; ++attempt) {
+                grpc::ClientContext read_ctx;
+                read_ctx.set_deadline(std::chrono::system_clock::now() +
+                                      std::chrono::seconds(kRemoteReadDeadlineSec * attempt));
+                read_rep.Clear();
+                grpc::Status read_st = stub->readBlockBytes(&read_ctx, read_req, &read_rep);
+                if (read_st.ok() && read_rep.ok() &&
+                    read_rep.data().size() == static_cast<size_t>(block_size)) {
+                    memcpy(buf_b.get(), read_rep.data().data(), static_cast<size_t>(block_size));
+                    loaded_b = true;
+                    break;
+                }
             }
         }
 
