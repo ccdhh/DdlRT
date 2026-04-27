@@ -1,5 +1,5 @@
 ## DdlRT
-DdlRT is a novel RS code-based data layout scheme designed using combinatorial mathematical tools and deployed on a prototype system. This branch contains the experimental code for DdlRT. The implementations of all other baselines are hosted in other branches of this repository: ClusterRT is available in the ClusterRT branch, while ERS and SRS are both provided in the SRS/ERS branch.
+DdlRT is a novel RS code-based data layout scheme designed using combinatorial mathematical tools and deployed on a prototype system. This is the experimental code for DdlRT..
 
 ## Prototype
 
