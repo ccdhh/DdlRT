@@ -1,3 +1,6 @@
+## DdlRT
+DdlRT is a novel RS code-based data layout scheme designed using combinatorial mathematical tools and deployed on a prototype system. This branch contains the experimental code for DdlRT. The implementations of all other baselines are hosted in other branches of this repository: ClusterRT is available in the ClusterRT branch, while ERS and SRS are both provided in the SRS/ERS branch.
+
 ## Prototype
 
 The architecture follows master-worker style, like many state-of-art distributed file storage such as HDFS and Ceph. Four major components are client, coordinator, proxy and datanode. 
@@ -45,11 +48,13 @@ The architecture follows master-worker style, like many state-of-art distributed
   * `CoordinatorIP`: IP address of the coordinator server (0.0.0.0)
   * `CoordinatorPort`: Port number for the coordinator server (55555)
   * `AppendMode`: The mode for append operations, can be:
+    - EQUIOX_MODE: DdlRT mode
     - REP_MODE: Replication mode
     - UNILRC_MODE: Uniform LRC mode  
     - CACHED_MODE: Cached mode
   * `alpha`: Parameter for coding (1)
   * `CodeType`: Type of erasure coding scheme, can be:
+    - RS:RS
     - UniLRC: UniLRC
     - AzureLRC: Azure LRC
     - OptimalLRC: Optimal LRC
@@ -77,12 +82,15 @@ sh start_coordinator.sh
 
 # Run client
 sh test.sh
+After all data blocks are placed, input y or Y, then select the merging round to start the first merging. After the first merging is completed, perform the second merging correspondingly.
+
 ```
 
 #### Attention
 
 - In `parameterConfiguration.xml`, if `CodeType` is UniLRC, the `k`, `r` is computed based on `alpha` and `z`; if `CodeType` is AzureLRC, OptimalLRC or UniformLRC, the `k`, `r`, and `z` are directly specified.
 - start_proxy.sh and start_coordinator.sh scripts need adjustment for different environments.
+-Temporary network fluctuations may occasionally cause data block placement failures, which is a normal occurrence
 
 
 
