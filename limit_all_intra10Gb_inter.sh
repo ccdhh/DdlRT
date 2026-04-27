@@ -1,5 +1,5 @@
 #!/bin/bash
-# 在所有 proxy 节点分发执行单机限速脚本（仅入口脚本使用 pdsh）
+# distribute the single node limit script to all proxy nodes (only used by the entry script pdsh)
 # Usage: sh limit_all_intra10Gb_inter.sh <0.5|1|2|5|10>
 
 INTER_GB="${1:-}"

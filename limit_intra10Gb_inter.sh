@@ -1,8 +1,8 @@
 #!/bin/bash
-# 单机脚本：在当前节点设置
-# - 机架内接口: 10 Gb/s
-# - 机架间接口: <INTER_GB> Gb/s
-# 用法: bash limit_intra10Gb_inter.sh <0.5|1|2|5|10>
+# single node script: set the bandwidth on the current node
+# - intra-rack interface: 10 Gb/s
+# - inter-rack interface: <INTER_GB> Gb/s
+# Usage: bash limit_intra10Gb_inter.sh <0.5|1|2|5|10>
 
 set -u
 

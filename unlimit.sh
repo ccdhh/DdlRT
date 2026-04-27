@@ -59,10 +59,13 @@ clear_iface() {
     return 0
 }
 
-# 清除 enp6s0f0（只要接口存在就清）
+# clear enp6s0f0（只要接口存在就清）
+# clear enp6s0f0 if it exists
 clear_iface enp6s0f0
 
-# 清除 enp6s0f1（只要接口存在就清）
+# clear enp6s0f1 if it exists
+# clear enp6s0f1（只要接口存在就清）
+# clear enp6s0f1 if it exists
 clear_iface enp6s0f1
 
 if [ "$applied" -eq 0 ]; then

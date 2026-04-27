@@ -1605,12 +1605,9 @@ namespace ECProject
                 << std::endl;
     }
     std::cout << "[merge" << merge_round
-              << "time] total spend time: " << merge_total_overlap_aware_seconds
-              << " seconds (overlap-aware: per-batch max of per-pair "
-                 "max(migration,parity) from MergeReply; excludes extra RPC tail)"
-              << '\n'
-              << " | coordinator data migration (sum per pair): " << sum_data_migration_seconds << " s"<<'\n'
-              << " | coordinator parity update (sum per pair): " << sum_parity_update_seconds << " s"
+              << "time] total spend time: " << merge_total_overlap_aware_seconds<<'\n'   
+              << " coordinator data migration: " << sum_data_migration_seconds << " s"<<'\n'
+              << " coordinator parity update: " << sum_parity_update_seconds << " s"
               << std::endl;
   }
   void Client::get_block_each_stripe_position(int stripe_cnt,const std::vector<int>& pos_list)
