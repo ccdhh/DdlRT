@@ -82,6 +82,7 @@ int main(int argc, char **argv)
     std::cout << "Set stripe operation finished" << std::endl;
     std::cout << "Conducting experiments, please wait..." << std::endl;
     std::chrono::duration<double> set_time = std::chrono::duration_cast<std::chrono::duration<double>>(set_end - set_start);
+    std::cout << "write time: " << set_time.count() << " seconds" << std::endl;
     std::cout << "write throughput: " << (static_cast<double> (total_write_size) / set_time.count() / 1024) << "MB/s" << std::endl;
 
     std::cout << "\n[Merge bandwidth] if you want to limit the bandwidth during merge, please execute the following commands:\n"
