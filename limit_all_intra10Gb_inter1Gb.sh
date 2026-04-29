@@ -4,7 +4,7 @@
 
 HOSTS_FILE="proxy_hosts"
 USER="root"
-REMOTE_COMMAND="cd /users/qiliang/UniLRC && sh limit_intra10Gb_inter1Gb.sh"
+REMOTE_COMMAND="cd /users/qiliang/DdlRT && sh limit_intra10Gb_inter1Gb.sh"
 PARALLEL=5
 
 echo "Running bandwidth limit on all nodes (intra 10Gb, inter 1Gb)..."

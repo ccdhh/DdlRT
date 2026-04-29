@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # define the configuration file directory
-CONFIG_DIR="/users/qiliang/UniLRC/project/config"
+CONFIG_DIR="/users/qiliang/DdlRT/project/config"
 
 # define the hosts file path
 HOSTS_FILE="hosts"

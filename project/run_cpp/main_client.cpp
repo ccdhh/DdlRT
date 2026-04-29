@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 
 
     
-    int stripe_num = 1000; // stripe number
+    int stripe_num = 1; // stripe number
     size_t total_write_size = static_cast<size_t>(stripe_num * block_size * n); // MB
     std::cout << "Starting set stripe operation" << std::endl;
     std::chrono::high_resolution_clock::time_point set_start = std::chrono::high_resolution_clock::now();
@@ -84,30 +84,47 @@ int main(int argc, char **argv)
     std::chrono::duration<double> set_time = std::chrono::duration_cast<std::chrono::duration<double>>(set_end - set_start);
     std::cout << "write throughput: " << (static_cast<double> (total_write_size) / set_time.count() / 1024) << "MB/s" << std::endl;
 
-    std::cout << "\n[Merge bandwidth] If you need to limit the bandwidth only during the merge phase: do not execute the limit script during the placement phase.\n"
-            << "   Execute sh limit_bandwidth.sh <0.5|1|2|5|10> in another terminal before merging:\n"
-            << "   Execute sh unlimit_all.sh after merging:\n\n";
-     int merge_round=1;
+    // std::cout << "\n[Merge bandwidth] If you need to limit the bandwidth only during the merge phase: do not execute the limit script during the placement phase.\n"
+    //         << "   Execute sh limit_bandwidth.sh <0.5|1|2|5|10> in another terminal before merging:\n"
+    //         << "   Execute sh unlimit_all.sh after merging:\n\n";
+    //  int merge_round=1;
 
-    while (true)
-    {
-        if(merge_round>2)
-        {
-            std::cout<<"merge completed"<<std::endl;
-            break;
-        }
-        std::cout << "start[ "<<merge_round<<" time]merge now? (Y/N)" << std::endl;
-        char choose;
-        std::cin >> choose;
-        if (choose == 'Y' || choose == 'y')
-        {      
-            client.start_merge(merge_round);
-            ++merge_round;
-        }
-        else
-        {
-            std::cout << "Invalid input, please enter Y or N." << std::endl;
-        }
-    }
+    // while (true)
+    // {
+    //     if(merge_round>2)
+    //     {
+    //         std::cout<<"merge completed"<<std::endl;
+    //         break;
+    //     }
+    //     std::cout << "start[ "<<merge_round<<" time]merge now? (Y/N)" << std::endl;
+    //     char choose;
+    //     std::cin >> choose;
+    //     if (choose == 'Y' || choose == 'y')
+    //     {      
+    //         client.start_merge(merge_round);
+    //         ++merge_round;
+    //     }
+    //     else
+    //     {
+    //         std::cout << "Invalid input, please enter Y or N." << std::endl;
+    //     }
+    // }
+    int stripe_id_to_read = 0;
+    // Coordinator::getBlocks maps ids in data-block space (k per stripe).
+    int start_block_id = stripe_id_to_read * k;
+    int end_block_id = start_block_id + k - 1;
+    std::cout << "reading one stripe once"<< std::endl;
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    client.get_blocks(start_block_id, end_block_id);
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+    double elapsed_s = time_span.count();
+    int block_size_bytes = parameters[3];
+    int requested_blocks = end_block_id - start_block_id + 1;
+    double physical_tp_mib =
+        static_cast<double>(requested_blocks) * block_size_bytes /
+        elapsed_s / (1024.0 * 1024.0);
+    std::cout<<"read time: "<<elapsed_s<<" seconds"<<std::endl;
+    std::cout << "read rate: " << physical_tp_mib << "MB/s" << std::endl;
     return 0;
 }

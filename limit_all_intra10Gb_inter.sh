@@ -17,7 +17,7 @@ fi
 
 HOSTS_FILE="proxy_hosts"
 USER="root"
-REMOTE_COMMAND="cd /users/qiliang/UniLRC && sh limit_intra10Gb_inter.sh $INTER_GB"
+REMOTE_COMMAND="cd /users/qiliang/DdlRT && sh limit_intra10Gb_inter.sh $INTER_GB"
 PARALLEL=5
 
 echo "Applying intra 10 Gb/s + inter ${INTER_GB} Gb/s on all proxy nodes..."

@@ -3,7 +3,7 @@
 
 HOSTS_FILE="proxy_hosts"
 USER="root"
-REMOTE_COMMAND="cd /users/qiliang/UniLRC && sh unlimit_both_interfaces.sh"
+REMOTE_COMMAND="cd /users/qiliang/DdlRT && sh unlimit_both_interfaces.sh"
 PARALLEL=5
 
 echo "Clearing bandwidth limits on all proxy nodes..."

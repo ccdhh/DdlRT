@@ -1,8 +1,8 @@
 CMakeFiles/run_datanode.dir/src/lrc.cpp.o: \
- /users/qiliang/UniLRC/project/src/lrc.cpp /usr/include/stdc-predef.h \
- /users/qiliang/UniLRC/project/include/lrc.h \
- /users/qiliang/UniLRC/project/third_party/jerasure/include/jerasure.h \
- /users/qiliang/UniLRC/project/third_party/jerasure/include/jerasure/galois.h \
+ /users/qiliang/DdlRT/project/src/lrc.cpp /usr/include/stdc-predef.h \
+ /users/qiliang/DdlRT/project/include/lrc.h \
+ /users/qiliang/DdlRT/project/third_party/jerasure/include/jerasure.h \
+ /users/qiliang/DdlRT/project/third_party/jerasure/include/jerasure/galois.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -18,11 +18,11 @@ CMakeFiles/run_datanode.dir/src/lrc.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- /users/qiliang/UniLRC/project/third_party/gf-complete/include/gf_complete.h \
- /users/qiliang/UniLRC/project/third_party/jerasure/include/jerasure/reed_sol.h \
- /users/qiliang/UniLRC/project/third_party/jerasure/include/jerasure/cauchy.h \
- /users/qiliang/UniLRC/project/include/meta_definition.h \
- /users/qiliang/UniLRC/project/include/devcommon.h \
+ /users/qiliang/DdlRT/project/third_party/gf-complete/include/gf_complete.h \
+ /users/qiliang/DdlRT/project/third_party/jerasure/include/jerasure/reed_sol.h \
+ /users/qiliang/DdlRT/project/third_party/jerasure/include/jerasure/cauchy.h \
+ /users/qiliang/DdlRT/project/include/meta_definition.h \
+ /users/qiliang/DdlRT/project/include/devcommon.h \
  /usr/include/c++/11/iostream \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

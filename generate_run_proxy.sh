@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # define the source file path
-SOURCE_FILE="/users/qiliang/UniLRC/small_tools/generator_sh.py"
+SOURCE_FILE="/users/qiliang/DdlRT/small_tools/generator_sh.py"
 
 # define the hosts file path
 HOSTS_FILE="hosts"
@@ -19,7 +19,7 @@ HOSTS=$(cat "$HOSTS_FILE")
 echo "Copying $SOURCE_FILE to all hosts..."
 for HOST in $HOSTS; do
   echo "Copying to $HOST..."
-  scp "$SOURCE_FILE" "$HOST:/users/qiliang/UniLRC/small_tools/"
+  scp "$SOURCE_FILE" "$HOST:/users/qiliang/DdlRT/small_tools/"
   if [ $? -eq 0 ]; then
     echo "Successfully copied to $HOST!"
   else
@@ -29,7 +29,7 @@ for HOST in $HOSTS; do
 done
 
 # use pdsh to run the Python script on all hosts
-REMOTE_COMMAND="cd /users/qiliang/UniLRC/small_tools/ && python generator_sh.py"
+REMOTE_COMMAND="cd /users/qiliang/DdlRT/small_tools/ && python generator_sh.py"
 PARALLEL=50
 USER="root"
 
