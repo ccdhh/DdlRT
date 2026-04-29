@@ -18,7 +18,7 @@ fi
 HOSTS_FILE="proxy_hosts"
 USER="root"
 # 远端必须用 bash 执行 limit_intra10Gb_inter.sh；LIMIT_* 见该脚本（自动 up、10.x f1 回退、tc 多次清理）。
-REMOTE_COMMAND="cd /users/qiliang/UniLRC && LIMIT_AUTO_IFUP=1 LIMIT_FALLBACK_10NET=1 bash limit_intra10Gb_inter.sh $INTER_GB"
+REMOTE_COMMAND="cd /users/qiliang/DdlRT && LIMIT_AUTO_IFUP=1 LIMIT_FALLBACK_10NET=1 bash limit_intra10Gb_inter.sh $INTER_GB"
 PARALLEL=5
 
 echo "Applying intra 10 Gb/s + inter ${INTER_GB} Gb/s on all proxy nodes..."

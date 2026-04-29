@@ -1794,22 +1794,44 @@ grpc::Status CoordinatorImpl::getBlocks(
     grpc::ServerContext *context,
     const coordinator_proto::BlockIDsAndClientIP *blockIDsClient,
     coordinator_proto::ReplyProxyIPsPorts *proxyIPPort) {
+  (void)context;
+  (void)proxyIPPort;
   std::string client_ip = blockIDsClient->clientip();
   int client_port = blockIDsClient->clientport();
   int start_block_id = blockIDsClient->start_block_id();
   int end_block_id = blockIDsClient->end_block_id();
+  if (start_block_id < 0 || end_block_id < start_block_id) {
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "invalid block id range");
+  }
+
+  const int blocks_per_stripe = m_sys_config->n;
+  if (blocks_per_stripe <= 0) {
+    return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION,
+                        "invalid n in system config");
+  }
+
   std::vector<int> stripe_ids;
   std::vector<int> block_ids;
   std::vector<int> relative_block_ids;
   for (int i = start_block_id; i <= end_block_id; i++) {
-    int stripe_id = i / m_sys_config->k;
+    int stripe_id = i / blocks_per_stripe;
+    if (m_stripe_table.find(stripe_id) == m_stripe_table.end()) {
+      return grpc::Status(grpc::StatusCode::OUT_OF_RANGE,
+                          "stripe id out of range: " + std::to_string(stripe_id));
+    }
+    int block_id = i % blocks_per_stripe;
+    if (block_id < 0 || block_id >= static_cast<int>(m_stripe_table[stripe_id].blocks.size())) {
+      return grpc::Status(grpc::StatusCode::OUT_OF_RANGE,
+                          "block id out of range in stripe " + std::to_string(stripe_id));
+    }
     stripe_ids.push_back(stripe_id);
-    block_ids.push_back(i % m_sys_config->k);
+    block_ids.push_back(block_id);
     relative_block_ids.push_back(i - start_block_id);
   }
   std::vector<int> get_cluster_ids;
   std::vector<int> unique_cluster_ids;
-  for (int i = 0; i < stripe_ids.size(); i++) {
+  for (int i = 0; i < static_cast<int>(stripe_ids.size()); i++) {
     get_cluster_ids.push_back(
         m_stripe_table[stripe_ids[i]].blocks[block_ids[i]]->map2cluster);
     if (std::find(unique_cluster_ids.begin(), unique_cluster_ids.end(),
@@ -1817,8 +1839,8 @@ grpc::Status CoordinatorImpl::getBlocks(
       unique_cluster_ids.push_back(get_cluster_ids[i]);
     }
   }
-  proxy_proto::StripeAndBlockIDs stripe_block_ids[unique_cluster_ids.size()];
-  for (int i = 0; i < stripe_ids.size(); i++) {
+  std::vector<proxy_proto::StripeAndBlockIDs> stripe_block_ids(unique_cluster_ids.size());
+  for (int i = 0; i < static_cast<int>(stripe_ids.size()); i++) {
     int idx = std::find(unique_cluster_ids.begin(), unique_cluster_ids.end(),
                         get_cluster_ids[i]) -
               unique_cluster_ids.begin();
@@ -1835,7 +1857,7 @@ grpc::Status CoordinatorImpl::getBlocks(
                 .node_port);
   }
   std::vector<std::thread> get_threads;
-  for (int i = 0; i < unique_cluster_ids.size(); i++) {
+  for (int i = 0; i < static_cast<int>(unique_cluster_ids.size()); i++) {
     get_threads.push_back(std::thread([this, &stripe_block_ids, &client_ip,
                                        &client_port, &proxyIPPort,
                                        &unique_cluster_ids, i]() {

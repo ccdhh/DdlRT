@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DCARES_STATICLIB
 
-CXX_INCLUDES = -I/users/qiliang/UniLRC/project/include -I/users/qiliang/UniLRC/project/src/proto -I/users/qiliang/UniLRC/project/third_party/asio/include -I/users/qiliang/UniLRC/project/third_party/gf-complete/include -I/users/qiliang/UniLRC/project/third_party/jerasure/include/jerasure -I/users/qiliang/UniLRC/project/third_party/jerasure/include -isystem /users/qiliang/UniLRC/project/third_party/grpc/include
+CXX_INCLUDES = -I/users/qiliang/DdlRT/project/include -I/users/qiliang/DdlRT/project/src/proto -I/users/qiliang/DdlRT/project/third_party/asio/include -I/users/qiliang/DdlRT/project/third_party/gf-complete/include -I/users/qiliang/DdlRT/project/third_party/jerasure/include/jerasure -I/users/qiliang/DdlRT/project/third_party/jerasure/include -isystem /users/qiliang/DdlRT/project/third_party/grpc/include
 
 CXX_FLAGS = -gdwarf-4 -gstrict-dwarf -g -Wall -std=c++17 -DASIO_STANDALONE -O3 -funroll-loops -fdata-sections -ffunction-sections -funroll-loops -ftree-vectorize -O3 -DNDEBUG
 

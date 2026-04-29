@@ -1,7 +1,7 @@
 CMakeFiles/main_client.dir/src/tinyxml2.cpp.o: \
- /users/qiliang/UniLRC/project/src/tinyxml2.cpp \
+ /users/qiliang/DdlRT/project/src/tinyxml2.cpp \
  /usr/include/stdc-predef.h \
- /users/qiliang/UniLRC/project/include/tinyxml2.h \
+ /users/qiliang/DdlRT/project/include/tinyxml2.h \
  /usr/include/c++/11/cctype \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

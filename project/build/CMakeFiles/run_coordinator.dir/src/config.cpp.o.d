@@ -1,7 +1,7 @@
 CMakeFiles/run_coordinator.dir/src/config.cpp.o: \
- /users/qiliang/UniLRC/project/src/config.cpp /usr/include/stdc-predef.h \
- /users/qiliang/UniLRC/project/include/config.h \
- /users/qiliang/UniLRC/project/include/devcommon.h \
+ /users/qiliang/DdlRT/project/src/config.cpp /usr/include/stdc-predef.h \
+ /users/qiliang/DdlRT/project/include/config.h \
+ /users/qiliang/DdlRT/project/include/devcommon.h \
  /usr/include/c++/11/iostream \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
@@ -229,7 +229,7 @@ CMakeFiles/run_coordinator.dir/src/config.cpp.o: \
  /usr/include/c++/11/pstl/glue_numeric_defs.h /usr/include/c++/11/set \
  /usr/include/c++/11/bits/stl_set.h \
  /usr/include/c++/11/bits/stl_multiset.h \
- /users/qiliang/UniLRC/project/include/tinyxml2.h \
+ /users/qiliang/DdlRT/project/include/tinyxml2.h \
  /usr/include/c++/11/climits \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/syslimits.h \

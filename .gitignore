@@ -12,3 +12,4 @@ data/*
 project/config/*
 small_tools/*
 logs/*
+build/*

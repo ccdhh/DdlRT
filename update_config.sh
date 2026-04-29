@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # define the source directory path
-SOURCE_DIR="/users/qiliang/UniLRC/project/config"
+SOURCE_DIR="/users/qiliang/DdlRT/project/config"
 
 # define the hosts file path
 HOSTS_FILE="hosts"
@@ -25,7 +25,7 @@ while read -r REMOTE_HOST; do
   echo "Copying contents of $SOURCE_DIR to $REMOTE_HOST..."
 
   # use scp to recursively copy the directory contents
-  sudo scp -r "$SOURCE_DIR"/* "$REMOTE_HOST:/users/qiliang/UniLRC/project/config/"
+  sudo scp -r "$SOURCE_DIR"/* "$REMOTE_HOST:/users/qiliang/DdlRT/project/config/"
 
   # check if scp is successful
   if [ $? -eq 0 ]; then

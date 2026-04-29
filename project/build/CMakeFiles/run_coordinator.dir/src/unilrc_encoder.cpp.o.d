@@ -1,7 +1,7 @@
 CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: \
- /users/qiliang/UniLRC/project/src/unilrc_encoder.cpp \
+ /users/qiliang/DdlRT/project/src/unilrc_encoder.cpp \
  /usr/include/stdc-predef.h \
- /users/qiliang/UniLRC/project/include/unilrc_encoder.h \
+ /users/qiliang/DdlRT/project/include/unilrc_encoder.h \
  /usr/include/c++/11/memory /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

@@ -27,5 +27,5 @@
 
 ## 注意
 
-- 限速脚本需在**各 proxy 节点**的 `/users/qiliang/UniLRC/` 下存在（可先 `update_all.sh` 同步）。
+- 限速脚本需在**各 proxy 节点**的 `/users/qiliang/DdlRT/` 下存在（可先 `update_all.sh` 同步）。
 - 网卡名默认 `enp6s0f0` / `enp6s0f1`，与现场不一致时请改 `limit_intra10Gb_inter1Gb.sh`。

@@ -1,18 +1,18 @@
 #!/bin/bash
 
 cd /users/qiliang
-sudo chmod 777 -R UniLRC
-cd UniLRC
+sudo chmod 777 -R DdlRT
+cd DdlRT
 
 
 # define the source directory path
-SOURCE_DIR="/users/qiliang/UniLRC"
+SOURCE_DIR="/users/qiliang/DdlRT"
 
 # define the hosts file path
-HOSTS_FILE="hosts"
+HOSTS_FILE="/users/qiliang/DdlRT/hosts"
 
 # define the remote target directory path
-REMOTE_DIR="/users/qiliang/UniLRC"
+REMOTE_DIR="/users/qiliang/DdlRT"
 
 # check if the hosts file exists
 if [[ ! -f "$HOSTS_FILE" ]]; then
@@ -38,7 +38,7 @@ while read -r ip; do
 
 done < "$HOSTS_FILE"
 
-cd /users/qiliang/UniLRC
+cd /users/qiliang/DdlRT
 sh generate_run_proxy.sh
 
 echo "All done!"
