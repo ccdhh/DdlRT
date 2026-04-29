@@ -129,6 +129,7 @@ int main(int argc, char **argv)
     double physical_tp_mib =
         static_cast<double>(requested_blocks) * block_size_bytes /
         elapsed_s / (1024.0 * 1024.0);
+    std::cout<<"read time: "<<elapsed_s<<" seconds"<<std::endl;
     std::cout << "read rate: " << physical_tp_mib << "MB/s" << std::endl;
     return 0;
 }
