@@ -186,9 +186,9 @@ foreach (_target
             ${CMAKE_CURRENT_SOURCE_DIR}/src/toolbox.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/tinyxml2.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/datanode.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/lrc.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/rs.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/config.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/unilrc_encoder.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/encoder.cpp
             #${_target}.cpp
             )
     target_link_libraries(${_target}

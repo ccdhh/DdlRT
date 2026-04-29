@@ -545,7 +545,7 @@ CMakeFiles/run_coordinator.dir/run_cpp/run_coordinator.cpp.o: ../run_cpp/run_coo
   ../include/toolbox.h \
   ../src/proto/proxy.pb.h \
   ../src/proto/coordinator.pb.h \
-  ../include/unilrc_encoder.h
+  ../include/encoder.h
 
 CMakeFiles/run_coordinator.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o: ../src/asm/gf_2vect_dot_prod_avx2.asm \
   ../src/asm/reg_sizes.asm
@@ -1777,7 +1777,7 @@ CMakeFiles/run_coordinator.dir/src/client.cpp.o: ../src/client.cpp \
   ../src/proto/coordinator.pb.h \
   /usr/include/c++/11/thread \
   /usr/include/c++/11/bits/this_thread_sleep.h \
-  ../include/unilrc_encoder.h
+  ../include/encoder.h
 
 CMakeFiles/run_coordinator.dir/src/config.cpp.o: ../src/config.cpp \
   /usr/include/stdc-predef.h \
@@ -2620,8 +2620,8 @@ CMakeFiles/run_coordinator.dir/src/coordinator.cpp.o: ../src/coordinator.cpp \
   ../include/toolbox.h \
   ../src/proto/proxy.pb.h \
   ../src/proto/coordinator.pb.h \
-  ../include/unilrc_encoder.h \
-  ../include/lrc.h \
+  ../include/encoder.h \
+  ../include/rs.h \
   ../third_party/jerasure/include/jerasure.h \
   ../third_party/jerasure/include/jerasure/galois.h \
   ../third_party/gf-complete/include/gf_complete.h \
@@ -3839,11 +3839,11 @@ CMakeFiles/run_coordinator.dir/src/datanode.cpp.o: ../src/datanode.cpp \
   ../include/toolbox.h \
   ../src/proto/proxy.pb.h \
   ../src/proto/coordinator.pb.h \
-  ../include/unilrc_encoder.h
+  ../include/encoder.h
 
-CMakeFiles/run_coordinator.dir/src/lrc.cpp.o: ../src/lrc.cpp \
+CMakeFiles/run_coordinator.dir/src/rs.cpp.o: ../src/rs.cpp \
   /usr/include/stdc-predef.h \
-  ../include/lrc.h \
+  ../include/rs.h \
   ../third_party/jerasure/include/jerasure.h \
   ../third_party/jerasure/include/jerasure/galois.h \
   /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h \
@@ -7051,7 +7051,7 @@ CMakeFiles/run_coordinator.dir/src/proxy.cpp.o: ../src/proxy.cpp \
   /usr/include/c++/11/bits/stl_numeric.h \
   /usr/include/c++/11/pstl/glue_numeric_defs.h \
   ../include/meta_definition.h \
-  ../include/lrc.h \
+  ../include/rs.h \
   ../third_party/jerasure/include/jerasure.h \
   ../third_party/jerasure/include/jerasure/galois.h \
   ../third_party/gf-complete/include/gf_complete.h \
@@ -7775,13 +7775,13 @@ CMakeFiles/run_coordinator.dir/src/proxy.cpp.o: ../src/proxy.cpp \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_queue.h \
   ../include/tinyxml2.h \
-  ../include/lrc.h \
+  ../include/rs.h \
   /usr/include/x86_64-linux-gnu/sys/mman.h \
   /usr/include/x86_64-linux-gnu/bits/mman.h \
   /usr/include/x86_64-linux-gnu/bits/mman-map-flags-generic.h \
   /usr/include/x86_64-linux-gnu/bits/mman-linux.h \
   /usr/include/x86_64-linux-gnu/bits/mman-shared.h \
-  ../include/unilrc_encoder.h
+  ../include/encoder.h
 
 CMakeFiles/run_coordinator.dir/src/tinyxml2.cpp.o: ../src/tinyxml2.cpp \
   /usr/include/stdc-predef.h \
@@ -8231,9 +8231,9 @@ CMakeFiles/run_coordinator.dir/src/toolbox.cpp.o: ../src/toolbox.cpp \
   /usr/include/c++/11/bits/stl_numeric.h \
   /usr/include/c++/11/pstl/glue_numeric_defs.h
 
-CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp \
+CMakeFiles/run_coordinator.dir/src/encoder.cpp.o: ../src/encoder.cpp \
   /usr/include/stdc-predef.h \
-  ../include/unilrc_encoder.h \
+  ../include/encoder.h \
   /usr/include/c++/11/memory \
   /usr/include/c++/11/bits/stl_algobase.h \
   /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
@@ -8496,7 +8496,7 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/grpc/include/grpcpp/impl/codegen/client_unary_call.h:
 
-../src/lrc.cpp:
+../src/rs.cpp:
 
 ../third_party/grpc/include/grpc++/health_check_service_interface.h:
 
@@ -8506,7 +8506,7 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/gf-complete/include/gf_complete.h:
 
-../include/lrc.h:
+../include/rs.h:
 
 ../src/coordinator.cpp:
 
@@ -8806,7 +8806,7 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 /usr/include/x86_64-linux-gnu/sys/ucontext.h:
 
-../include/unilrc_encoder.h:
+../include/encoder.h:
 
 ../third_party/asio/include/asio/execution/blocking.hpp:
 
@@ -10556,7 +10556,7 @@ CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.c
 
 ../third_party/asio/include/asio/co_spawn.hpp:
 
-../src/unilrc_encoder.cpp:
+../src/encoder.cpp:
 
 ../third_party/asio/include/asio/basic_datagram_socket.hpp:
 

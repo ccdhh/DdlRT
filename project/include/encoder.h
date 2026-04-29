@@ -1,5 +1,5 @@
-#ifndef UNILRC_ENCODER_H
-#define UNILRC_ENCODER_H
+#ifndef encoder_H
+#define encoder_H
 #include <memory>
 #include <vector>
 #include <cstring>

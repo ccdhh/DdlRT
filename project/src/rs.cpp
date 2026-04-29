@@ -1,4 +1,4 @@
-#include <lrc.h>
+#include <rs.h>
 
 void ECProject::dfs(std::vector<int> temp, std::shared_ptr<std::vector<std::vector<int>>> ans, int cur, int n, int k)
 {

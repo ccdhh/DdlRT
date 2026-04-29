@@ -1,6 +1,6 @@
 #include "datanode.h"
 #include "toolbox.h"
-#include "unilrc_encoder.h"
+#include "encoder.h"
 #include <fstream>
 #include <unistd.h>
 #include <sys/stat.h>

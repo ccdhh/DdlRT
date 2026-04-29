@@ -5,7 +5,7 @@
 #include "datanode.grpc.pb.h"
 #include "devcommon.h"
 #include "meta_definition.h"
-#include "lrc.h"
+#include "rs.h"
 #include <asio.hpp>
 #include <grpc++/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>

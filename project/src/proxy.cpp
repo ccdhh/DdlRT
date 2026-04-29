@@ -3,13 +3,13 @@
 #include "reed_sol.h"
 #include "tinyxml2.h"
 #include "toolbox.h"
-#include "lrc.h"
+#include "rs.h"
 #include <thread>
 #include <cassert>
 #include <string>
 #include <fstream>
 #include <sys/mman.h>
-#include "unilrc_encoder.h"
+#include "encoder.h"
 #include <chrono>
 template <typename T>
 inline T ceil(T const &A, T const &B)

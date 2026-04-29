@@ -1,6 +1,6 @@
 #include "coordinator.h"
 #include "datanode.grpc.pb.h"
-#include "lrc.h"
+#include "rs.h"
 #include "meta_definition.h"
 #include "tinyxml2.h"
 #include <algorithm>

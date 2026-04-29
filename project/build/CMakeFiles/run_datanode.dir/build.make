@@ -338,19 +338,19 @@ CMakeFiles/run_datanode.dir/src/datanode.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/run_datanode.dir/src/datanode.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S DdlRT/project/src/datanode.cpp -o CMakeFiles/run_datanode.dir/src/datanode.cpp.s
 
-CMakeFiles/run_datanode.dir/src/lrc.cpp.o: CMakeFiles/run_datanode.dir/flags.make
-CMakeFiles/run_datanode.dir/src/lrc.cpp.o: ../src/lrc.cpp
-CMakeFiles/run_datanode.dir/src/lrc.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=DdlRT/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/run_datanode.dir/src/lrc.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/lrc.cpp.o -MF CMakeFiles/run_datanode.dir/src/lrc.cpp.o.d -o CMakeFiles/run_datanode.dir/src/lrc.cpp.o -c DdlRT/project/src/lrc.cpp
+CMakeFiles/run_datanode.dir/src/rs.cpp.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/rs.cpp.o: ../src/rs.cpp
+CMakeFiles/run_datanode.dir/src/rs.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=DdlRT/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/run_datanode.dir/src/rs.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/rs.cpp.o -MF CMakeFiles/run_datanode.dir/src/rs.cpp.o.d -o CMakeFiles/run_datanode.dir/src/rs.cpp.o -c DdlRT/project/src/rs.cpp
 
-CMakeFiles/run_datanode.dir/src/lrc.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/run_datanode.dir/src/lrc.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E DdlRT/project/src/lrc.cpp > CMakeFiles/run_datanode.dir/src/lrc.cpp.i
+CMakeFiles/run_datanode.dir/src/rs.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/run_datanode.dir/src/rs.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E DdlRT/project/src/rs.cpp > CMakeFiles/run_datanode.dir/src/rs.cpp.i
 
-CMakeFiles/run_datanode.dir/src/lrc.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/run_datanode.dir/src/lrc.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S DdlRT/project/src/lrc.cpp -o CMakeFiles/run_datanode.dir/src/lrc.cpp.s
+CMakeFiles/run_datanode.dir/src/rs.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/run_datanode.dir/src/rs.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S DdlRT/project/src/rs.cpp -o CMakeFiles/run_datanode.dir/src/rs.cpp.s
 
 CMakeFiles/run_datanode.dir/src/config.cpp.o: CMakeFiles/run_datanode.dir/flags.make
 CMakeFiles/run_datanode.dir/src/config.cpp.o: ../src/config.cpp
@@ -366,19 +366,19 @@ CMakeFiles/run_datanode.dir/src/config.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/run_datanode.dir/src/config.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S DdlRT/project/src/config.cpp -o CMakeFiles/run_datanode.dir/src/config.cpp.s
 
-CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: CMakeFiles/run_datanode.dir/flags.make
-CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: ../src/unilrc_encoder.cpp
-CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=DdlRT/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o -MF CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o.d -o CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o -c DdlRT/project/src/unilrc_encoder.cpp
+CMakeFiles/run_datanode.dir/src/encoder.cpp.o: CMakeFiles/run_datanode.dir/flags.make
+CMakeFiles/run_datanode.dir/src/encoder.cpp.o: ../src/encoder.cpp
+CMakeFiles/run_datanode.dir/src/encoder.cpp.o: CMakeFiles/run_datanode.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=DdlRT/project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/run_datanode.dir/src/encoder.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/run_datanode.dir/src/encoder.cpp.o -MF CMakeFiles/run_datanode.dir/src/encoder.cpp.o.d -o CMakeFiles/run_datanode.dir/src/encoder.cpp.o -c DdlRT/project/src/encoder.cpp
 
-CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E DdlRT/project/src/unilrc_encoder.cpp > CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.i
+CMakeFiles/run_datanode.dir/src/encoder.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/run_datanode.dir/src/encoder.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E DdlRT/project/src/encoder.cpp > CMakeFiles/run_datanode.dir/src/encoder.cpp.i
 
-CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S DdlRT/project/src/unilrc_encoder.cpp -o CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.s
+CMakeFiles/run_datanode.dir/src/encoder.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/run_datanode.dir/src/encoder.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S DdlRT/project/src/encoder.cpp -o CMakeFiles/run_datanode.dir/src/encoder.cpp.s
 
 # Object files for target run_datanode
 run_datanode_OBJECTS = \
@@ -403,9 +403,9 @@ run_datanode_OBJECTS = \
 "CMakeFiles/run_datanode.dir/src/toolbox.cpp.o" \
 "CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o" \
 "CMakeFiles/run_datanode.dir/src/datanode.cpp.o" \
-"CMakeFiles/run_datanode.dir/src/lrc.cpp.o" \
+"CMakeFiles/run_datanode.dir/src/rs.cpp.o" \
 "CMakeFiles/run_datanode.dir/src/config.cpp.o" \
-"CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o"
+"CMakeFiles/run_datanode.dir/src/encoder.cpp.o"
 
 # External object files for target run_datanode
 run_datanode_EXTERNAL_OBJECTS =
@@ -431,9 +431,9 @@ run_datanode: CMakeFiles/run_datanode.dir/run_cpp/run_datanode.cpp.o
 run_datanode: CMakeFiles/run_datanode.dir/src/toolbox.cpp.o
 run_datanode: CMakeFiles/run_datanode.dir/src/tinyxml2.cpp.o
 run_datanode: CMakeFiles/run_datanode.dir/src/datanode.cpp.o
-run_datanode: CMakeFiles/run_datanode.dir/src/lrc.cpp.o
+run_datanode: CMakeFiles/run_datanode.dir/src/rs.cpp.o
 run_datanode: CMakeFiles/run_datanode.dir/src/config.cpp.o
-run_datanode: CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o
+run_datanode: CMakeFiles/run_datanode.dir/src/encoder.cpp.o
 run_datanode: CMakeFiles/run_datanode.dir/build.make
 run_datanode: ../third_party/grpc/lib/libgrpc++_reflection.a
 run_datanode: ../third_party/grpc/lib/libgrpc++.a

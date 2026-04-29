@@ -546,7 +546,7 @@ CMakeFiles/run_coordinator.dir/run_cpp/run_coordinator.cpp.o
  DdlRT/project/include/toolbox.h
  DdlRT/project/src/proto/proxy.pb.h
  DdlRT/project/src/proto/coordinator.pb.h
- DdlRT/project/include/unilrc_encoder.h
+ DdlRT/project/include/encoder.h
 
 CMakeFiles/run_coordinator.dir/src/asm/gf_2vect_dot_prod_avx2.asm.o
  DdlRT/project/src/asm/gf_2vect_dot_prod_avx2.asm
@@ -1787,7 +1787,7 @@ CMakeFiles/run_coordinator.dir/src/client.cpp.o
  DdlRT/project/src/proto/coordinator.pb.h
  /usr/include/c++/11/thread
  /usr/include/c++/11/bits/this_thread_sleep.h
- DdlRT/project/include/unilrc_encoder.h
+ DdlRT/project/include/encoder.h
 
 CMakeFiles/run_coordinator.dir/src/config.cpp.o
  DdlRT/project/src/config.cpp
@@ -2632,8 +2632,8 @@ CMakeFiles/run_coordinator.dir/src/coordinator.cpp.o
  DdlRT/project/include/toolbox.h
  DdlRT/project/src/proto/proxy.pb.h
  DdlRT/project/src/proto/coordinator.pb.h
- DdlRT/project/include/unilrc_encoder.h
- DdlRT/project/include/lrc.h
+ DdlRT/project/include/encoder.h
+ DdlRT/project/include/rs.h
  DdlRT/project/third_party/jerasure/include/jerasure.h
  DdlRT/project/third_party/jerasure/include/jerasure/galois.h
  DdlRT/project/third_party/gf-complete/include/gf_complete.h
@@ -3852,12 +3852,12 @@ CMakeFiles/run_coordinator.dir/src/datanode.cpp.o
  DdlRT/project/include/toolbox.h
  DdlRT/project/src/proto/proxy.pb.h
  DdlRT/project/src/proto/coordinator.pb.h
- DdlRT/project/include/unilrc_encoder.h
+ DdlRT/project/include/encoder.h
 
-CMakeFiles/run_coordinator.dir/src/lrc.cpp.o
- DdlRT/project/src/lrc.cpp
+CMakeFiles/run_coordinator.dir/src/rs.cpp.o
+ DdlRT/project/src/rs.cpp
  /usr/include/stdc-predef.h
- DdlRT/project/include/lrc.h
+ DdlRT/project/include/rs.h
  DdlRT/project/third_party/jerasure/include/jerasure.h
  DdlRT/project/third_party/jerasure/include/jerasure/galois.h
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h
@@ -7072,7 +7072,7 @@ CMakeFiles/run_coordinator.dir/src/proxy.cpp.o
  /usr/include/c++/11/bits/stl_numeric.h
  /usr/include/c++/11/pstl/glue_numeric_defs.h
  DdlRT/project/include/meta_definition.h
- DdlRT/project/include/lrc.h
+ DdlRT/project/include/rs.h
  DdlRT/project/third_party/jerasure/include/jerasure.h
  DdlRT/project/third_party/jerasure/include/jerasure/galois.h
  DdlRT/project/third_party/gf-complete/include/gf_complete.h
@@ -7796,13 +7796,13 @@ CMakeFiles/run_coordinator.dir/src/proxy.cpp.o
  /usr/include/c++/11/bits/deque.tcc
  /usr/include/c++/11/bits/stl_queue.h
  DdlRT/project/include/tinyxml2.h
- DdlRT/project/include/lrc.h
+ DdlRT/project/include/rs.h
  /usr/include/x86_64-linux-gnu/sys/mman.h
  /usr/include/x86_64-linux-gnu/bits/mman.h
  /usr/include/x86_64-linux-gnu/bits/mman-map-flags-generic.h
  /usr/include/x86_64-linux-gnu/bits/mman-linux.h
  /usr/include/x86_64-linux-gnu/bits/mman-shared.h
- DdlRT/project/include/unilrc_encoder.h
+ DdlRT/project/include/encoder.h
 
 CMakeFiles/run_coordinator.dir/src/tinyxml2.cpp.o
  DdlRT/project/src/tinyxml2.cpp
@@ -8254,10 +8254,10 @@ CMakeFiles/run_coordinator.dir/src/toolbox.cpp.o
  /usr/include/c++/11/bits/stl_numeric.h
  /usr/include/c++/11/pstl/glue_numeric_defs.h
 
-CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o
- DdlRT/project/src/unilrc_encoder.cpp
+CMakeFiles/run_coordinator.dir/src/encoder.cpp.o
+ DdlRT/project/src/encoder.cpp
  /usr/include/stdc-predef.h
- DdlRT/project/include/unilrc_encoder.h
+ DdlRT/project/include/encoder.h
  /usr/include/c++/11/memory
  /usr/include/c++/11/bits/stl_algobase.h
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h

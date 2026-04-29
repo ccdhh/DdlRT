@@ -484,38 +484,38 @@ src/datanode.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/datanode.cpp.s
 .PHONY : src/datanode.cpp.s
 
-src/lrc.o: src/lrc.cpp.o
+src/lrc.o: src/rs.cpp.o
 .PHONY : src/lrc.o
 
 # target to build an object file
-src/lrc.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/lrc.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/lrc.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/lrc.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/lrc.cpp.o
-.PHONY : src/lrc.cpp.o
+src/rs.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/rs.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/rs.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/rs.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/rs.cpp.o
+.PHONY : src/rs.cpp.o
 
-src/lrc.i: src/lrc.cpp.i
+src/lrc.i: src/rs.cpp.i
 .PHONY : src/lrc.i
 
 # target to preprocess a source file
-src/lrc.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/lrc.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/lrc.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/lrc.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/lrc.cpp.i
-.PHONY : src/lrc.cpp.i
+src/rs.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/rs.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/rs.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/rs.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/rs.cpp.i
+.PHONY : src/rs.cpp.i
 
-src/lrc.s: src/lrc.cpp.s
+src/lrc.s: src/rs.cpp.s
 .PHONY : src/lrc.s
 
 # target to generate assembly for a file
-src/lrc.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/lrc.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/lrc.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/lrc.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/lrc.cpp.s
-.PHONY : src/lrc.cpp.s
+src/rs.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/rs.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/rs.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/rs.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/rs.cpp.s
+.PHONY : src/rs.cpp.s
 
 src/proto/coordinator.grpc.pb.o: src/proto/coordinator.grpc.pb.cc.o
 .PHONY : src/proto/coordinator.grpc.pb.o
@@ -814,38 +814,38 @@ src/toolbox.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/toolbox.cpp.s
 .PHONY : src/toolbox.cpp.s
 
-src/unilrc_encoder.o: src/unilrc_encoder.cpp.o
-.PHONY : src/unilrc_encoder.o
+src/encoder.o: src/encoder.cpp.o
+.PHONY : src/encoder.o
 
 # target to build an object file
-src/unilrc_encoder.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.o
-.PHONY : src/unilrc_encoder.cpp.o
+src/encoder.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/encoder.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/encoder.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/encoder.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/encoder.cpp.o
+.PHONY : src/encoder.cpp.o
 
-src/unilrc_encoder.i: src/unilrc_encoder.cpp.i
-.PHONY : src/unilrc_encoder.i
+src/encoder.i: src/encoder.cpp.i
+.PHONY : src/encoder.i
 
 # target to preprocess a source file
-src/unilrc_encoder.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.i
-.PHONY : src/unilrc_encoder.cpp.i
+src/encoder.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/encoder.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/encoder.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/encoder.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/encoder.cpp.i
+.PHONY : src/encoder.cpp.i
 
-src/unilrc_encoder.s: src/unilrc_encoder.cpp.s
-.PHONY : src/unilrc_encoder.s
+src/encoder.s: src/encoder.cpp.s
+.PHONY : src/encoder.s
 
 # target to generate assembly for a file
-src/unilrc_encoder.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/unilrc_encoder.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/unilrc_encoder.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/unilrc_encoder.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/unilrc_encoder.cpp.s
-.PHONY : src/unilrc_encoder.cpp.s
+src/encoder.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_coordinator.dir/build.make CMakeFiles/run_coordinator.dir/src/encoder.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_proxy.dir/build.make CMakeFiles/run_proxy.dir/src/encoder.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_datanode.dir/build.make CMakeFiles/run_datanode.dir/src/encoder.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_client.dir/build.make CMakeFiles/main_client.dir/src/encoder.cpp.s
+.PHONY : src/encoder.cpp.s
 
 # Help Target
 help:
@@ -921,9 +921,9 @@ help:
 	@echo "... src/toolbox.o"
 	@echo "... src/toolbox.i"
 	@echo "... src/toolbox.s"
-	@echo "... src/unilrc_encoder.o"
-	@echo "... src/unilrc_encoder.i"
-	@echo "... src/unilrc_encoder.s"
+	@echo "... src/encoder.o"
+	@echo "... src/encoder.i"
+	@echo "... src/encoder.s"
 .PHONY : help
 
 

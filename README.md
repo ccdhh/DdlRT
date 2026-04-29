@@ -1,5 +1,5 @@
 ## DdlRT
-DdlRT is a novel RS code-based data layout scheme designed using combinatorial mathematical tools and deployed on a prototype system. This is the experimental code for DdlRT..
+DdlRT is a novel RS code-based data layout scheme designed using combinatorial mathematical tools and deployed on a prototype system. This is the experimental code for DdlRT.
 
 ## Prototype
 
@@ -53,12 +53,6 @@ The architecture follows master-worker style, like many state-of-art distributed
     - UNILRC_MODE: Uniform LRC mode  
     - CACHED_MODE: Cached mode
   * `alpha`: Parameter for coding (1)
-  * `CodeType`: Type of erasure coding scheme, can be:
-    - RS:RS
-    - UniLRC: UniLRC
-    - AzureLRC: Azure LRC
-    - OptimalLRC: Optimal LRC
-    - UniformLRC: Uniform LRC
   * `k`: Number of data blocks
   * `r`: Number of global parity blocks
   * `z`: Number of local parity blocks

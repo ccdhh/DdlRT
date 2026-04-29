@@ -1,4 +1,4 @@
-#include "unilrc_encoder.h"
+#include "encoder.h"
 #include <cstring>
 #include <iostream>
 #include <unordered_map>
