@@ -1,4 +1,8 @@
-CRT_DIR=$(pwd)
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
+CRT_DIR="$REPO_ROOT"
+cd "$CRT_DIR"
 set -e
 
 ASIO_INSTALL_DIR=$CRT_DIR"/project/third_party/asio"
@@ -22,6 +26,17 @@ cd $ASIO_DIR
 ./configure --prefix=$ASIO_INSTALL_DIR
 make -j6
 make install
+
+# sanity check
+if [ ! -f "$GF_INSTALL_DIR/lib/libgf_complete.so.1.0.0" ]; then
+  echo "Error: gf-complete shared library not found after install: $GF_INSTALL_DIR/lib/libgf_complete.so.1.0.0" >&2
+  exit 1
+fi
+if [ ! -f "$JERASURE_INSTALL_DIR/lib/libJerasure.so.2.0.0" ]; then
+  echo "Error: Jerasure shared library not found after install: $JERASURE_INSTALL_DIR/lib/libJerasure.so.2.0.0" >&2
+  exit 1
+fi
+echo "Third-party install done. Shared libs are present in project/third_party/*/lib."
 
 # grpc
 mkdir -p $GRPC_INSTALL_DIR

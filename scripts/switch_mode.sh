@@ -1,10 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 
-# define the configuration file directory
-CONFIG_DIR="/users/qiliang/UniLRC/project/config"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONFIG_DIR="$REPO_ROOT/project/config"
 
 # define the hosts file path
-HOSTS_FILE="hosts"
+HOSTS_FILE="$REPO_ROOT/hosts"
 
 # check if the hosts file exists
 if [[ ! -f "$HOSTS_FILE" ]]; then

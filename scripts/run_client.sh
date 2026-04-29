@@ -1,3 +1,8 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
 COR_IP='0.0.0.0'
 STRIPE_NUM=32
 KK=6
@@ -21,9 +26,9 @@ VALUE_SIZE=393216  #384MB, 64MB, (6, 2, 2)
 ./project/cmake/build/run_client true Azure_LRC Optimal OPT ${KK} ${LL} ${G_M} ${STRIPE_NUM} ${X1} ${X2} ${X3} ${VALUE_SIZE} ${COR_IP}
 
 # unlimit bandwidth
-sh exp.sh 4
+sh scripts/exp.sh 4
 # kill datanodes and proxies
-sh exp.sh 0
+sh scripts/exp.sh 0
 # kill coordinator
 pkill -9 run_coordinator
 

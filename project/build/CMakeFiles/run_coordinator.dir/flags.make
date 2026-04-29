@@ -5,13 +5,13 @@
 # compile CXX with /usr/bin/c++
 ASM_NASM_DEFINES = -DCARES_STATICLIB -DENABLE_AVX2_ASM
 
-ASM_NASM_INCLUDES = -I/users/qiliang/UniLRC/project/include -I/users/qiliang/UniLRC/project/src/proto -I/users/qiliang/UniLRC/project/third_party/asio/include -I/users/qiliang/UniLRC/project/third_party/gf-complete/include -I/users/qiliang/UniLRC/project/third_party/jerasure/include/jerasure -I/users/qiliang/UniLRC/project/third_party/jerasure/include -I/users/qiliang/UniLRC/project/third_party/grpc/include
+ASM_NASM_INCLUDES = -IDdlRT/project/include -IDdlRT/project/src/proto -IDdlRT/project/third_party/asio/include -IDdlRT/project/third_party/gf-complete/include -IDdlRT/project/third_party/jerasure/include/jerasure -IDdlRT/project/third_party/jerasure/include -IDdlRT/project/third_party/grpc/include
 
-ASM_NASM_FLAGS = -f elf64 -I/users/qiliang/UniLRC/project/src/asm
+ASM_NASM_FLAGS = -f elf64 -IDdlRT/project/src/asm
 
 CXX_DEFINES = -DCARES_STATICLIB -DENABLE_AVX2_ASM
 
-CXX_INCLUDES = -I/users/qiliang/UniLRC/project/include -I/users/qiliang/UniLRC/project/src/proto -I/users/qiliang/UniLRC/project/third_party/asio/include -I/users/qiliang/UniLRC/project/third_party/gf-complete/include -I/users/qiliang/UniLRC/project/third_party/jerasure/include/jerasure -I/users/qiliang/UniLRC/project/third_party/jerasure/include -isystem /users/qiliang/UniLRC/project/third_party/grpc/include
+CXX_INCLUDES = -IDdlRT/project/include -IDdlRT/project/src/proto -IDdlRT/project/third_party/asio/include -IDdlRT/project/third_party/gf-complete/include -IDdlRT/project/third_party/jerasure/include/jerasure -IDdlRT/project/third_party/jerasure/include -isystem DdlRT/project/third_party/grpc/include
 
 CXX_FLAGS = -gdwarf-4 -gstrict-dwarf -g -Wall -std=c++17 -DASIO_STANDALONE -O3 -funroll-loops -fdata-sections -ffunction-sections -funroll-loops -ftree-vectorize
 

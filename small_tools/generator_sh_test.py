@@ -49,7 +49,7 @@ def generate_cluster_info_dict():
         cluster_informtion[i] = new_cluster
             
 def generate_run_proxy_datanode_file():
-    file_name = parent_path + '/run_proxy_datanode.sh'
+    file_name = parent_path + '/scripts/run_proxy_datanode.sh'
     with open(file_name, 'w') as f:
         f.write("pkill -9 run_datanode\n")
         f.write("pkill -9 run_proxy\n")
@@ -103,7 +103,7 @@ def test_chat_gpt():
     tree.write('clusters1.xml', encoding='utf-8', xml_declaration=True)
             
 def cluster_generate_run_proxy_datanode_file():
-    file_name = parent_path + '/run_proxy_datanode.sh'
+    file_name = parent_path + '/scripts/run_proxy_datanode.sh'
     with open(file_name, 'w') as f:
         f.write("pkill -9 run_datanode\n")
         f.write("pkill -9 run_proxy\n")

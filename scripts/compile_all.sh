@@ -1,18 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
-BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
-HOSTS_FILE="$BASE_DIR/hosts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+HOSTS_FILE="$REPO_ROOT/hosts"
 REMOTE_DIR="${REMOTE_DIR:-DdlRT}"
 
 USER="root"
 
-REMOTE_COMMAND="cd $REMOTE_DIR && bash scripts/unlimit.sh"
+REMOTE_COMMAND="cd $REMOTE_DIR/project && sh compile.sh"
 
 PARALLEL=5
 
 echo "Running command on all nodes..."
-sudo pdsh -R ssh -w ^"$HOSTS_FILE" -l "$USER" -f "$PARALLEL" "$REMOTE_COMMAND"
+pdsh -R ssh -w ^"$HOSTS_FILE" -l "$USER" -f "$PARALLEL" "$REMOTE_COMMAND"
 
 if [ $? -eq 0 ]; then
 	echo "Command executed successfully on all nodes."

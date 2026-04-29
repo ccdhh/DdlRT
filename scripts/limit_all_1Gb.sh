@@ -1,13 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
-HOSTS_FILE="$BASE_DIR/hosts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+HOSTS_FILE="$REPO_ROOT/proxy_hosts"
 REMOTE_DIR="${REMOTE_DIR:-DdlRT}"
 
 USER="root"
 
-REMOTE_COMMAND="cd $REMOTE_DIR && bash scripts/unlimit.sh"
+REMOTE_COMMAND="cd $REMOTE_DIR && bash scripts/limit_1Gb.sh"
 
 PARALLEL=5
 

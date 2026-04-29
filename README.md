@@ -26,7 +26,7 @@ The architecture follows master-worker style, like many state-of-art distributed
 - Run the following command to install these packages
 
   - ```
-    sh install_third_party.sh
+    bash install_third_party.sh
     ```
 
 ### System Configuration
@@ -68,23 +68,35 @@ The architecture follows master-worker style, like many state-of-art distributed
 - Compile
 
 ```
-sh compile.sh
+bash compile.sh
 ```
 
 - Run
 
 ```
 # Run proxy and datanode
-sh start_proxy.sh
+bash start_proxy.sh
 
 # Run coordinator
-sh start_coordinator.sh
+bash start_coordinator.sh
 
 # Run client
-sh test.sh
-After all data blocks are placed, input y or Y, then select the merging round to start the first merging. After the first merging is completed, perform the second merging correspondingly.
+bash test.sh
+
 
 ```
+###Limit_bandwidth
+
+- limit_bandwidth
+
+```
+bash limit_bandwidth.sh<0.5|1|5|10>
+```
+- unlimit_bandwidth
+```
+bash unlimit_all.sh
+``` 
+
 
 #### Attention
 
@@ -100,10 +112,17 @@ After all data blocks are placed, input y or Y, then select the merging round to
 
 - directory `doc/`  is the introduction of system implementation.
 - directory `project/` is the system implementation.
+- directory `scripts/` holds cluster helper scripts (sync, compile helpers, bandwidth limits, etc.); top-level `start_*.sh`, `test.sh`, `kill_all_nodes.sh`, `unlimit_all.sh`, and `limit_bandwidth.sh` stay in the repo root for convenience.
 - create directory `storage/` to store the data blocks for data nodes.
 - create directory `run_cluster_sh/` to store the running shell for each cluster.
 
 #### Tools
 
-- use `small_tools/generator_sh.py` to generate configuration file and running shell for proxy and data node.
+- use `small_tools/generator_sh.py` to generate configuration file and running shell for proxy and data node (invoked for you after `bash update_all.sh`).
+
+To sync the whole repo to the cluster and regenerate per-node `scripts/run_proxy_datanode.sh`, run from the repo root:
+
+```
+bash update_all.sh
+```
 

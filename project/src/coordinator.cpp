@@ -1796,10 +1796,16 @@ grpc::Status CoordinatorImpl::getBlocks(
     grpc::ServerContext *context,
     const coordinator_proto::BlockIDsAndClientIP *blockIDsClient,
     coordinator_proto::ReplyProxyIPsPorts *proxyIPPort) {
+  (void)context;
+  (void)proxyIPPort;
   std::string client_ip = blockIDsClient->clientip();
   int client_port = blockIDsClient->clientport();
   int start_block_id = blockIDsClient->start_block_id();
   int end_block_id = blockIDsClient->end_block_id();
+  if (start_block_id < 0 || end_block_id < start_block_id) {
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "invalid block id range");
+  }
   std::vector<int> stripe_ids;
   std::vector<int> block_ids;
   std::vector<int> relative_block_ids;
@@ -1812,6 +1818,15 @@ grpc::Status CoordinatorImpl::getBlocks(
   std::vector<int> get_cluster_ids;
   std::vector<int> unique_cluster_ids;
   for (int i = 0; i < stripe_ids.size(); i++) {
+    if (stripe_ids[i] < 0 || stripe_ids[i] >= static_cast<int>(m_stripe_table.size())) {
+      return grpc::Status(grpc::StatusCode::OUT_OF_RANGE,
+                          "stripe id out of range in getBlocks");
+    }
+    if (block_ids[i] < 0 ||
+        block_ids[i] >= static_cast<int>(m_stripe_table[stripe_ids[i]].blocks.size())) {
+      return grpc::Status(grpc::StatusCode::OUT_OF_RANGE,
+                          "block id out of range in getBlocks");
+    }
     get_cluster_ids.push_back(
         m_stripe_table[stripe_ids[i]].blocks[block_ids[i]]->map2cluster);
     if (std::find(unique_cluster_ids.begin(), unique_cluster_ids.end(),

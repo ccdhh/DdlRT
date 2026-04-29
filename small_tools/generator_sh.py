@@ -74,8 +74,12 @@ def generate_run_proxy_datanode_file():
     local_ip_last_segment = local_ip.split('.')[-1]
     cluster_id = int(local_ip_last_segment) - 3
     #cluster_id = 0 # for test
-    file_name = parent_path + '/run_proxy_datanode.sh'
+    file_name = parent_path + '/scripts/run_proxy_datanode.sh'
     with open(file_name, 'w') as f:
+        f.write("#!/bin/bash\n")
+        f.write("BASE_DIR=\"$(cd \"$(dirname \"$0\")/..\" && pwd)\"\n")
+        f.write("export LD_LIBRARY_PATH=\"$BASE_DIR/project/third_party/jerasure/lib:$BASE_DIR/project/third_party/gf-complete/lib:${LD_LIBRARY_PATH:-}\"\n")
+        f.write("\n")
         f.write("pkill -9 run_datanode\n")
         f.write("pkill -9 run_proxy\n")
         f.write("\n")
@@ -119,6 +123,10 @@ def generater_cluster_information_xml():
 def cluster_generate_run_proxy_datanode_file(ip, port, i):
     file_name = parent_path + '/run_cluster_sh/' + str(i) +'/cluster_run_proxy_datanode.sh'
     with open(file_name, 'w') as f:
+        f.write("#!/bin/bash\n")
+        f.write("BASE_DIR=\"$(cd \"$(dirname \"$0\")/../..\" && pwd)\"\n")
+        f.write("export LD_LIBRARY_PATH=\"$BASE_DIR/project/third_party/jerasure/lib:$BASE_DIR/project/third_party/gf-complete/lib:${LD_LIBRARY_PATH:-}\"\n")
+        f.write("\n")
         f.write("pkill -9 run_datanode\n")
         f.write("pkill -9 run_proxy\n")
         f.write("\n")

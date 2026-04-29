@@ -1,10 +1,11 @@
 #!/bin/bash
+set -euo pipefail
 
-# define the source file path
-SOURCE_FILE="/users/qiliang/UniLRC/small_tools/generator_sh.py"
-
-# define the hosts file path
-HOSTS_FILE="hosts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REMOTE_DIR="${REMOTE_DIR:-DdlRT}"
+SOURCE_FILE="$REPO_ROOT/small_tools/generator_sh.py"
+HOSTS_FILE="$REPO_ROOT/hosts"
 
 # check if the hosts file exists
 if [ ! -f "$HOSTS_FILE" ]; then
@@ -19,7 +20,7 @@ HOSTS=$(cat "$HOSTS_FILE")
 echo "Copying $SOURCE_FILE to all hosts..."
 for HOST in $HOSTS; do
   echo "Copying to $HOST..."
-  scp "$SOURCE_FILE" "$HOST:/users/qiliang/UniLRC/small_tools/"
+  scp "$SOURCE_FILE" "$HOST:$REMOTE_DIR/small_tools/"
   if [ $? -eq 0 ]; then
     echo "Successfully copied to $HOST!"
   else
@@ -29,12 +30,12 @@ for HOST in $HOSTS; do
 done
 
 # use pdsh to run the Python script on all hosts
-REMOTE_COMMAND="cd /users/qiliang/UniLRC/small_tools/ && python generator_sh.py"
+REMOTE_COMMAND="cd $REMOTE_DIR/small_tools/ && python generator_sh.py"
 PARALLEL=50
 USER="root"
 
 echo "Running generator_sh.py on all hosts..."
-pdsh -R ssh -w ^$HOSTS_FILE -l $USER -f $PARALLEL "$REMOTE_COMMAND"
+pdsh -R ssh -w ^"$HOSTS_FILE" -l "$USER" -f "$PARALLEL" "$REMOTE_COMMAND"
 
 # check if the script is successfully run
 if [ $? -eq 0 ]; then

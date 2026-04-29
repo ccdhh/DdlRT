@@ -1176,7 +1176,6 @@ namespace ECProject
     
     return data_ptr_array;
   }
-
   std::shared_ptr<char[]> Client::get_degraded_read_blocks(int start_block_id, int end_block_id)
   {
     grpc::ClientContext context;

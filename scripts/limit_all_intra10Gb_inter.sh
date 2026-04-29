@@ -1,6 +1,7 @@
 #!/bin/bash
 # distribute the single node limit script to all proxy nodes (only used by the entry script pdsh)
 # Usage: sh limit_all_intra10Gb_inter.sh <0.5|1|2|5|10>
+set -euo pipefail
 
 INTER_GB="${1:-}"
 if [ -z "$INTER_GB" ]; then
@@ -8,9 +9,12 @@ if [ -z "$INTER_GB" ]; then
   exit 1
 fi
 
-HOSTS_FILE="proxy_hosts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+HOSTS_FILE="$REPO_ROOT/proxy_hosts"
+REMOTE_DIR="${REMOTE_DIR:-DdlRT}"
 USER="root"
-REMOTE_COMMAND="cd /users/qiliang/UniLRC && LIMIT_AUTO_IFUP=1 LIMIT_FALLBACK_10NET=1 bash limit_intra10Gb_inter.sh $INTER_GB"
+REMOTE_COMMAND="cd $REMOTE_DIR && LIMIT_AUTO_IFUP=1 LIMIT_FALLBACK_10NET=1 bash scripts/limit_intra10Gb_inter.sh $INTER_GB"
 PARALLEL=5
 
 echo "Applying intra 10 Gb/s + inter ${INTER_GB} Gb/s on all proxy nodes..."

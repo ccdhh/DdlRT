@@ -1,18 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 
-cd /users/qiliang
-sudo chmod 777 -R UniLRC
-cd UniLRC
-
-
-# define the source folder path
-SOURCE_DIR="/users/qiliang/UniLRC"
-
-# define the hosts file path
-HOSTS_FILE="hosts"
-
-# define the remote target folder path
-REMOTE_DIR="/users/qiliang/UniLRC"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
+SOURCE_DIR="$REPO_ROOT"
+HOSTS_FILE="$REPO_ROOT/hosts"
+REMOTE_DIR="${REMOTE_DIR:-DdlRT}"
+SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 # check if the hosts file exists
 if [[ ! -f "$HOSTS_FILE" ]]; then
@@ -22,11 +16,12 @@ fi
 
 # iterate over each IP address in the hosts file
 while read -r ip; do
+    [[ -z "$ip" ]] && continue
 
     echo "Copying to host: $ip..."
 
     # use rsync to copy the folder
-    sudo rsync -avz  --exclude='project/cmake/build/CMakeFiles' --exclude='project/cmake/build/run_client' --exclude='project/cmake/build/main_test' --exclude='project/cmake/build/main_client' --exclude='storage/*' -e ssh "$SOURCE_DIR/" "$ip:$REMOTE_DIR/"
+    sudo rsync -avz --delete --exclude='project/cmake/build/CMakeFiles' --exclude='project/cmake/build/run_client' --exclude='project/cmake/build/main_test' --exclude='project/cmake/build/main_client' --exclude='storage/*' -e "ssh $SSH_OPTS" "$SOURCE_DIR/" "$ip:$REMOTE_DIR/"
     #rsync -avz -e ssh "$SOURCE_DIR/" "$ip:$REMOTE_DIR/"
 
     # check if rsync is successful
@@ -38,7 +33,7 @@ while read -r ip; do
 
 done < "$HOSTS_FILE"
 
-cd /users/qiliang/UniLRC
-sh generate_run_proxy.sh
+cd "$REPO_ROOT"
+bash "$REPO_ROOT/scripts/generate_run_proxy.sh"
 
 echo "All done!"

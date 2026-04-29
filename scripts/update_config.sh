@@ -1,10 +1,13 @@
 #!/bin/bash
+set -euo pipefail
 
-# define the source folder path
-SOURCE_DIR="/users/qiliang/UniLRC/project/config"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REMOTE_DIR="${REMOTE_DIR:-DdlRT}"
+SOURCE_DIR="$REPO_ROOT/project/config"
 
 # define the hosts file path
-HOSTS_FILE="hosts"
+HOSTS_FILE="$REPO_ROOT/hosts"
 
 # get the hostname of the local machine
 LOCAL_HOST=$(hostname)
@@ -25,7 +28,7 @@ while read -r REMOTE_HOST; do
   echo "Copying contents of $SOURCE_DIR to $REMOTE_HOST..."
 
   # use scp to recursively copy the folder contents
-  sudo scp -r "$SOURCE_DIR"/* "$REMOTE_HOST:/users/qiliang/UniLRC/project/config/"
+  sudo scp -r "$SOURCE_DIR"/* "$REMOTE_HOST:$REMOTE_DIR/project/config/"
 
   # check if scp is successful
   if [ $? -eq 0 ]; then
